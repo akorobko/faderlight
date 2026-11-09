@@ -24,7 +24,7 @@
 
 ```
 /
-├─ CLAUDE.md                     # agent rules (see 05)
+├─ AGENTS.md                     # agent rules, harness-neutral (CLAUDE.md is a 1-line pointer)
 ├─ docs/design/                  # these documents
 ├─ docs/vendor/                  # RME OSC table (user-supplied), captured traces
 ├─ packages/

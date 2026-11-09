@@ -8,7 +8,7 @@ A Stream Deck plugin (XL first) to control and monitor RME interfaces (Fireface 
 | [02-architecture.md](02-architecture.md) | Tech stack, repo layout, runtime architecture, performance targets |
 | [03-ux.md](03-ux.md) | Key anatomy, gestures, Channel Detail overlay, default XL layout, PI + Control Center settings |
 | [04-naming.md](04-naming.md) | Trademark-safe name + alternatives |
-| [05-agentic-plan.md](05-agentic-plan.md) | Milestones/tasks, simulator, capture tool, testing without hardware, CLAUDE.md draft |
+| [05-agentic-plan.md](05-agentic-plan.md) | Milestones/tasks, simulator, capture tool, testing without hardware, AGENTS.md rules |
 | [UX mockup (canvas)](https://claude.ai/artifact/UwZ1hZm3rRiLWQBF9sqoYm) (private link, owner only) | Key states, XL Console page, Channel Detail overlay, Control Center, Property Inspector |
 
 ## Key decisions
