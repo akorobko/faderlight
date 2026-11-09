@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+
+# Vendor material (RME/Elgato documents, tables, binaries): never commit.
+docs/vendor/*
+!docs/vendor/README.md
