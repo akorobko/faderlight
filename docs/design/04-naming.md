@@ -10,7 +10,7 @@ Also avoid: **MixKey** (Steinberg product), "TotalMix FX Control" (existing plug
 
 - Evokes the product exactly: a lit fader/channel strip on an LCD key.
 - No hits for the exact term in web search; npm package name free (2026-11-09).
-- Works as repo (`faderlight`), plugin UUID (`io.github.akorobko.faderlight`), and Marketplace name ("Faderlight for TotalMix FX" — nominative, allowed style).
+- Works as repo (`faderlight`), plugin UUID (`dev.faderlight.mixer`), and Marketplace name ("Faderlight for TotalMix FX" — nominative, allowed style).
 - Easy to say, no language collisions known.
 
 ## Alternatives

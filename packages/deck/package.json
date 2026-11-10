@@ -1,0 +1,19 @@
+{
+  "name": "@faderlight/deck",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Deck runtime without the Stream Deck SDK: settings, gestures, frame scheduling, layouts and key controllers.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@faderlight/model": "0.0.0",
+    "@faderlight/render": "0.0.0",
+    "@faderlight/totalmix": "0.0.0"
+  },
+  "devDependencies": {
+    "@faderlight/osc": "0.0.0",
+    "@faderlight/simulator": "0.0.0"
+  }
+}

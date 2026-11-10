@@ -5,7 +5,7 @@ Harness-neutral instructions for any coding agent working in this repo.
 - Keep the repo harness-neutral: rules live in AGENTS.md; no agent-specific files or folders (CLAUDE.md, .claude/, .cursor/, …) and no agent-tool names in code, docs or scripts.
 - Read docs/design/*.md (start with docs/design/README.md) and docs/protocol/global-osc.md before changing behaviour.
 - Never use RME/TotalMix/Fireface/Elgato/Stream Deck names or artwork in product names, icons or UUIDs.
-- Core packages (osc, totalmix, model, render) must not import @elgato/streamdeck.
+- Core packages (osc, totalmix, model, render, deck) must not import @elgato/streamdeck; only packages/plugin talks to the Stream Deck SDK.
 - Every protocol change: update docs/protocol/global-osc.md + add decode/encode tests from a fixture.
 - The simulator (packages/simulator) must keep answering like the captures: its conformance test replays every capture in fixtures/captures. When a new capture disagrees, change the simulator and the spec, not the test.
 - Every renderer change: regenerate goldens (`npm run render:goldens`) and attach renders/contact-sheet.png to the PR.

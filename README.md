@@ -13,6 +13,7 @@ npm ci
 npm run check            # vendor guard, format, lint, typecheck, tests
 npm run sim              # fake TotalMix FX on ports 7002/9002 (packages/simulator/README.md)
 npm run render:goldens   # key images and renders/contact-sheet.png (packages/render/README.md)
+npm run plugin:build     # the Stream Deck plugin (packages/plugin/README.md)
 ```
 
 | Path                 | Contents                                       |
@@ -21,6 +22,8 @@ npm run render:goldens   # key images and renders/contact-sheet.png (packages/re
 | `packages/totalmix`  | TotalMix FX Global OSC adaptor                 |
 | `packages/model`     | Mixer model, device profiles, meters           |
 | `packages/render`    | Key renderers (SVG)                            |
+| `packages/deck`      | Deck runtime: settings, gestures, layouts      |
+| `packages/plugin`    | The Stream Deck plugin (SDK wiring, manifest)  |
 | `packages/simulator` | Fake TotalMix FX for hardware-free development |
 | `tools/`             | Developer tools (capture, virtual deck)        |
 

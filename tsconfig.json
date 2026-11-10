@@ -3,6 +3,7 @@
   "include": [
     "packages/*/src",
     "packages/*/test",
+    "packages/*/scripts",
     "tools/*/src",
     "tools/*/test",
     "scripts",
