@@ -301,12 +301,12 @@ export const CASES: readonly Case[] = [
   { name: 'output-offline', title: 'Offline', group: OUTPUTS, view: { ...main, offline: true } },
   {
     name: 'output-unassigned',
-    title: 'Phones, not assigned',
+    title: 'Main, not assigned',
     group: OUTPUTS,
     view: {
       kind: 'output',
-      role: 'phones',
-      title: 'PHONES 2',
+      role: 'main',
+      title: 'MAIN',
       label: '',
       name: 'Not assigned',
       volume: undefined,

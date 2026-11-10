@@ -65,7 +65,9 @@ that instantly, without switching profiles; each device keeps its own page and b
 
 A page can have several banks, one per channel row; its strip and bank keys name theirs. A bank
 moves by its size and wraps around at the end; a long press on its key switches it to the next
-source: inputs, playback, outputs, then playback and outputs together. The last source is what
+source: inputs, playback, outputs, then playback and outputs together. While a bank's own source
+fits on its row, its key is blank. A Phones key for a role TotalMix shows no output for is blank
+too. The last source is what
 the Console's third row starts on: the playback strips, then the outputs that are not Main or a
 Phones output, since those have keys of their own. A page key goes to its page (`to`) or the
 next one; a long press goes back to the Console. The layout is built in (`CONSOLE_LAYOUT`)

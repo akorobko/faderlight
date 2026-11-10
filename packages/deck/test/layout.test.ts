@@ -1,5 +1,5 @@
 import { controlRoom } from '@faderlight/model';
-import { fullMixer } from '@faderlight/simulator';
+import { fullMixer, studioMixer } from '@faderlight/simulator';
 import { describe, expect, it } from 'vitest';
 import {
   CONSOLE_LAYOUT,
@@ -55,12 +55,11 @@ describe('the Console layout', () => {
       'page',
     ]);
     expect(row(0)[7]).toMatchObject({ name: 'INPUTS', index: 1, count: 3 });
-    // The studio session shows four inputs: the rest of the row is blank, its bank at the end.
-    expect(names(row(1))).toEqual(['Synth', 'Vocal', 'Guitar', 'Room', '', '', '', 'bank']);
-    expect(row(1)[7]).toMatchObject({ row: 'INPUTS', first: 1, last: 4, total: 4, atEnd: true });
+    // The studio session shows four inputs: the rest of the row is blank, and so is its Bank
+    // key, since everything fits.
+    expect(names(row(1))).toEqual(['Synth', 'Vocal', 'Guitar', 'Room', '', '', '', '']);
     // Playback, then the outputs that are not Main or Phones (the studio session has none).
-    expect(names(row(2))).toEqual(['DAW', 'Browser', '', '', '', '', '', 'bank']);
-    expect(row(2)[7]).toMatchObject({ row: 'PLAY + OUT', total: 2 });
+    expect(names(row(2))).toEqual(['DAW', 'Browser', '', '', '', '', '', '']);
     expect(names(row(3))).toEqual([
       'Main',
       'Phones 1',
@@ -85,6 +84,17 @@ describe('the Console layout', () => {
     expect(row(1)[1]).toMatchObject({ name: 'Vocal', muted: true });
   });
 
+  it('a row that fits has a blank Bank key that does nothing', () => {
+    const { tap, hold, row, host } = consoleDeck();
+    tap(7, 1);
+    hold(7, 1);
+    hold(7, 2);
+    expect(names(row(1)).slice(0, 4)).toEqual(['Synth', 'Vocal', 'Guitar', 'Room']);
+    expect(row(1)[7]).toBeUndefined();
+    expect(row(2)[7]).toBeUndefined();
+    expect(host.alerts).toEqual([]);
+  });
+
   it('each channel row has its own bank, and a long press switches its source', () => {
     const { tap, hold, row } = consoleDeck(new Loopback(new FakeClock(), fullMixer()).connect());
     expect(row(1)[0]).toMatchObject({ label: 'AN 1/2' });
@@ -97,6 +107,17 @@ describe('the Console layout', () => {
     hold(7, 1);
     expect(row(1)[7]).toMatchObject({ row: 'PLAYBACK', first: 1 });
     expect(row(1)[0]).toMatchObject({ kind: 'channel', value: { kind: 'level' } });
+  });
+
+  it('keeps a Bank key that switched to a source that fits, so it can switch back', () => {
+    const sim = studioMixer();
+    for (const n of [2, 3, 4, 5]) sim.setVisible('input', n, true);
+    const { hold, row } = consoleDeck(new Loopback(new FakeClock(), sim).connect());
+    expect(row(1)[7]).toMatchObject({ row: 'INPUTS', total: 8 });
+    hold(7, 1);
+    expect(row(1)[7]).toMatchObject({ row: 'PLAYBACK', total: 2, atEnd: true });
+    hold(7, 1);
+    expect(row(1)[7]).toMatchObject({ row: 'OUTPUTS' });
   });
 
   it('the playback and output row leaves out Main and the Phones outputs', () => {
@@ -122,7 +143,7 @@ describe('the Console layout', () => {
     expect(row(3)[7]).toMatchObject({ kind: 'page', name: 'OUTPUTS', index: 2 });
     tap(7, 3);
     expect(names(row(0)).slice(0, 3)).toEqual(['Main', 'Phones 1', 'Phones 2']);
-    expect(row(3)[6]).toMatchObject({ row: 'OUTPUTS', total: 3 });
+    expect(row(3)[6]).toBeUndefined(); // the three outputs fit: no Bank key
     expect(row(3)[7]).toMatchObject({ kind: 'page', name: 'INPUTS', direction: 'prev' });
     tap(7, 0);
     expect(deck.pageOf('XL')).toBe(0);

@@ -102,15 +102,7 @@ const console: (KeyView | undefined)[] = [
   output('AN 5/6', 'Reamp', 0, -18),
   output('AN 7/8', 'Gtr Ret', -3, -26),
   output('ADAT 1/2', 'To PC', 0, -22),
-  {
-    kind: 'bank',
-    direction: 'next',
-    row: 'Play + Out',
-    first: 1,
-    last: 7,
-    total: 7,
-    atEnd: true,
-  },
+  undefined, // all seven fit: no Bank key
 
   {
     kind: 'output',
@@ -130,15 +122,7 @@ const console: (KeyView | undefined)[] = [
     volume: -12,
     meter: { left: meter(-24), right: meter(-25) },
   },
-  {
-    kind: 'output',
-    role: 'phones',
-    title: 'PHONES 2',
-    label: '',
-    name: 'Not assigned',
-    volume: undefined,
-    unassigned: true,
-  },
+  undefined, // no Phones 2 in TotalMix
   {
     kind: 'control',
     title: 'Main preset',

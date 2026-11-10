@@ -91,12 +91,14 @@ export interface Theme {
 const DARK_BG: Hex = '#16181c';
 // Teal strong enough to see from across the room: the first, darker tint read as barely there.
 const MUTE_BG: Hex = '#1f6165';
+// Amber as bright as the mute teal, so a soloed key reads as clearly as a muted one.
+const SOLO_BG: Hex = '#7d4f18';
 
 export const DARK: Theme = {
   name: 'dark',
   normal: { background: DARK_BG, text: '#f2f4f7', subtext: '#8f97a3' },
   muted: { background: MUTE_BG, text: '#e6f6f7', subtext: '#a8dfe1' },
-  soloed: { background: '#3e2c18', text: '#fff4e6', subtext: '#ffc98a' },
+  soloed: { background: SOLO_BG, text: '#fff6eb', subtext: '#ffdcb0' },
   offline: { background: '#111215', text: '#737a84', subtext: '#646a74', hatch: '#1a1c20' },
   lit: { background: '#22405f', text: '#ffffff', subtext: '#c9ddf5', frame: '#4ea1ff' },
   line: '#3a3f47',

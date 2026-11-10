@@ -66,6 +66,8 @@ export interface BankState extends BankPosition {
   readonly size: number;
   /** Strips the source has now. */
   readonly total: number;
+  /** The source the bank starts on (its layout's). */
+  readonly home: BankSource;
 }
 
 /** Where the ± send keys of the Channel Detail overlay go: a submix (its output) or FX. */
@@ -331,12 +333,22 @@ const channelController: Controller<ChannelSpec> = {
 
 const PHONES_FIELD = { 1: 'phones1', 2: 'phones2', 3: 'phones3', 4: 'phones4' } as const;
 
-/** TotalMix reports no output for Main or a Phones role (Phones 2 not set up, say). */
+/**
+ * TotalMix shows no output for Main or a Phones role: none is set up (Phones 2, say), or the
+ * one set up is hidden in TotalMix, so it is not on the wire.
+ */
 function unassigned(store: MixerStore, ref: OutputRef): boolean {
   if (ref.role === 'output' || !isOnline(store)) return false;
   const f = ref.role === 'main' ? 'mainOut' : PHONES_FIELD[ref.n];
-  return store.value({ scope: 'controlRoom', field: f }) === NO_CHANNEL;
+  const index = store.value({ scope: 'controlRoom', field: f });
+  if (index === NO_CHANNEL) return true;
+  // Hidden: assigned, but the last full sync did not report that output.
+  return store.synced && resolveOutput(store, ref) === undefined;
 }
+
+/** A Phones key for a role TotalMix shows no output for is blank: there is nothing to control. */
+const absentPhones = (ref: OutputRef, ctx: KeyContext): boolean =>
+  ref.role === 'phones' && unassigned(ctx.mixer.store, ref);
 
 export function outputView(ref: OutputRef, ctx: KeyContext): OutputKey {
   const store = ctx.mixer.store;
@@ -390,9 +402,9 @@ export function outputView(ref: OutputRef, ctx: KeyContext): OutputKey {
 
 const outputController: Controller<Extract<KeySpec, { type: 'output' }>> = {
   options: () => ({}),
-  view: (spec, ctx) => outputView(spec.output, ctx),
+  view: (spec, ctx) => (absentPhones(spec.output, ctx) ? undefined : outputView(spec.output, ctx)),
   gesture: (spec, g, ctx) => {
-    if (g.type !== 'tap') return;
+    if (g.type !== 'tap' || absentPhones(spec.output, ctx)) return;
     const strip = resolveOutput(ctx.mixer.store, spec.output);
     if (!strip) ctx.alert();
     else toggle(ctx, field('output', strip.index, 'mute'));
@@ -601,10 +613,20 @@ const BANK_ROW: Readonly<Record<BankSource, string>> = {
   'playback+output': 'PLAY + OUT',
 };
 
+/**
+ * Every strip of the bank's own source is on its row already: the Bank key is blank, since a
+ * tap would not move the row. Once a long press has switched the source, the key stays, so
+ * another long press can switch it back.
+ */
+function bankFits(b: BankState | undefined, ctx: KeyContext): boolean {
+  return b !== undefined && b.source === b.home && b.total <= b.size && isOnline(ctx.mixer.store);
+}
+
 const bankController: Controller<Extract<KeySpec, { type: 'bank' }>> = {
   options: (_spec, ctx) => ({ longPressMs: ctx.settings.gestures.longPressMs }),
   view: (spec, ctx) => {
     const b = ctx.nav.bank(spec.bank ?? 0);
+    if (bankFits(b, ctx)) return undefined;
     const last = b ? Math.min(b.offset + b.size, b.total) : 0;
     return {
       kind: 'bank',
@@ -620,6 +642,7 @@ const bankController: Controller<Extract<KeySpec, { type: 'bank' }>> = {
   },
   gesture: (spec, g, ctx) => {
     const n = spec.bank ?? 0;
+    if (bankFits(ctx.nav.bank(n), ctx)) return;
     if (!ctx.nav.bank(n)) {
       if (g.type === 'tap' || g.type === 'longPress') ctx.alert();
       return;

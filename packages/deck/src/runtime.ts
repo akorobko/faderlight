@@ -486,7 +486,7 @@ export class DeckRuntime {
     if (!spec) return undefined;
     const at = banks.get(`${String(page)}/${String(n)}`) ?? { source: spec.source, offset: 0 };
     const total = this.stripsOf(at.source).length;
-    return { ...clampBank(at, spec.size, total), size: spec.size, total };
+    return { ...clampBank(at, spec.size, total), size: spec.size, total, home: spec.source };
   }
 
   /** Draws every key of a device again (its page or a bank moved). */
