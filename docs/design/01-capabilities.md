@@ -46,7 +46,7 @@ Monitoring ("Control Room") features available in TotalMix: Main Out volume, Dim
 - `@elgato/streamdeck` **v3.0.4** (released 2026-09-22 → 3.0.4 on 2026-10-29). Requires **Node.js 24+** and **Stream Deck app 7.1+** (`Software.MinimumVersion: "7.1"`).
 - Actions are TypeScript classes (`SingletonAction`, decorators), `@elgato/cli` 1.10.x for `create`, `link`, `restart`, `pack`, `validate`.
 - v3 changes: settings events fire only on PI-originated changes; `Action` union (`KeyAction | DialAction | NeoInfobarAction`); v2 removed runtime manifest access and browser import of the SDK in PI.
-- PI UI: `sdpi-components` v4 web components; plugin ↔ PI via `sendToPlugin` / `streamDeck.ui.sendToPropertyInspector`.
+- PI UI: our own small page (02, "PI"), not `sdpi-components`; plugin ↔ PI via `sendToPlugin` / `streamDeck.ui.sendToPropertyInspector`.
 - `streamDeck.system.openUrl(url)` is available → we can open a local configuration web app in the user's browser.
 - Plugin runs as a Node process managed by the Stream Deck app on **macOS and Windows** (no Linux app). Native Node addons are possible but complicate packaging (per-arch prebuilds) → avoid in v1.
 

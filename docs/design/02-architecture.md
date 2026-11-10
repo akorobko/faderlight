@@ -12,7 +12,7 @@
 | MIDI | Not in v1 | See 01 §3.3 |
 | Key rendering | **Pure functions → SVG string** → `data:image/svg+xml` via `setImage` | No canvas/native deps; deterministic; snapshot-testable |
 | Test rendering | `@resvg/resvg-wasm` (dev only) to rasterise SVG → PNG at 96/144 px | Golden images that agents can *look at*; the WebAssembly build draws the same pixels on every platform |
-| PI (in Stream Deck) | Plain HTML + `sdpi-components` v4, tiny TS bundle | Fast, native look |
+| PI (in Stream Deck) | Plain HTML + a tiny TS bundle (`packages/plugin/pi`) that draws a form model the plugin builds (`packages/deck/src/inspector.ts`); no `sdpi-components` | Native look in a few lines of CSS, no outside code, lists stay live |
 | Settings app ("Control Center") | Local HTTP + WebSocket server inside the plugin (`127.0.0.1`, random port), UI = **Preact** SPA bundled with Rollup (one script, one stylesheet), opened with `streamDeck.system.openUrl` | Rich UI without PI limits; no Electron |
 | Build | npm workspaces, **Rollup** for the plugin and its pages (`packages/control-center/scripts/bundle.ts`) | Standard; one bundler, no dev server needed |
 | Tests | **Vitest** (unit/integration), Playwright (settings app + virtual deck screenshots) | Fast, agent-friendly |

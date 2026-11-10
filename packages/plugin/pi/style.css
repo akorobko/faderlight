@@ -1,0 +1,155 @@
+/* The Property Inspector, in the Stream Deck app's own colours: a narrow dark panel with a
+   label column, like the app's built-in actions. */
+
+:root {
+  color-scheme: dark;
+  --bg: #2d2d2d;
+  --field: #3d3d3d;
+  --field-hover: #464646;
+  --text: #d8d8d8;
+  --muted: #969696;
+  --accent: #0078ff;
+  --ok: #3ddc84;
+  --busy: #f0b429;
+  --fail: #ff5c5c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font:
+    9pt/1.4 system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+}
+
+#pi {
+  display: grid;
+  gap: 12px;
+  padding: 12px 14px 16px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 10pt;
+  font-weight: 600;
+}
+
+.summary {
+  margin: 4px 0 0;
+}
+
+.note {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.note:empty {
+  display: none;
+}
+
+.fields {
+  display: grid;
+  gap: 8px;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  align-items: center;
+  column-gap: 10px;
+}
+
+.label {
+  color: var(--muted);
+  text-align: right;
+}
+
+select {
+  width: 100%;
+  min-width: 0;
+  height: 26px;
+  padding: 0 6px;
+  font: inherit;
+  color: var(--text);
+  background: var(--field);
+  border: 0;
+  border-radius: 3px;
+}
+
+select:hover {
+  background: var(--field-hover);
+}
+
+select:focus-visible,
+button:focus-visible {
+  outline: 1px solid var(--accent);
+}
+
+.help {
+  grid-column: 2;
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 8pt;
+}
+
+.help:empty {
+  display: none;
+}
+
+footer {
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #3a3a3a;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5a6069;
+}
+
+.dot.ok {
+  background: var(--ok);
+}
+
+.dot.busy {
+  background: var(--busy);
+}
+
+.dot.fail {
+  background: var(--fail);
+}
+
+.open {
+  justify-self: start;
+  height: 26px;
+  padding: 0 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--field);
+  border: 0;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.open:hover {
+  background: var(--field-hover);
+}

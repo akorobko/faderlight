@@ -1,9 +1,13 @@
 // A stand-in for the Stream Deck app: a WebSocket server that launches the built plugin the way
 // the app does (`node bin/plugin.js -port … -pluginUUID … -registerEvent … -info …`, working
 // directory = the .sdPlugin folder), answers its settings requests, sends key events and
-// records what the plugin sends back.
+// records what the plugin sends back. The plugin gets an empty home folder of its own, so
+// nothing on the computer running the tests (such as TotalMix's state file with its snapshot
+// names) changes what it does.
 
 import { spawn, type ChildProcess } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { PLUGIN_UUID } from '../src/ids.ts';
@@ -34,6 +38,7 @@ export class FakeStreamDeck {
   private server: WebSocketServer | undefined;
   private socket: WebSocket | undefined;
   private child: ChildProcess | undefined;
+  private home: string | undefined;
   private waiters: { test: (m: Json) => boolean; resolve: (m: Json) => void }[] = [];
 
   async start(): Promise<number> {
@@ -75,6 +80,8 @@ export class FakeStreamDeck {
       },
       devices,
     };
+    const home = mkdtempSync(join(tmpdir(), 'faderlight-home-'));
+    this.home = home;
     const child = spawn(
       process.execPath,
       [
@@ -88,7 +95,11 @@ export class FakeStreamDeck {
         '-info',
         JSON.stringify(info),
       ],
-      { cwd: pluginDir, stdio: ['ignore', 'pipe', 'pipe'] },
+      {
+        cwd: pluginDir,
+        env: { ...process.env, HOME: home, USERPROFILE: home },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
     );
     child.stdout.on('data', (d: Buffer) => (this.output += d.toString()));
     child.stderr.on('data', (d: Buffer) => (this.output += d.toString()));
@@ -197,6 +208,8 @@ export class FakeStreamDeck {
       child.kill();
       await exited;
     }
+    if (this.home) rmSync(this.home, { recursive: true, force: true });
+    this.home = undefined;
     await new Promise<void>((resolve) => {
       if (!this.server) {
         resolve();

@@ -13,3 +13,4 @@ export * from './layout.ts';
 export * from './detail.ts';
 export * from './keys.ts';
 export * from './snapshot-names.ts';
+export * from './inspector.ts';

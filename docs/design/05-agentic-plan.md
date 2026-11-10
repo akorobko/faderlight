@@ -78,7 +78,7 @@ Legend: 🤖 agent-only · 👤 needs the maintainer (≤15 min) · deps in brac
 - **M4.8 👤 Hardware checkpoint #1**: install dev build (`streamdeck link`), run the 10-minute checklist (§5).
 
 ### M5 — Settings (week 4–5)
-- **M5.1 🤖 Property Inspectors** (sdpi-components; live target picker; Open Control Center).
+- **M5.1 🤖 Property Inspectors** ✅ (live target picker; Open Control Center; own page instead of sdpi-components, see 02).
 - **M5.2 🤖 Control Center server** ✅ (HTTP+WS, token, JSON-RPC, live store stream).
 - **M5.3 🤖 Control Center UI** ✅: Connection + Setup Assistant + packet log.
 - **M5.4 🤖 Device & Channels, Behaviour, Appearance sections.**

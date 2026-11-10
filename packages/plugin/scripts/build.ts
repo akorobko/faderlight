@@ -2,6 +2,7 @@
 //
 //   bin/plugin.js   src/plugin.ts and everything it imports, bundled with Rollup (one ES module)
 //   control-center/ the Control Center page (packages/control-center/scripts/build-ui.ts)
+//   pi/             the Property Inspector page (scripts/build-pi.ts)
 //   fonts/          the renderer's fonts (packages/render/fonts), read at runtime
 //   profiles/       the bundled profiles: Console and Render Test (scripts/profile.ts)
 //   debug/          PNGs of the Test Images pages (src/debug.ts), drawn with resvg
@@ -24,6 +25,7 @@ import { writeUi } from '../../control-center/scripts/build-ui.ts';
 import { initRaster, rasterize } from '../../render/test/raster.ts';
 import { UI_FOLDER } from '../src/control-center.ts';
 import { DEBUG_PAGES, pngName } from '../src/debug.ts';
+import { PI_FOLDER, writePi } from './build-pi.ts';
 import { FONTS_DIR, PACKAGE_DIR, PLUGIN_DIR } from './paths.ts';
 import { writeProfiles } from './profile.ts';
 
@@ -33,7 +35,7 @@ const commonjs = ((commonjsImport as unknown as { default?: unknown }).default ?
   commonjsImport) as unknown as typeof commonjsImport.default;
 
 /** Generated parts of the plugin folder (gitignored). */
-export const GENERATED = ['bin', UI_FOLDER, 'fonts', 'profiles', 'debug'] as const;
+export const GENERATED = ['bin', UI_FOLDER, PI_FOLDER, 'fonts', 'profiles', 'debug'] as const;
 
 /** Committed parts, copied when building into another folder. */
 const STATIC = ['manifest.json', 'imgs'] as const;
@@ -121,6 +123,7 @@ export async function buildPlugin(options: BuildOptions = {}): Promise<string> {
   for (const item of GENERATED) rmSync(join(outDir, item), { recursive: true, force: true });
   await bundle(outDir);
   await writeUi(join(outDir, UI_FOLDER));
+  await writePi(join(outDir, PI_FOLDER));
   copyFonts(outDir);
   writeProfiles(outDir);
   await writeDebugImages(outDir);

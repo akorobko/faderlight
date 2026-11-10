@@ -14,7 +14,7 @@ import { Simulator } from '@faderlight/simulator';
 import { buildPlugin } from '../scripts/build.ts';
 import { DEBUG_PAGES } from '../src/debug.ts';
 import { actionUuid, PLUGIN_UUID } from '../src/ids.ts';
-import { FakeStreamDeck, type Json } from './fake-app.ts';
+import { FakeStreamDeck, XL, type Json } from './fake-app.ts';
 
 const require = createRequire(import.meta.url);
 
@@ -103,6 +103,41 @@ describe('the built plugin', () => {
     expect(await page.text()).toContain('<script type="module" src="/app.js">');
     const script = await fetch(`${origin}/app.js`, { headers: { cookie } });
     expect(script.headers.get('content-type')).toMatch(/javascript/);
+  });
+
+  it('answers the Property Inspector and stores what it changes', async () => {
+    const snapshot = actionUuid('snapshot');
+    app.appear('k5', snapshot, { column: 0, row: 0 }, { n: 1 });
+    await app.waitFor((m) => m.event === 'setImage' && m.context === 'k5');
+    const view = (m: Json) => (m.payload as { view?: { summary?: string } }).view;
+    const shown = app.waitFor((m) => m.event === 'sendToPropertyInspector' && m.context === 'k5');
+    app.send({
+      event: 'propertyInspectorDidAppear',
+      action: snapshot,
+      context: 'k5',
+      device: XL.id,
+    });
+    expect(view(await shown)?.summary).toBe('Loads snapshot 1.');
+
+    // A choice in the inspector: the plugin stores it and shows the new view.
+    const stored = app.waitFor((m) => m.event === 'setSettings' && m.context === 'k5');
+    const again = app.waitFor(
+      (m) => m.event === 'sendToPropertyInspector' && view(m)?.summary === 'Loads snapshot 3.',
+    );
+    app.send({
+      event: 'sendToPlugin',
+      action: snapshot,
+      context: 'k5',
+      payload: { event: 'set', key: 'n', value: 3 },
+    });
+    expect((await stored).payload).toEqual({ n: 3 });
+    await again;
+    app.send({
+      event: 'propertyInspectorDidDisappear',
+      action: snapshot,
+      context: 'k5',
+      device: XL.id,
+    });
   });
 
   it('shows the first Test Images page, and its PNG after a long press', async () => {

@@ -84,7 +84,9 @@ and out goes to the packet log (meter messages only when asked, there are dozens
 and the report counts datagrams, meters and changes made in TotalMix. A change made in
 TotalMix is a state message that is no reply to a request of ours: more than 300 ms after the
 last request (TotalMix answers in 6-20 ms). The log masks the interface's serial number, which
-TotalMix sends in `/status/device`.
+TotalMix sends in `/status/device`; such an entry keeps it apart in `unmasked`. The page's
+_Serial numbers_ switch shows it (to tell two interfaces of the same model apart). The switch is
+off on every visit and never saved, so a screenshot of the log has no serial number by accident.
 
 ## Tests
 

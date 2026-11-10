@@ -127,6 +127,10 @@ export function ConnectionPage(props: PageProps): JSX.Element {
   );
 }
 
+/** An entry's arguments, with the serial number only when asked for. */
+const argsText = (e: PacketEntry, serials: boolean): string =>
+  serials ? (e.unmasked ?? e.args) : e.args;
+
 const CHECK_DOT: Readonly<Record<SetupCheck['state'], DotState>> = {
   ok: 'ok',
   fail: 'fail',
@@ -173,6 +177,8 @@ function PacketLog(props: { readonly rpc: Rpc }): JSX.Element {
   const [filter, setFilter] = useState('');
   const [showIn, setShowIn] = useState(true);
   const [showOut, setShowOut] = useState(true);
+  // Off on every visit and never saved, so screenshots of the log stay without serial numbers.
+  const [serials, setSerials] = useState(false);
   const [paused, setPaused] = useState(false);
   const pausedRef = useRef(paused);
   pausedRef.current = paused;
@@ -193,9 +199,9 @@ function PacketLog(props: { readonly rpc: Rpc }): JSX.Element {
     return entries.filter(
       (e) =>
         (e.dir === 'in' ? showIn : showOut) &&
-        (f === '' || `${e.address} ${e.args}`.toLowerCase().includes(f)),
+        (f === '' || `${e.address} ${argsText(e, serials)}`.toLowerCase().includes(f)),
     );
-  }, [entries, filter, showIn, showOut]);
+  }, [entries, filter, showIn, showOut, serials]);
 
   // Follow the newest message unless the reader scrolled up.
   useEffect(() => {
@@ -245,6 +251,13 @@ function PacketLog(props: { readonly rpc: Rpc }): JSX.Element {
         >
           Meters
         </Check>
+        <Check
+          checked={serials}
+          onChange={setSerials}
+          title="Show the interface's serial number, which tells two of the same model apart. Off again on the next visit."
+        >
+          Serial numbers
+        </Check>
         <span class="muted count">
           {shown.length} of the last {entries.length} messages
         </span>
@@ -259,7 +272,7 @@ function PacketLog(props: { readonly rpc: Rpc }): JSX.Element {
                   {e.dir === 'in' ? '←' : '→'}
                 </td>
                 <td class="address">{e.address}</td>
-                <td class="args">{e.args}</td>
+                <td class="args">{argsText(e, serials)}</td>
                 <td class="note">{e.note ?? ''}</td>
               </tr>
             ))}

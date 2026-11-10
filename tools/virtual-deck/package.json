@@ -10,9 +10,11 @@
     "@faderlight/model": "0.0.0",
     "@faderlight/render": "0.0.0",
     "@faderlight/simulator": "0.0.0",
-    "@faderlight/totalmix": "0.0.0"
+    "@faderlight/totalmix": "0.0.0",
+    "ws": "8.22.0"
   },
   "devDependencies": {
-    "@playwright/test": "1.63.0"
+    "@playwright/test": "1.63.0",
+    "@types/ws": "8.18.2"
   }
 }

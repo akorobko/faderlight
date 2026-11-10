@@ -84,6 +84,21 @@ test('the packet log shows what TotalMix sends, filtered', async ({ page }) => {
   await shot(page, 'packet-log', '#packets');
 });
 
+test('the packet log shows serial numbers only when asked', async ({ page }) => {
+  await open(page, 'connection');
+  const serials = page.getByLabel('Serial numbers');
+  await expect(serials).not.toBeChecked();
+  await page.getByRole('textbox', { name: 'Filter' }).first().fill('/status/device');
+  const args = page.locator('#packets tbody tr .args').first();
+  // The simulator's interface reports the serial number 00000000.
+  await expect(args).toHaveText('s:"Fireface UFX III (XXXXXXXX)"');
+  await serials.check();
+  await expect(args).toHaveText('s:"Fireface UFX III (00000000)"');
+  // Never saved: off again on the next visit.
+  await page.reload();
+  await expect(page.getByLabel('Serial numbers')).not.toBeChecked();
+});
+
 test('the mixer state lists every value the plugin holds', async ({ page }) => {
   await open(page, 'connection');
   await page.locator('#state').getByRole('button', { name: 'Show' }).click();

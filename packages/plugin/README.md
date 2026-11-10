@@ -4,17 +4,18 @@ The Stream Deck plugin: the only code that talks to the Stream Deck SDK (`@elgat
 v3). It reads the global settings, keeps the connection to TotalMix FX, and passes key events
 to the deck runtime (`packages/deck`) and key images back to the Stream Deck app.
 
-| Path                                     | Contents                                                       |
-| ---------------------------------------- | -------------------------------------------------------------- |
-| `com.ratio32.faderlight.mixer.sdPlugin/` | The folder the Stream Deck app loads: `manifest.json`, `imgs/` |
-| `src/plugin.ts`                          | Entry point, SDK wiring                                        |
-| `src/ids.ts`                             | Plugin and action UUIDs                                        |
-| `src/mixer.ts`                           | The TotalMix connection, restarted when its settings change    |
-| `scripts/build.ts`                       | Builds `bin/`, `fonts/`, `profiles/` and `debug/`              |
-| `scripts/profile.ts`                     | Writes the bundled profiles (`scripts/zip.ts` packs them)      |
-| `src/debug.ts`                           | The pages of the Test Images debug action                      |
-| `scripts/icons.ts`                       | Draws the icons in `imgs/` (our own artwork)                   |
-| `test/fake-app.ts`                       | A fake Stream Deck app for tests                               |
+| Path                                     | Contents                                                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------ |
+| `com.ratio32.faderlight.mixer.sdPlugin/` | The folder the Stream Deck app loads: `manifest.json`, `imgs/`           |
+| `src/plugin.ts`                          | Entry point, SDK wiring                                                  |
+| `src/ids.ts`                             | Plugin and action UUIDs                                                  |
+| `src/mixer.ts`                           | The TotalMix connection, restarted when its settings change              |
+| `pi/`                                    | The Property Inspector page (`scripts/build-pi.ts` builds it)            |
+| `scripts/build.ts`                       | Builds `bin/`, `control-center/`, `pi/`, `fonts/`, `profiles/`, `debug/` |
+| `scripts/profile.ts`                     | Writes the bundled profiles (`scripts/zip.ts` packs them)                |
+| `src/debug.ts`                           | The pages of the Test Images debug action                                |
+| `scripts/icons.ts`                       | Draws the icons in `imgs/` (our own artwork)                             |
+| `test/fake-app.ts`                       | A fake Stream Deck app for tests                                         |
 
 The manifest targets SDK 3, Stream Deck 7.1 or later and Node.js 24, on macOS 13+ and Windows
 10+. Its actions come from the registry in `packages/deck/src/actions.ts`; a test keeps the two
@@ -76,6 +77,19 @@ the result back. Settings written by a newer build are used but never written ba
 
 The defaults: TotalMix on `127.0.0.1`, sending to port 7002 and listening on 9002. The
 Control Center changes them (the Connection page), and more settings follow there (M5).
+
+## Property Inspector
+
+Every action has the same inspector page (`PropertyInspectorPath` in the manifest, built into
+`pi/`): it draws what the deck runtime builds for the selected key (`packages/deck`,
+"Property Inspector") and sends each choice back with `sendToPlugin`. The plugin applies it,
+stores the action's settings with `setSettings` and answers with the new view; the page keeps
+no settings itself, so the plugin is the only writer. The page loads no files from elsewhere:
+the Stream Deck app loads it from the plugin folder, as a classic script.
+
+The design (docs/design/02-architecture.md) planned Elgato's sdpi-components for this page. It
+is not used: the inspector needs only lists, a status line and a button, which match the app's
+look in a few lines of CSS, and the page then has no outside code.
 
 ## Control Center
 

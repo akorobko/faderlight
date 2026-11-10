@@ -1,6 +1,7 @@
 // The virtual deck's web page: a Stream Deck XL drawn in HTML. Key images arrive as server-sent
 // events; pressing a key (mouse or touch) posts key down and key up, so long presses, double
-// taps and held ± keys work as on the hardware.
+// taps and held ± keys work as on the hardware. With Key settings on, a click selects a key
+// instead and shows its Property Inspector beside the deck, as the Stream Deck app does.
 
 const STYLE = `
 :root { color-scheme: dark; --key: 96px; --gap: 14px; }
@@ -22,6 +23,14 @@ nav button[aria-pressed="true"] { background: #2b4a7a; border-color: #4b7bd0; co
   background: #172433; border: 1px solid #355a85; border-radius: 10px; box-shadow: 0 12px 30px #0009;
 }
 #toast[hidden] { display: none; }
+.stage { display: flex; gap: 20px; align-items: flex-start; }
+#inspector {
+  width: 340px; height: 430px; border-radius: 12px; overflow: hidden; background: #2d2d2d;
+  box-shadow: 0 20px 50px #0008;
+}
+#inspector[hidden] { display: none; }
+#inspector iframe { display: block; width: 100%; height: 100%; border: 0; }
+.key.selected { outline: 3px solid #4b7bd0; outline-offset: 3px; }
 #toast a { color: #8fc1ff; }
 #deck {
   display: grid; grid-template-columns: repeat(8, var(--key)); gap: var(--gap);
@@ -48,7 +57,32 @@ const deck = document.getElementById('deck');
 const link = document.getElementById('link');
 const tabs = document.querySelectorAll('nav button[data-profile]');
 const keys = new Map();
+const edit = document.getElementById('edit');
+const inspector = document.getElementById('inspector');
+const frame = inspector.querySelector('iframe');
 let state;
+let selected;
+
+/** Shows a key's Property Inspector, connected like the Stream Deck app connects it. */
+function inspect(id) {
+  selected = id;
+  for (const [k, el] of keys) el.classList.toggle('selected', k === id);
+  inspector.hidden = false;
+  frame.onload = () => {
+    const port = location.port || '80';
+    const action = JSON.stringify({ action: id, context: id });
+    frame.contentWindow.connectElgatoStreamDeckSocket(port, id, 'registerPropertyInspector', '{}', action);
+  };
+  frame.src = '/pi/index.html?key=' + encodeURIComponent(id);
+}
+
+function stopInspecting() {
+  selected = undefined;
+  for (const el of keys.values()) el.classList.remove('selected');
+  inspector.hidden = true;
+  frame.onload = null;
+  frame.src = 'about:blank';
+}
 
 function post(path, body) {
   return fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
@@ -60,6 +94,8 @@ function build(s) {
   keys.clear();
   for (const t of tabs) t.setAttribute('aria-pressed', String(t.dataset.profile === s.profile));
   const present = new Set(s.keys);
+  // The selected key went away with its profile.
+  if (selected !== undefined && !present.has(selected)) stopInspecting();
   for (let row = 0; row < s.rows; row++) {
     for (let col = 0; col < s.columns; col++) {
       const id = s.profile + ':' + col + ',' + row;
@@ -73,6 +109,7 @@ function build(s) {
         img.alt = '';
         if (s.images[id]) img.src = s.images[id];
         key.append(img);
+        if (id === selected) key.classList.add('selected');
         keys.set(id, key);
         let down = false;
         const release = () => {
@@ -83,6 +120,10 @@ function build(s) {
         };
         key.addEventListener('pointerdown', (e) => {
           e.preventDefault();
+          if (edit.getAttribute('aria-pressed') === 'true') {
+            inspect(id);
+            return;
+          }
           key.setPointerCapture(e.pointerId);
           down = true;
           key.classList.add('down');
@@ -109,6 +150,12 @@ function flash(id, cls) {
 }
 
 for (const t of tabs) t.addEventListener('click', () => post('/api/profile', { profile: t.dataset.profile }));
+
+edit.addEventListener('click', () => {
+  const on = edit.getAttribute('aria-pressed') !== 'true';
+  edit.setAttribute('aria-pressed', String(on));
+  if (!on) stopInspecting();
+});
 
 const events = new EventSource('/events');
 events.addEventListener('state', (e) => build(JSON.parse(e.data)));
@@ -161,10 +208,14 @@ export function page(): string {
   <nav>
     <button data-profile="console" aria-pressed="false">Console</button>
     <button data-profile="own" aria-pressed="false">My page</button>
+    <button id="edit" aria-pressed="false">Key settings</button>
     <button id="cc">Control Center</button>
     <span id="link">connecting…</span>
   </nav>
-  <div id="deck" role="grid" aria-label="Stream Deck XL"></div>
+  <div class="stage">
+    <div id="deck" role="grid" aria-label="Stream Deck XL"></div>
+    <aside id="inspector" hidden><iframe title="Key settings"></iframe></aside>
+  </div>
 </main>
 <p id="toast" role="status" hidden><a target="_blank" rel="noopener">Open the Control Center</a></p>
 <script>${SCRIPT}</script>

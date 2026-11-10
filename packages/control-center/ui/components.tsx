@@ -149,9 +149,10 @@ export function Check(props: {
   readonly checked: boolean;
   readonly onChange: (on: boolean) => void;
   readonly children: ComponentChildren;
+  readonly title?: string;
 }): JSX.Element {
   return (
-    <label class="check">
+    <label class="check" title={props.title}>
       <input
         type="checkbox"
         checked={props.checked}

@@ -87,9 +87,14 @@ describe('Diagnostics against the simulator', () => {
     expect(log.find((e) => e.dir === 'out')).toMatchObject({ address: '/sendstate', args: 'f:1' });
     expect(log.find((e) => e.address === '/status/device')).toMatchObject({
       dir: 'in',
-      // The serial number is masked.
+      // The serial number is masked, and kept apart for a page that asks for it.
       args: 's:"Fireface UFX III (XXXXXXXX)"',
+      unmasked: 's:"Fireface UFX III (00000000)"',
     });
+    // Nothing else has an unmasked copy.
+    expect(log.filter((e) => e.unmasked !== undefined).map((e) => e.address)).toEqual(
+      log.filter((e) => e.address === '/status/device').map((e) => e.address),
+    );
   });
 
   it('counts meters, and a change made in TotalMix as unsolicited', async () => {

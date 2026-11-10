@@ -1,6 +1,7 @@
 // Plugin entry point, run by the Stream Deck app (bin/plugin.js after the build). It is the only
 // code that talks to the Stream Deck SDK: it reads the global settings, keeps the TotalMix
-// connection, and passes key events to the deck runtime and key images back to the app.
+// connection, passes key events to the deck runtime and key images back to the app, and
+// answers the Property Inspector (pi/).
 
 import { join } from 'node:path';
 import streamDeck from '@elgato/streamdeck';
@@ -8,6 +9,7 @@ import type { ControlCenterHost } from '@faderlight/control-center';
 import {
   DeckRuntime,
   DEFAULT_SETTINGS,
+  Inspectors,
   readGlobalSettings,
   toJson,
   totalMixFolder,
@@ -15,6 +17,7 @@ import {
   type DeckHost,
   type GlobalSettings,
   type JsonObject,
+  type JsonValue,
   type Logger,
   type ReadSettings,
 } from '@faderlight/deck';
@@ -103,6 +106,31 @@ const deck = new DeckRuntime({
   snapshotNames,
 });
 
+// The Property Inspector of the selected key: the deck builds what it shows and applies what
+// it changes; the app stores the action's settings.
+const inspectors = new Inspectors(
+  {
+    view: (id) => deck.inspect(id),
+    change: (id, key, value) => {
+      const settings = deck.changeSetting(id, key, value);
+      if (!settings) return false;
+      streamDeck.actions.getActionById(id)?.setSettings(settings).catch(report('setSettings'));
+      return true;
+    },
+    send: (id, update) => {
+      // The app shows one inspector at a time, and the SDK sends to that one.
+      if (streamDeck.ui.action?.id !== id) return;
+      streamDeck.ui
+        .sendToPropertyInspector(update as unknown as JsonObject)
+        .catch(report('sendToPropertyInspector'));
+    },
+    openControlCenter: (section) => {
+      void controlCenter.open(section);
+    },
+  },
+  systemClock,
+);
+
 /** Settings in use from now on: the connection, the keys and the Control Center follow. */
 function apply(settings: GlobalSettings): void {
   current = settings;
@@ -144,6 +172,18 @@ streamDeck.actions.onKeyDown((ev) => {
 
 streamDeck.actions.onKeyUp((ev) => {
   deck.up(ev.action.id);
+});
+
+streamDeck.ui.onDidAppear((ev) => {
+  inspectors.appear(ev.action.id);
+});
+
+streamDeck.ui.onDidDisappear((ev) => {
+  inspectors.disappear(ev.action.id);
+});
+
+streamDeck.ui.onSendToPlugin<JsonValue>((ev) => {
+  inspectors.message(ev.action.id, ev.payload);
 });
 
 streamDeck.settings.onDidReceiveSettings<JsonObject>((ev) => {
