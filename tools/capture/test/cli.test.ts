@@ -41,9 +41,14 @@ afterEach(async () => {
   fake = undefined;
 });
 
-async function startFake(): Promise<{ sendPort: string; listenPort: string }> {
+async function startFake(device?: string): Promise<{ sendPort: string; listenPort: string }> {
   const listenPort = await freePort();
-  fake = new FakeTotalMix({ feedbackPort: listenPort, levelMs: 20, heartbeatMs: 200 });
+  fake = new FakeTotalMix({
+    feedbackPort: listenPort,
+    levelMs: 20,
+    heartbeatMs: 200,
+    ...(device === undefined ? {} : { device }),
+  });
   await fake.start();
   return { sendPort: String(fake.port), listenPort: String(listenPort) };
 }
@@ -80,8 +85,8 @@ describe('cli', () => {
     expect(r.stdout).toContain('Nothing arrived.');
   }, 20_000);
 
-  it('runs the baseline capture unattended and writes a capture file', async () => {
-    const p = await startFake();
+  it('runs the baseline capture unattended and writes a redacted capture file', async () => {
+    const p = await startFake('Fake UFX (12345678)');
     const out = join(mkdtempSync(join(tmpdir(), 'capture-cli-')), 'run.jsonl');
     const r = await cli([
       'run',
@@ -111,8 +116,20 @@ describe('cli', () => {
       script: 'baseline',
       tmfxVersion: '2.10',
     });
-    expect(records.at(-1)).toMatchObject({ k: 'end', reason: 'done', device: 'Fake UFX' });
+    expect(records.at(-1)).toMatchObject({
+      k: 'end',
+      reason: 'done',
+      device: 'Fake UFX (XXXXXXXX)',
+    });
     expect(r.stdout).toContain('write-mute-float');
+    expect(r.stdout).toContain('Redacted serial number "12345678"');
+    const text = readFileSync(out, 'utf8');
+    expect(text).not.toContain('12345678');
+    const rawBytes = records.flatMap((x) =>
+      x.k === 'rx' || x.k === 'tx' ? [Buffer.from(x.raw, 'base64').toString('latin1')] : [],
+    );
+    expect(rawBytes.some((b) => b.includes('Fake UFX (XXXXXXXX)'))).toBe(true);
+    expect(rawBytes.some((b) => b.includes('12345678'))).toBe(false);
 
     const summary = await cli(['summary', out]);
     expect(summary.code).toBe(0);

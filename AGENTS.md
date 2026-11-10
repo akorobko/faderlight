@@ -15,4 +15,5 @@ Harness-neutral instructions for any coding agent working in this repo.
 - `npm run check` (vendor guard, Prettier, ESLint, tsc, Vitest) must pass before pushing; `npm run format` fixes formatting.
 - Hardware facts unknown? Write a question in the PR and add a step to tools/capture/scripts/ — do not guess.
 - No personal details in code, docs, commit messages or PR descriptions: no people's names, emails, local paths, machine or runner names, or links to private repos and pages. Say "the maintainer" instead.
+- Capture files never reach GitHub with hardware serial numbers or computer names in them: `run` and `listen` mask them, and older files go through `node tools/capture/src/cli.ts redact` first. Pushing is permanent, even on a branch.
 - Never commit RME/Elgato documents, tables, binaries or artwork; keep them in gitignored docs/vendor/ (run `scripts/fetch-vendor.sh`).

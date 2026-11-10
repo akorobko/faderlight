@@ -83,6 +83,12 @@ the `baseline` script (`node tools/capture/src/cli.ts scripts` lists them):
 At the end it prints a summary and the file name, for example
 `fixtures/captures/fireface-ufx-iii-2.10-2026-11-10.jsonl`.
 
+Before saving, it replaces identifying text with the same number of `X`: the interface's
+serial number (TotalMix reports it in the device name, for example `Fireface UFX III
+(12345678)`), and this computer's host name, user name and home folder. It does this in the
+decoded messages and in the raw bytes, and prints what it replaced. Pass `--mask "<text>"`
+(repeatable) for anything else that should not be shared.
+
 Test channels are 0-based indices. The defaults suit a UFX III: input 8 (Mic 9), output 0
 (AN 1/2, usually Main), phones 8 (PH 9/10), playback 0. On another interface pass
 `--input`, `--output`, `--phones` and `--playback`. Other ports: `--send-port` (TotalMix
@@ -91,7 +97,16 @@ Test channels are 0-based indices. The defaults suit a UFX III: input 8 (Mic 9),
 
 ### 5. Hand it over
 
-Commit the file on a new branch and push it:
+Anything pushed to GitHub stays in its history, even on a branch that is deleted later. A
+file recorded before the tool removed serial numbers (its name contains the serial, for example
+`fireface-ufx-iii-12345678-...`) must be redacted first:
+
+```sh
+node tools/capture/src/cli.ts redact fixtures/captures/<file>.jsonl
+```
+
+It rewrites the file in place, drops the serial from its name and checks that nothing is left.
+Then commit the file on a new branch and push it:
 
 ```sh
 git switch -c capture/baseline-$(date +%F)
@@ -101,7 +116,8 @@ git push -u origin HEAD
 ```
 
 The file contains your channel names, snapshot names and the levels on your inputs during the
-capture. Nothing else from your computer is recorded except the OS and Node versions.
+capture. Nothing else from your computer is recorded except the OS and Node versions; the
+serial number and the computer's names are replaced as described above.
 
 ## Other commands
 
@@ -110,6 +126,7 @@ node tools/capture/src/cli.ts listen --duration 30          # record without a s
 node tools/capture/src/cli.ts listen --send "/sendchan/input/8 f:1" --duration 10
 node tools/capture/src/cli.ts summary fixtures/captures/<file>.jsonl          # per step and per address
 node tools/capture/src/cli.ts summary fixtures/captures/<file>.jsonl --json   # machine-readable
+node tools/capture/src/cli.ts redact fixtures/captures/<file>.jsonl --mask "Studio B"   # remove text
 node tools/capture/src/cli.ts scripts                       # list scripts and steps
 node tools/capture/src/cli.ts --help                        # all options
 ```
@@ -123,7 +140,8 @@ One JSON object per line, in time order. `t` is milliseconds since the tool star
 (monotonic clock). OSC arguments are `[tag]` or `[tag, value]` tuples: `["f", -12.5]`,
 `["i", 1]`, `["s", "Mic 9"]`, `["T"]`. Floats are written as the shortest decimal that reads
 back as the same float32; non-finite values as `"NaN"`, `"Infinity"`, `"-Infinity"`; blobs
-as base64; int64 and timetags as strings.
+as base64; int64 and timetags as strings. A run of `X` in a string is redacted text (see
+"Run it", step 4); it is masked identically in `raw`, so lengths and padding are as received.
 
 | `k`    | Record                                 | Fields                                                                                                                                                                                                                                                                                                          |
 | ------ | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

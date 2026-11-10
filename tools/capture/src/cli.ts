@@ -18,6 +18,7 @@ import {
   type MeterMode,
   type RecordSink,
 } from './records.ts';
+import { deviceLabel, localSecrets, redactFile, type RedactResult, type Secret } from './redact.ts';
 import { NoReply, QuitRequested, Runner } from './runner.ts';
 import { setupChecklist } from './setup.ts';
 import { DEFAULT_VARS, listen, request, type Script, type Vars } from './steps.ts';
@@ -35,6 +36,8 @@ Commands:
   run              Guided capture (script "baseline", about 5 minutes) into fixtures/captures/.
   listen           Record without a script until Ctrl+C or --duration.
   summary <file>   Summarise a capture file (--json for machine-readable output).
+  redact <file>    Remove the interface serial number and this computer's names from a
+                   capture file, in place (run and listen already do this).
   scripts          List the capture scripts and their steps.
 
 Connection (must match TotalMix Options > Settings > OSC):
@@ -68,6 +71,9 @@ listen:
 
 summary:
   --json               print the summary as JSON
+
+run, listen and redact:
+  --mask "<text>"      also replace this text with X's (repeatable), e.g. a studio name
 `;
 
 const options = {
@@ -91,6 +97,7 @@ const options = {
   duration: { type: 'string' },
   send: { type: 'string', multiple: true, default: [] as string[] },
   json: { type: 'boolean', default: false },
+  mask: { type: 'string', multiple: true, default: [] as string[] },
   help: { type: 'boolean', short: 'h', default: false },
 } satisfies ParseArgsOptionsConfig;
 
@@ -146,6 +153,20 @@ function vars(values: Values): Vars {
     pb: int(values, 'playback', 0, 1023),
     ph: int(values, 'phones', 0, 1023),
   };
+}
+
+function secrets(values: Values): Secret[] {
+  return [...localSecrets(), ...values.mask.map((text) => ({ text, kind: '--mask text' }))];
+}
+
+function reportRedaction(io: Io, r: RedactResult): void {
+  const found = r.replaced.filter((x) => x.count > 0);
+  if (found.length === 0) {
+    io.dim('Redacted: no serial number or computer names found in the file.');
+    return;
+  }
+  for (const x of found)
+    io.print(`Redacted ${x.secret.kind} "${x.secret.text}": ${String(x.count)} place(s), now X's.`);
 }
 
 const show = (path: string): string => {
@@ -325,15 +346,18 @@ async function record(values: Values, io: Io, session: Session): Promise<number>
           : {}),
       });
       await rec.closeSink();
-      let finalPath = workPath;
+      // Nothing identifying this interface or computer goes into a file meant to be shared.
+      const redaction = redactFile(workPath, secrets(values));
+      let finalPath = redaction.path;
       if (fixedOut === undefined) {
         const suffix =
           (session.command === 'listen' ? '-listen' : '') + (reason === 'done' ? '' : `-${reason}`);
+        const label = device === undefined ? 'unknown-device' : deviceLabel(device);
         finalPath = uniquePath(
           capturesDir,
-          fixtureName(device ?? 'unknown-device', session.tmfx, localDate(new Date()), suffix),
+          fixtureName(label, session.tmfx, localDate(new Date()), suffix),
         );
-        renameSync(workPath, finalPath);
+        renameSync(redaction.path, finalPath);
       }
       const summary = await summariseFile(finalPath);
       const lines = formatSummary(summary, show(finalPath));
@@ -347,6 +371,7 @@ async function record(values: Values, io: Io, session: Session): Promise<number>
         );
         for (const u of runner.unconfirmedRestores) io.warn(`  ${u}`);
       }
+      reportRedaction(io, redaction);
       io.heading(`Saved ${show(finalPath)}`);
       io.print(`Full summary: node tools/capture/src/cli.ts summary ${show(finalPath)}`);
       io.print(
@@ -456,6 +481,17 @@ async function summaryCommand(
   return 0;
 }
 
+function redactCommand(values: Values, positionals: readonly string[], io: Io): number {
+  const files = positionals.slice(1);
+  if (files.length === 0) throw new UsageError('redact needs a capture file');
+  for (const file of files) {
+    const r = redactFile(file, secrets(values));
+    reportRedaction(io, r);
+    io.ok(`Saved ${show(r.path)}${r.path === file ? '' : ` (was ${show(file)})`}`);
+  }
+  return 0;
+}
+
 function listScripts(io: Io): number {
   for (const script of Object.values(scripts)) {
     io.heading(`${script.id}: ${script.title}`);
@@ -493,6 +529,8 @@ export async function main(argv: readonly string[]): Promise<number> {
         return await listenCommand(values, io);
       case 'summary':
         return await summaryCommand(values, positionals, io);
+      case 'redact':
+        return redactCommand(values, positionals, io);
       case 'scripts':
         return listScripts(io);
       default:
