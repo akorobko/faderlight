@@ -19,7 +19,7 @@ A Stream Deck plugin (XL first) to control and monitor RME interfaces (Fireface 
 4. **Settings split**: minimal Property Inspector + a local browser "Control Center" with live device data.
 5. **Hardware-free development**: own OSC simulator, captured traffic fixtures, PNG goldens, virtual deck with Playwright.
 
-## Open questions for Alexey
+## Open questions for the maintainer
 
 - ~~TotalMix version~~ latest (2.10) ✓ · ~~repo name~~ `akorobko/faderlight` ✓
 - RME vendor files stay out of git (gitignored `docs/vendor/`).

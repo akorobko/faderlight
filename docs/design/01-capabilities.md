@@ -1,6 +1,6 @@
 # 01 — Capability analysis: Fireface UFX III, Stream Deck XL, TotalMix FX control protocols
 
-Status: research draft, 2026-11-09. Alexey runs the latest TotalMix FX (2.10 at the time of writing, Global OSC available). Items marked **[VERIFY]** must be confirmed against the official RME OSC table (`osc_table_totalmix_new.zip`, RME downloads page) or by capturing real TotalMix traffic (see `05-agentic-plan.md`, task M0.3).
+Status: research draft, 2026-11-09. The target setup runs the latest TotalMix FX (2.10 at the time of writing, Global OSC available). Items marked **[VERIFY]** must be confirmed against the official RME OSC table (`osc_table_totalmix_new.zip`, RME downloads page) or by capturing real TotalMix traffic (see `05-agentic-plan.md`, task M0.3).
 
 ---
 
