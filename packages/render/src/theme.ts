@@ -82,8 +82,8 @@ export interface Theme {
   };
   /**
    * Channel colours by the mixer's colour number (docs/protocol/global-osc.md §6). 1 is
-   * TotalMix's "no colour", so it has none. 3, 5 and 6 are TotalMix's own label colours; the
-   * numbers not mapped yet have placeholders.
+   * TotalMix's white, its "no colour", so it has none. 3, 5 and 6 are TotalMix's own label
+   * colours (seen); 2, 4, 7 and 8 follow the order of TotalMix's colour menu (inferred).
    */
   readonly channelColors: Readonly<Partial<Record<number, Hex>>>;
 }
@@ -137,13 +137,13 @@ export const DARK: Theme = {
   type: { small: 15, medium: 22, large: 36, display: 52 },
   frame: { pending: 3, dash: [9, 6] },
   channelColors: {
-    2: '#e5484d', // placeholder
+    2: '#9aa4b1', // grey (inferred)
     3: '#ff6e0a', // orange
-    4: '#f5d90a', // placeholder
+    4: '#e5484d', // red (inferred)
     5: '#3c8cff', // blue
     6: '#00f027', // green
-    7: '#b07cff', // placeholder
-    8: '#ff6fae', // placeholder
+    7: '#f5d90a', // yellow (inferred)
+    8: '#ff6fae', // pink (inferred)
   },
 };
 

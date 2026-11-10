@@ -24,14 +24,18 @@ const THEMES: readonly Choice<ThemeName>[] = [
 ];
 
 /**
- * What TotalMix calls its colour numbers, as far as they are known (docs/protocol/global-osc.md
- * §6): the others were not seen on hardware yet.
+ * What TotalMix calls its colour numbers (docs/protocol/global-osc.md §6): 1, 3, 5 and 6 were
+ * seen on hardware; 2, 4, 7 and 8 follow the order of TotalMix's colour menu.
  */
 const TOTALMIX_COLOR: Readonly<Record<number, string>> = {
-  1: 'No colour',
+  1: 'White (no colour)',
+  2: 'Grey',
   3: 'Orange',
+  4: 'Red',
   5: 'Blue',
   6: 'Green',
+  7: 'Yellow',
+  8: 'Pink',
 };
 
 export function AppearancePage(props: PageProps): JSX.Element {
@@ -138,9 +142,9 @@ export function AppearancePage(props: PageProps): JSX.Element {
       </div>
       <Card title="Channel colours" id="colors" wide>
         <p class="muted note first">
-          TotalMix gives each channel a colour number. Here each number gets its key colour; a
-          channel can still have a colour of its own on the Device & Channels page. Only some
-          numbers are known so far: the others have stand-in colours.
+          TotalMix gives each channel a colour number, in the order of its colour menu. Here each
+          number gets its key colour; a channel can still have a colour of its own on the Device &
+          Channels page.
         </p>
         <table class="table" data-testid="colors">
           <thead>

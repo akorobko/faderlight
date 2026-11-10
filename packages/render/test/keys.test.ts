@@ -32,11 +32,16 @@ describe('channel key', () => {
   it("maps TotalMix's colour numbers and custom colours to underline colours", () => {
     expect(channelColor(DARK, undefined)).toBeUndefined();
     expect(channelColor(DARK, 0)).toBeUndefined();
-    // 1 is TotalMix's "no colour"; 3, 5 and 6 are its orange, blue and green.
+    // 1 is TotalMix's white, its "no colour"; then its menu order: grey, orange, red, blue,
+    // green, yellow, pink.
     expect(channelColor(DARK, 1)).toBeUndefined();
+    expect(channelColor(DARK, 2)).toBe('#9aa4b1');
     expect(channelColor(DARK, 3)).toBe('#ff6e0a');
+    expect(channelColor(DARK, 4)).toBe('#e5484d');
     expect(channelColor(DARK, 5)).toBe('#3c8cff');
     expect(channelColor(DARK, 6)).toBe('#00f027');
+    expect(channelColor(DARK, 7)).toBe('#f5d90a');
+    expect(channelColor(DARK, 8)).toBe('#ff6fae');
     expect(channelColor(DARK, 99)).toBeUndefined();
     expect(channelColor(DARK, '#123456')).toBe('#123456');
     expect(channelColor(DARK, '#nope')).toBeUndefined();

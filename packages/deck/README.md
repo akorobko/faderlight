@@ -58,8 +58,7 @@ Control Center (`snapshots`, by number) wins over the state file's.
 The Control Center can also give a channel a name and a colour of its own, and hide it from
 the Console's banks (`channels`, by bus and left index, e.g. `input/8`); its own name and
 colour win over TotalMix's on every key that shows the channel. `colors` gives a TotalMix
-colour number (`/{bus}/{n}/color`) a key colour of its own, for the numbers the theme does not
-know yet. A hidden channel only leaves the banks: a Channel key that names it still shows it.
+colour number (`/{bus}/{n}/color`) a key colour of its own instead of the theme's. A hidden channel only leaves the banks: a Channel key that names it still shows it.
 
 ## Property Inspector
 

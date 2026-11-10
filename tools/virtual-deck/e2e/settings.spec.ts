@@ -122,7 +122,7 @@ test('the Appearance page maps a TotalMix colour number to a key colour', async 
   const green = page.locator('[data-color="6"]');
   await expect(green).toContainText('Green');
   await expect(green).toContainText('Guitar');
-  await expect(page.locator('[data-color="2"]')).toContainText('not known yet');
+  await expect(page.locator('[data-color="2"]')).toContainText('Grey');
   await green.getByLabel('Key colour for TotalMix colour 6').fill('#123456');
   await shot(page, 'appearance');
   await save(page);
