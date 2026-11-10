@@ -1,5 +1,6 @@
-# The pull-request gate, on Alexey's Mac through a self-hosted runner rather than on GitHub's
-# cloud runners: a self-hosted runner is not billed, and the Mac is the primary target platform.
+# The pull-request gate, on the maintainer's Mac through a self-hosted runner rather than on
+# GitHub's cloud runners: a self-hosted runner is not billed, and the Mac is the primary target
+# platform.
 #
 # Drafts are for reading, so nothing runs for one. Marking a PR ready asks for the gate, and every
 # push after that re-runs it. `checkout` on a `pull_request` event takes the merge of the branch
