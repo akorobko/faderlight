@@ -235,6 +235,11 @@ and should replace it there:
    restart, which shows up as a new source port and a burst of meters.
 6. **Decode everything as bundles** with timetag 0; float32 for every number.
 
+`packages/totalmix` implements these (M1). The details are in `docs/design/02-architecture.md`
+(TotalMixAdaptor). A full sync is treated as complete after 150 ms without state messages
+(the longest gap inside a `/sendall` reply in the capture was 21 ms) plus a reply to a
+`/sendstate` sent behind it.
+
 ## 9. Resolved research questions
 
 From the **[VERIFY]** markers in `docs/design/01-capabilities.md`:
