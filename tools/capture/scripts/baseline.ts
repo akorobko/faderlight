@@ -277,6 +277,22 @@ export const baseline: Script = {
       verify: msg('/sendchan/output/{out}', f(1)),
     }),
     write({
+      id: 'write-output-mute',
+      title: 'Toggle mute of the {outName} output',
+      why: 'Is /output/n/mute an explicit set? A Main mute would be /output/{mainout}/mute.',
+      address: '/output/{out}/mute',
+      change: toggle('f'),
+      verify: msg('/sendchan/output/{out}', f(1)),
+    }),
+    write({
+      id: 'write-gain',
+      title: 'Lower the gain of {inName} by 1 dB',
+      why: 'Is /input/n/gain set in dB, and is it echoed? (Skipped at 8 dB or less, where mic gain jumps to 0.)',
+      address: '/input/{in}/gain',
+      change: nudgeDb(-1, 8),
+      verify: sendchanIn,
+    }),
+    write({
       id: 'write-dim',
       title: 'Toggle Dim',
       why: 'Is /controlroom/dim an explicit set or a toggle?',

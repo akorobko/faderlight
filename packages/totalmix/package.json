@@ -6,5 +6,9 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@faderlight/model": "0.0.0",
+    "@faderlight/osc": "0.0.0"
   }
 }

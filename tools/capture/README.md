@@ -73,8 +73,8 @@ the `baseline` script (`node tools/capture/src/cli.ts scripts` lists them):
   Enter to skip a step, `q` and Enter to stop. While you work you see what TotalMix sends.
   Two steps are marked optional and say when to skip them (48V, loading a snapshot).
 - **Write steps**: it changes one value for about a second and puts it back: mute of Mic 9,
-  a playback route to Main lowered by 1 dB, the Main output lowered by 1 dB, Dim, and the Mic 9
-  channel name. It lists them and asks once before the first one. It never touches 48V, never
+  a playback route to Main lowered by 1 dB, the Main output lowered by 1 dB, mute of that
+  output, the Mic 9 gain lowered by 1 dB, Dim, and the Mic 9 channel name. It lists them and asks once before the first one. It never touches 48V, never
   raises a level and never loads a snapshot by itself. If it cannot confirm a value was put
   back, it says which one so you can fix it in TotalMix.
 - **Ctrl+C** stops at any time. A value that is changed at that moment is put back first,
