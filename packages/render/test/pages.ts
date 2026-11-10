@@ -46,7 +46,7 @@ const line = (
   ...over,
 });
 
-const snapshots = ['Tracking', 'Overdubs', 'Mixdown', 'Reference'];
+const snapshots = ['Tracking', 'Overdubs', 'Mixdown', 'Reference', 'Live', 'Podcast'];
 
 const playback = (n: number, name: string, db: number, level: number): ChannelKey => ({
   kind: 'channel',
@@ -75,8 +75,6 @@ const console: (KeyView | undefined)[] = [
     name,
     state: i === 1 ? 'active' : 'inactive',
   })),
-  { kind: 'toggle', function: 'dim', on: true, caption: `${MINUS}20 dB` },
-  { kind: 'toggle', function: 'mono', on: false, caption: 'Main out' },
   { kind: 'status', link: 'live', device: 'Fireface UFX III', beat: true },
   { kind: 'page', name: 'Inputs', index: 1, count: 3 },
 
@@ -147,8 +145,8 @@ const console: (KeyView | undefined)[] = [
     word: `${MINUS}20.0 dB`,
     caption: 'hold to save',
   },
-  undefined,
-  undefined,
+  { kind: 'toggle', function: 'dim', on: true, caption: `${MINUS}20 dB` },
+  { kind: 'toggle', function: 'mono', on: false, caption: 'Main out' },
   undefined,
   { kind: 'control', title: 'Console', arrow: 'left', word: 'EXIT', caption: 'my profile' },
 ];

@@ -50,9 +50,7 @@ describe('the Console layout', () => {
   it('lays out the Console page like docs/design/03-ux.md §4', () => {
     const { row } = consoleDeck();
     expect(row(0).map((v) => v?.kind)).toEqual([
-      ...Array<string>(4).fill('snapshot'),
-      'toggle',
-      'toggle',
+      ...Array<string>(6).fill('snapshot'),
       'status',
       'page',
     ]);
@@ -68,18 +66,20 @@ describe('the Console layout', () => {
       'Phones 1',
       'Phones 2',
       'control',
-      '',
-      '',
+      'toggle',
+      'toggle',
       '',
       'control',
     ]);
+    expect(row(3)[4]).toMatchObject({ function: 'dim' });
+    expect(row(3)[5]).toMatchObject({ function: 'mono' });
     expect(row(3)[3]).toMatchObject({ title: 'MAIN PRESET', word: 'SET', caption: 'hold to save' });
     expect(row(3)[7]).toMatchObject({ title: 'CONSOLE', word: 'EXIT', arrow: 'left' });
   });
 
   it('slots act like the specific actions', () => {
     const { tap, mixer, row } = consoleDeck();
-    tap(4, 0);
+    tap(4, 3);
     expect(mixer.store.value(controlRoom('dim'))).toBe(true);
     tap(1, 1);
     expect(row(1)[1]).toMatchObject({ name: 'Vocal', muted: true });

@@ -69,7 +69,7 @@ const OWN_PAGE: Readonly<Record<string, KeyDef>> = {
 };
 
 /** Snapshot names for the simulator, which (like TotalMix) does not send any. */
-const SIMULATOR_SNAPSHOTS = ['Tracking', 'Overdubs', 'Mixdown', 'Reference'];
+const SIMULATOR_SNAPSHOTS = ['Tracking', 'Overdubs', 'Mixdown', 'Reference', 'Live', 'Podcast'];
 
 function keysOf(profile: ProfileName): Map<string, KeyDef> {
   const keys = new Map<string, KeyDef>();
