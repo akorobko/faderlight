@@ -31,6 +31,11 @@ Markers used below:
 | Argument types | Every numeric value is **float32**, including switches, enums and indices. Names and status texts are strings. No other types were received.                                     | seen   |
 | Ordering       | In one reply, messages arrive in a stable order per channel (strip settings, then EQ, then dynamics). Do not depend on it.                                                       | seen   |
 
+Packing (seen): a datagram is filled in order until the next message would not fit in 16
+messages or 480 bytes. The snapshot states always start a datagram of their own, at the end
+of a `/sendsettings` or `/sendall` reply. Replies to requests that arrive together (the
+24-request burst) can share datagrams, so a client must not expect one reply per datagram.
+
 ## 2. Channel model
 
 Indices are 0-based and count physical channels, not strips. On a UFX III: inputs AN 1-8 are
@@ -53,7 +58,11 @@ as in `docs/design/01-capabilities.md`.
 - `/input/{n}/stereo` reports whether the strip is stereo (1) or mono (0). (seen)
 - Hardware-specific settings appear only where the hardware has them: `48v`, `instrument` and
   `autoset` on the mic inputs (8, 10, 11 here). `reflevel` appears on the analog line inputs
-  (2, 4, 5) and the analog outputs (0, 2, 8). (seen)
+  (2, 4, 5) and the analog outputs (0, 2, 8). The digital input (ADAT, 14/15) has no `gain` at
+  all; every output has one. (seen)
+- A `/sendchan` reply lists a channel's settings in a fixed order per bus, the same for every
+  channel, with the settings it lacks left out. `packages/simulator/src/fields.ts` holds that
+  order. (seen)
 
 ## 3. Requests
 
@@ -100,7 +109,7 @@ outputs. Expect tens of thousands of messages. Prefer `/sendall 2`, or `/sendset
 | Heartbeat                | **None.** In 6 s without requests, TotalMix sent only meter messages. `/status/*` was only ever sent in reply to a request. 10 of the 354 seconds had no traffic at all, 7 of them while TotalMix was closed.                                                                                                                                                      | seen   |
 | Changes made in TotalMix | Sent at once in small bundles, usually one message (44-48 bytes). A fader drag sends about every 20 ms. Example: mute → `/input/8/mute`. Solo → `/mix/in/8/2/solo` plus `/groupflags` for the submix shown. Gain → `/input/8/gain` in 1 dB steps. 48V → `/input/8/48v`. Output fader → `/output/{n}/volume`. Dim → `/controlroom/dim` plus the dimmed Main volume. | seen   |
 | Solo                     | The input solo button reports per route, `/mix/in/{n}/{out}/solo`, for the submix currently shown in TotalMix (out 2 here). There is no `/input/{n}/pfl` in the capture.                                                                                                                                                                                           | seen   |
-| Snapshot load            | Sends `/snapshot/load/n` for the old and new snapshot, plus only the values that **changed** (a few messages, not a full state).                                                                                                                                                                                                                                   | seen   |
+| Snapshot load            | Sends only the values that **changed** (a few messages, not a full state), in channel order, then `/snapshot/load/n` for the old and new snapshot in a datagram of their own, in snapshot order. Once (in `meters-signal`) the old snapshot was first reported as modified (`f:3`) just before.                                                                    | seen   |
 | Quit                     | Traffic stops; no goodbye message.                                                                                                                                                                                                                                                                                                                                 | seen   |
 | Start                    | When TotalMix started again (7 s later here), the first datagram came from the new source port (`/durec/state`), followed by one complete meter frame (every visible channel, including silent ones at −100), then normal traffic. No state push (with "Send all data on start" off).                                                                              | seen   |
 
@@ -239,6 +248,10 @@ and should replace it there:
 (TotalMixAdaptor). A full sync is treated as complete after 150 ms without state messages
 (the longest gap inside a `/sendall` reply in the capture was 21 ms) plus a reply to a
 `/sendstate` sent behind it.
+
+`packages/simulator` (M2) behaves as this spec says, for hardware-free tests. Its conformance
+test replays every request and write of every capture against it and compares the replies
+message by message, so a new capture that disagrees with the simulator fails CI.
 
 ## 9. Resolved research questions
 

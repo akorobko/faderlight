@@ -7,6 +7,7 @@ Harness-neutral instructions for any coding agent working in this repo.
 - Never use RME/TotalMix/Fireface/Elgato/Stream Deck names or artwork in product names, icons or UUIDs.
 - Core packages (osc, totalmix, model, render) must not import @elgato/streamdeck.
 - Every protocol change: update docs/protocol/global-osc.md + add decode/encode tests from a fixture.
+- The simulator (packages/simulator) must keep answering like the captures: its conformance test replays every capture in fixtures/captures. When a new capture disagrees, change the simulator and the spec, not the test.
 - Every renderer change: regenerate goldens (`npm run render:goldens`) and attach renders/contact-sheet.png to the PR.
 - UI changes: attach Playwright screenshots of virtual deck / Control Center.
 - Node 24 (`.nvmrc`). Workspaces live in packages/* and tools/*; each is `@faderlight/<dir>`, private, `"type": "module"`. Library packages export TypeScript source (`"exports": { ".": "./src/index.ts" }`): no build step, Node runs the source directly.
