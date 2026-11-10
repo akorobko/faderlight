@@ -17,6 +17,7 @@ the virtual deck (`tools/virtual-deck`) connects it to a browser.
 | `src/layout.ts`         | The Console layout: pages, banks, what each Console Slot is             |
 | `src/runtime.ts`        | DeckRuntime: keys appear, get pressed and are drawn through a DeckHost  |
 | `src/snapshot-names.ts` | Snapshot names from TotalMix's own state file                           |
+| `src/inspector.ts`      | What a key's Property Inspector shows, and the changes it may make      |
 
 ## Specific actions
 
@@ -53,6 +54,23 @@ the newest one), so a renamed snapshot shows after TotalMix has quit once. The f
 the interface's serial number: it is read, never logged or copied. Where TotalMix keeps the
 file on Windows is not known yet; there the keys show the snapshot number. Names set in the
 settings (M5) will win.
+
+## Property Inspector
+
+The inspector page in the Stream Deck app (`packages/plugin/pi`) draws what this package builds
+(`inspectorView`, docs/design/03-ux.md §5.1): the action's name, what the key is now, a list to
+pick from for each of its settings, and the connection to TotalMix. The lists come from the
+mixer while the inspector is open: a Channel key offers the channels TotalMix shows, by name
+(`Mic 9 · Vocal`); an output offers Main and Phones 1-4 by the outputs TotalMix assigns to them,
+then every output; Snapshot and Level Preset keys show the snapshot names and saved levels. A
+setting TotalMix cannot show now (a hidden channel) stays in the list, marked "not shown". A
+Console Slot has nothing to set: its inspector says what it shows now.
+
+`DeckRuntime.inspect(id)` builds the view of a key and `changeSetting(id, key, value)` applies
+one choice (null takes a setting out, so its default applies; a new row clears the channel).
+`Inspectors` holds the open inspectors: each gets its view on `hello`, after each change, and
+whenever the view changes (it looks twice a second), and its button opens the Control Center
+on the section for the key.
 
 ## The Console layout
 

@@ -12,13 +12,18 @@
 //   GET  /api/state    the profile shown, its keys and their images
 //   GET  /api/views    what each key shows now, as view models (for tests)
 //   GET  /api/control-center?section=…  {"url": a one-time link to the Control Center}
+//   GET  /pi/index.html the Property Inspector page (packages/plugin/pi), for a key's settings
+//   WebSocket /        the Stream Deck app's side of the Property Inspector protocol
 //
 // It also runs a Control Center (packages/control-center) for its keys, as the plugin does:
 // a tap on the Status key sends an `open` event with a link, and settings saved there apply to
-// the keys at once (they live as long as the server).
+// the keys at once (they live as long as the server). Key settings work as in the Stream Deck
+// app: the page shows the plugin's Property Inspector in a frame and connects it to this
+// server, which answers like the plugin; settings changed there last until the server stops.
 
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { WebSocketServer, type WebSocket } from 'ws';
 import {
   ControlCenterServer,
   Diagnostics,
@@ -28,6 +33,7 @@ import {
   blankImage,
   DeckRuntime,
   DEFAULT_SETTINGS,
+  Inspectors,
   readGlobalSettings,
   SILENT,
   totalMixFolder,
@@ -36,6 +42,7 @@ import {
   type DeckHost,
   type GlobalSettings,
   type JsonObject,
+  type JsonValue,
   type Logger,
   type SnapshotNameRead,
 } from '@faderlight/deck';
@@ -50,6 +57,7 @@ import {
 } from '@faderlight/simulator';
 import { connectTotalMix, systemClock, type TotalMixConnection } from '@faderlight/totalmix';
 import { buildUi } from '../../../packages/control-center/scripts/build-ui.ts';
+import { buildPi } from '../../../packages/plugin/scripts/build-pi.ts';
 import { page } from './page.ts';
 
 export const DEVICE = 'virtual-xl';
@@ -142,6 +150,14 @@ export class VirtualDeck {
     name: () => undefined,
   };
   private controlCenter: ControlCenterServer | undefined;
+  private inspectors: Inspectors | undefined;
+  /** The Property Inspector page's files. */
+  private piFiles = new Map<string, string>();
+  private readonly inspectorSockets = new WebSocketServer({ noServer: true });
+  /** The open Property Inspector of each key. */
+  private readonly piSockets = new Map<string, WebSocket>();
+  /** Key settings changed in a Property Inspector, kept across profile switches. */
+  private readonly keySettings = new Map<string, JsonObject>();
 
   constructor(options: VirtualDeckOptions = {}) {
     this.options = options;
@@ -153,6 +169,17 @@ export class VirtualDeck {
         this.log.error('request failed:', error);
         if (!res.headersSent) res.writeHead(500);
         res.end();
+      });
+    });
+    this.server.on('upgrade', (req, socket, head) => {
+      // Only this server's own page (its Property Inspector frame), not other web pages.
+      const origin = req.headers.origin;
+      if (origin !== undefined && new URL(origin).host !== req.headers.host) {
+        socket.destroy();
+        return;
+      }
+      this.inspectorSockets.handleUpgrade(req, socket, head, (ws) => {
+        this.inspectorSocket(ws);
       });
     });
   }
@@ -242,6 +269,28 @@ export class VirtualDeck {
         return svgDataUrl(renderKey(view, theme, size));
       },
     });
+    this.inspectors = new Inspectors(
+      {
+        view: (id) => this.runtime?.inspect(id),
+        change: (id, key, value) => {
+          const next = this.runtime?.changeSetting(id, key, value);
+          if (next) this.keySettings.set(id, next);
+          return next !== undefined;
+        },
+        send: (id, update) => {
+          this.piSockets
+            .get(id)
+            ?.send(
+              JSON.stringify({ event: 'sendToPropertyInspector', context: id, payload: update }),
+            );
+        },
+        openControlCenter: (section) => {
+          this.broadcast('open', { url: this.controlCenterLink(section) });
+        },
+      },
+      systemClock,
+    );
+    this.piFiles = await buildPi();
     this.appearAll();
     this.controlCenter = new ControlCenterServer({
       host: this.controlCenterHost(),
@@ -278,6 +327,9 @@ export class VirtualDeck {
 
   async stop(): Promise<void> {
     await this.controlCenter?.stop();
+    this.inspectors?.dispose();
+    for (const ws of this.inspectorSockets.clients) ws.terminate();
+    this.inspectorSockets.close();
     this.diagnostics.detach();
     this.runtime?.dispose();
     for (const res of this.clients) res.end();
@@ -317,9 +369,33 @@ export class VirtualDeck {
         device: DEVICE,
         kind: def.kind,
         coordinates: { column: at[0] ?? 0, row: at[1] ?? 0 },
-        settings: def.settings ?? {},
+        settings: this.keySettings.get(id) ?? def.settings ?? {},
       });
     }
+  }
+
+  /** A Property Inspector page, connected the way the Stream Deck app connects it. */
+  private inspectorSocket(ws: WebSocket): void {
+    let key: string | undefined;
+    ws.on('message', (data: Buffer) => {
+      const m = JSON.parse(data.toString('utf8')) as {
+        event?: unknown;
+        uuid?: unknown;
+        payload?: JsonValue;
+      };
+      if (m.event === 'registerPropertyInspector' && typeof m.uuid === 'string') {
+        key = m.uuid;
+        this.piSockets.set(key, ws);
+        this.inspectors?.appear(key);
+      } else if (m.event === 'sendToPlugin' && key !== undefined) {
+        this.inspectors?.message(key, m.payload ?? null);
+      }
+    });
+    ws.on('close', () => {
+      if (key === undefined || this.piSockets.get(key) !== ws) return;
+      this.piSockets.delete(key);
+      this.inspectors?.disappear(key);
+    });
   }
 
   private broadcast(event: string, data: unknown): void {
@@ -363,6 +439,18 @@ export class VirtualDeck {
     }
     if (req.method === 'GET' && url.pathname === '/api/views') {
       json(res, 200, Object.fromEntries(this.views));
+      return;
+    }
+    const pi = /^\/pi\/([\w.]+)$/.exec(url.pathname);
+    const piFile = pi?.[1] !== undefined ? this.piFiles.get(pi[1]) : undefined;
+    if (req.method === 'GET' && piFile !== undefined) {
+      const type = url.pathname.endsWith('.js')
+        ? 'text/javascript'
+        : url.pathname.endsWith('.css')
+          ? 'text/css'
+          : 'text/html';
+      res.writeHead(200, { 'content-type': `${type}; charset=utf-8` });
+      res.end(piFile);
       return;
     }
     if (req.method === 'GET' && url.pathname === '/api/control-center') {

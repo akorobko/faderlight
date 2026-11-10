@@ -13,6 +13,7 @@ export default defineConfig(
     // Plugin build output (packages/plugin/scripts/build.ts).
     'packages/plugin/*.sdPlugin/bin/',
     'packages/plugin/*.sdPlugin/control-center/',
+    'packages/plugin/*.sdPlugin/pi/',
   ]),
   eslint.configs.recommended,
   tseslint.configs.strictTypeChecked,
@@ -32,7 +33,7 @@ export default defineConfig(
   },
   {
     // Pages that run in a browser: the Control Center and the Property Inspector.
-    files: ['packages/*/ui/**/*.{ts,tsx}'],
+    files: ['packages/*/ui/**/*.{ts,tsx}', 'packages/plugin/pi/**/*.ts'],
     languageOptions: { globals: globals.browser },
   },
   {

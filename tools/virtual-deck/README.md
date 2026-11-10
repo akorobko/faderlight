@@ -28,6 +28,12 @@ opens no window by itself after a key press, so the Status key offers a link ins
 saved there apply to the keys at once and last until the virtual deck stops; it keeps the
 TotalMix connection it was started with.
 
+**Key settings** switches to choosing keys, as in the Stream Deck app: a click selects a key
+instead of pressing it and shows the plugin's Property Inspector (`packages/plugin/pi`) beside
+the deck. The page connects it the way the app does (`connectElgatoStreamDeckSocket`, over a
+WebSocket to this server, which answers like the plugin). Settings changed there apply to the
+key at once and last until the virtual deck stops.
+
 Press keys with the mouse or a finger: key down and key up go to the runtime separately, so
 long presses, double taps (Talkback) and held ± keys work as on the hardware.
 
@@ -39,6 +45,7 @@ long presses, double taps (Talkback) and held ± keys work as on the hardware.
 | `test/server.test.ts`        | The HTTP API against the simulator (Vitest, part of `npm test`) |
 | `e2e/deck.spec.ts`           | Browser tests that press keys and save screenshots (Playwright) |
 | `e2e/control-center.spec.ts` | Browser tests of the Control Center, with screenshots           |
+| `e2e/inspector.spec.ts`      | Browser tests of the Property Inspector, with screenshots       |
 
 ## End-to-end tests
 
@@ -48,6 +55,6 @@ npm run e2e
 ```
 
 The tests start the virtual deck on port 4179, press keys in Chromium and check what the keys
-show through `GET /api/views`. They save screenshots of each page to `renders/virtual-deck/`, and
-of the Control Center to `renders/control-center/`; attach those to PRs that change what the
-keys or the Control Center look like or do.
+show through `GET /api/views`. They save screenshots of each page to `renders/virtual-deck/`, of
+the Control Center to `renders/control-center/` and of the Property Inspector to
+`renders/property-inspector/`; attach those to PRs that change what they look like or do.

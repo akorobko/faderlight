@@ -29,8 +29,11 @@ export function typescript(): Plugin {
   };
 }
 
-/** One browser script (an ES module) with everything `entry` imports. */
-export async function bundleBrowser(entry: string): Promise<string> {
+/**
+ * One browser script with everything `entry` imports: an ES module, or a classic script
+ * (`iife`) for pages loaded from files, where browsers refuse module scripts.
+ */
+export async function bundleBrowser(entry: string, format: 'es' | 'iife' = 'es'): Promise<string> {
   const build = await rollup({
     input: entry,
     plugins: [
@@ -48,7 +51,7 @@ export async function bundleBrowser(entry: string): Promise<string> {
     },
   });
   try {
-    const { output } = await build.generate({ format: 'es' });
+    const { output } = await build.generate({ format });
     const chunk = output.find((o) => o.type === 'chunk');
     if (!chunk || output.length !== 1) throw new Error(`expected one chunk from ${entry}`);
     // Anything that reached for Node would fail in the browser: catch it here.

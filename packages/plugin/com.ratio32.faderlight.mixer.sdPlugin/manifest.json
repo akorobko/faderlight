@@ -9,6 +9,7 @@
   "CategoryIcon": "imgs/plugin/category",
   "Icon": "imgs/plugin/icon",
   "CodePath": "bin/plugin.js",
+  "PropertyInspectorPath": "pi/index.html",
   "SDKVersion": 3,
   "Software": {
     "MinimumVersion": "7.1"

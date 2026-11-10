@@ -35,6 +35,12 @@ import type {
 } from './controllers.ts';
 import { DETAIL_KEYS, neighbour } from './detail.ts';
 import { GestureRecogniser, type Gesture } from './gestures.ts';
+import {
+  changeSetting,
+  inspectorView,
+  type InspectorValue,
+  type InspectorView,
+} from './inspector.ts';
 import { controllerFor } from './keys.ts';
 import {
   clampBank,
@@ -378,6 +384,33 @@ export class DeckRuntime {
     if (!key) return;
     key.placement = { ...key.placement, settings };
     this.scheduler.invalidate(id);
+  }
+
+  /** What the key's Property Inspector shows now, or undefined for a key that is not here. */
+  inspect(id: string): InspectorView | undefined {
+    const key = this.keys.get(id);
+    if (!key) return undefined;
+    const { kind, settings } = key.placement;
+    return inspectorView({
+      kind,
+      settings,
+      store: this.mixer.store,
+      global: this.settings,
+      slot: kind === 'slot' ? this.slotSpec(key) : undefined,
+      snapshotName: (n) => this.snapshotNames?.name(n),
+    });
+  }
+
+  /**
+   * One change from the key's Property Inspector: the key follows at once. Returns the
+   * action's new settings for the host to store, or undefined when the change was refused.
+   */
+  changeSetting(id: string, name: string, value: InspectorValue): JsonObject | undefined {
+    const key = this.keys.get(id);
+    if (!key) return undefined;
+    const next = changeSetting(key.placement.kind, key.placement.settings, name, value);
+    if (next) this.settingsChanged(id, next);
+    return next;
   }
 
   down(id: string): void {

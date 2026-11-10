@@ -1,6 +1,8 @@
 // The virtual deck's HTTP API against its own simulator, without a browser (the browser tests
 // are in e2e/ and run with npm run e2e).
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { WebSocket } from 'ws';
+import type { InspectorView } from '@faderlight/deck';
 import { VirtualDeck } from '../src/server.ts';
 
 let deck: VirtualDeck;
@@ -84,6 +86,50 @@ describe('the virtual deck server', () => {
     expect(JSON.parse(open[1] ?? '')).toEqual({
       url: expect.stringMatching(/^http:\/\/127\.0\.0\.1:\d+\/\?t=[\w-]+#connection$/) as string,
     });
+  });
+
+  it('answers a Property Inspector like the plugin, and the key follows its changes', async () => {
+    const page = await fetch(new URL('/pi/index.html', deck.url));
+    expect(await page.text()).toContain('<script src="pi.js"></script>');
+    await post('/api/profile', { profile: 'own' });
+    const ws = new WebSocket(deck.url.replace('http', 'ws'));
+    const views: InspectorView[] = [];
+    ws.on('message', (data: Buffer) => {
+      const m = JSON.parse(data.toString('utf8')) as { payload: { view: InspectorView } };
+      views.push(m.payload.view);
+    });
+    await new Promise((resolve) => {
+      ws.once('open', resolve);
+    });
+    ws.send(JSON.stringify({ event: 'registerPropertyInspector', uuid: 'own:6,0' }));
+    await until(async () => Promise.resolve(views.length > 0));
+    expect(views[0]?.summary).toBe('Loads snapshot 1 (Tracking).');
+    ws.send(
+      JSON.stringify({
+        event: 'sendToPlugin',
+        context: 'own:6,0',
+        payload: { event: 'set', key: 'n', value: 3 },
+      }),
+    );
+    await until(async () =>
+      Promise.resolve(views.at(-1)?.summary === 'Loads snapshot 3 (Mixdown).'),
+    );
+    ws.close();
+    // Kept across a profile switch, as the app keeps an action's settings.
+    await post('/api/profile', { profile: 'console' });
+    await post('/api/profile', { profile: 'own' });
+    await until(async () => (await view('own:6,0'))?.n === 3);
+    await post('/api/profile', { profile: 'console' });
+  });
+
+  it('refuses a Property Inspector socket from another web page', async () => {
+    const ws = new WebSocket(deck.url.replace('http', 'ws'), { origin: 'http://example.com' });
+    await expect(
+      new Promise((resolve, reject) => {
+        ws.once('open', resolve);
+        ws.once('error', reject);
+      }),
+    ).rejects.toThrow();
   });
 
   it('refuses requests it does not understand', async () => {
