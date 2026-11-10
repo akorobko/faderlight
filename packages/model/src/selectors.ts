@@ -45,7 +45,9 @@ export function deviceProfile(store: MixerStore): DeviceProfile {
 
 /**
  * The strips of a bus, in index order. A strip exists once the device reported its name: only
- * channels visible in TotalMix are sent, so this is the channel list to show.
+ * channels visible in TotalMix are sent, so this is the channel list to show. A name at the
+ * right index of a stereo strip is left over from before the pair was linked (TotalMix sends
+ * names for the left index only) and is skipped until the next full sync removes it.
  */
 export function strips(store: MixerStore, bus: Bus, speed: SpeedMode = 'single'): Strip[] {
   const profile = deviceProfile(store);
@@ -63,7 +65,8 @@ export function strips(store: MixerStore, bus: Bus, speed: SpeedMode = 'single')
       label: profile.stripLabel(bus, t.index, stereo, speed),
     });
   }
-  return out.sort((a, b) => a.index - b.index);
+  const rights = new Set(out.flatMap((x) => (x.right === undefined ? [] : [x.right])));
+  return out.filter((x) => !rights.has(x.index)).sort((a, b) => a.index - b.index);
 }
 
 /** The strip a physical channel belongs to (a right channel belongs to its left neighbour). */

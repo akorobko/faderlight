@@ -9,6 +9,8 @@
 // - Only visible channels exist: the store's channel list comes from the full sync, which
 //   removes what it does not report.
 // - A restart shows up as a new source port: sync again.
+// - Linking or splitting a stereo pair in TotalMix changes which strips exist, but TotalMix
+//   only reports the new stereo setting: sync again shortly after, so the channel list follows.
 //
 //   idle --start--> probing --status reply--> syncing --replies, then quiet--> live
 //                      ^                         |  no reply                   | 3 polls unanswered
@@ -54,6 +56,8 @@ export interface ClientOptions extends RequestPacing {
   readonly confirmDelayMs: number;
   /** Roll a write back when the confirming reply has not settled it after this long (default 1000 ms). */
   readonly confirmTimeoutMs: number;
+  /** Sync again this long after the last change of a strip's stereo setting while live (default 250 ms). */
+  readonly layoutSyncDelayMs: number;
 }
 
 export const DEFAULT_CLIENT_OPTIONS: ClientOptions = {
@@ -63,6 +67,7 @@ export const DEFAULT_CLIENT_OPTIONS: ClientOptions = {
   syncTimeoutMs: 3000,
   confirmDelayMs: 75,
   confirmTimeoutMs: 1000,
+  layoutSyncDelayMs: 250,
   spacingMs: 10,
   heavySpacingMs: 100,
 };
@@ -109,6 +114,7 @@ export class TotalMixClient extends EventEmitter<ClientEvents> {
   private syncFenceSent = false;
   private syncQuietTimer: TimerHandle | undefined;
   private syncTimeoutTimer: TimerHandle | undefined;
+  private layoutSyncTimer: TimerHandle | undefined;
   private readonly pending = new Map<Key, PendingCommand>();
   private readonly confirmGroups = new Map<string, ConfirmGroup>();
   private seq = 0;
@@ -176,6 +182,7 @@ export class TotalMixClient extends EventEmitter<ClientEvents> {
     const now = this.clock.now();
     const updates: Update[] = [];
     let status = false;
+    let layout = false;
     for (const m of messages) {
       const d = decodeMessage(m);
       if (d.kind === 'meter') {
@@ -185,6 +192,7 @@ export class TotalMixClient extends EventEmitter<ClientEvents> {
       } else {
         updates.push({ target: d.target, value: d.value });
         if (d.target.scope === 'status') status = true;
+        else if (this.current === 'live' && this.changesLayout(d.target, d.value)) layout = true;
       }
     }
     if (updates.length === 0) return;
@@ -192,6 +200,27 @@ export class TotalMixClient extends EventEmitter<ClientEvents> {
     this.settlePending(updates);
     if (status) this.onStatusReply();
     if (this.current === 'syncing' && this.syncSent && !this.syncFence) this.onSyncReply();
+    if (layout && this.current === 'live') this.scheduleLayoutSync();
+  }
+
+  /**
+   * A known strip turned stereo or mono. The right channel of a new pair stays in the store,
+   * and the right channel of a split pair is not reported, until a full sync. A value seen for
+   * the first time is not a change: a channel that came into view reports its setting too.
+   */
+  private changesLayout(target: Target, value: Value): boolean {
+    if (target.scope !== 'channel' || target.field !== 'stereo') return false;
+    const before = this.store.value(target);
+    return before !== undefined && before !== value;
+  }
+
+  /** One full sync after a burst of layout changes (TotalMix sends them in quick succession). */
+  private scheduleLayoutSync(): void {
+    this.clock.clearTimeout(this.layoutSyncTimer);
+    this.layoutSyncTimer = this.clock.setTimeout(() => {
+      this.layoutSyncTimer = undefined;
+      if (this.current === 'live') this.enterSyncing();
+    }, this.options.layoutSyncDelayMs);
   }
 
   private onStatusReply(): void {
@@ -214,7 +243,8 @@ export class TotalMixClient extends EventEmitter<ClientEvents> {
     this.clock.clearTimeout(this.pollTimer);
     this.clock.clearTimeout(this.syncQuietTimer);
     this.clock.clearTimeout(this.syncTimeoutTimer);
-    this.pollTimer = this.syncQuietTimer = this.syncTimeoutTimer = undefined;
+    this.clock.clearTimeout(this.layoutSyncTimer);
+    this.pollTimer = this.syncQuietTimer = this.syncTimeoutTimer = this.layoutSyncTimer = undefined;
     this.syncToken++;
     this.syncSent = false;
     this.syncFence = false;

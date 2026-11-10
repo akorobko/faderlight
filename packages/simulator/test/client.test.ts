@@ -122,6 +122,27 @@ describe('the TotalMix client against the simulator', () => {
     expect(conn.store.value({ scope: 'snapshot', n: 1 })).toBe('modified');
   });
 
+  it('follows a stereo pair linked and split in TotalMix', async () => {
+    const { sim, conn, states } = await setup();
+    await until(live(conn), 'live');
+    const names = () => strips(conn.store, 'input').map((s) => [s.name, s.label]);
+    const guitar = channel('input', 9, 'name');
+    sim.change('/input/8/stereo', true);
+    // At once one strip, then a full sync removes the right channel's old name.
+    await until(() => conn.store.value(channel('input', 8, 'stereo')) === true, 'stereo');
+    expect(names()).toEqual([
+      ['Synth', 'AN 1/2'],
+      ['Vocal', 'Mic 9/10'],
+      ['Room', 'Mic 11/12'],
+    ]);
+    await until(() => conn.store.get(guitar) === undefined && live(conn)(), 'linked');
+    // Split again: only the sync brings the right channel back.
+    sim.change('/input/8/stereo', false);
+    await until(() => names().length === 4 && live(conn)(), 'split');
+    expect(names()).toContainEqual(['Guitar', 'Mic 10']);
+    expect(states).toEqual(['probing', 'syncing', 'live', 'syncing', 'live', 'syncing', 'live']);
+  });
+
   it('goes stale when TotalMix quits and syncs again after a restart', async () => {
     const { sim, conn, states } = await setup();
     await until(live(conn), 'live');
