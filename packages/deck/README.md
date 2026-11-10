@@ -12,6 +12,8 @@ the virtual deck (`tools/virtual-deck`) connects it to a browser.
 | `src/controllers.ts` | One controller per spec type: mixer state to view, gestures to commands |
 | `src/gestures.ts`    | Tap, long press, double tap and auto-repeat from key down and up        |
 | `src/scheduler.ts`   | FrameScheduler: image budget, per-key rate, static before meter frames  |
+| `src/detail.ts`      | The Channel Detail overlay: its keys, views and gestures                |
+| `src/keys.ts`        | The controller for each spec type                                       |
 | `src/layout.ts`      | The Console layout: pages, banks, what each Console Slot is             |
 | `src/runtime.ts`     | DeckRuntime: keys appear, get pressed and are drawn through a DeckHost  |
 
@@ -51,6 +53,20 @@ A bank key moves its bank by its size and wraps around at the end; a long press 
 the next bus (inputs, playback, outputs). A page key goes to the next page; a long press goes
 back to the first. The layout is built in (`CONSOLE_LAYOUT`) until the Control Center can edit
 it (M5).
+
+## The Channel Detail overlay
+
+A long press on a channel key (the default hold) turns the whole Console into that channel's
+control surface (docs/design/03-ux.md §3.1): gain ±, 48V, phase, Inst, Autoset, mute, solo,
+fader ±, a tall meter, low cut, EQ and dynamics, five sends and the FX send (tap one to choose
+what the send ± and pan keys change), previous and next channel, Clear Clip and Back. Keys for
+something the channel does not have are blank. From a key on another profile the deck switches
+to the Console profile first, and Back switches back. The overlay closes after
+`detail.timeoutSec` (20 s) without a press; 0 keeps it open.
+
+The fader keys set the channel's route into Main, the send keys its route into the chosen
+submix. Gain steps follow the device profile's preamp range, including the jump from 0 to
+8 dB on the mic inputs.
 
 ## Tests
 

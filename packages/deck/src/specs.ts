@@ -34,6 +34,42 @@ export interface ChannelSpec {
 
 export type Direction = 'prev' | 'next';
 
+/** One key of the Channel Detail overlay (detail.ts). */
+export type DetailControl =
+  | 'back'
+  | 'header'
+  | 'gainDown'
+  | 'gainUp'
+  | 'phantom'
+  | 'phase'
+  | 'instrument'
+  | 'autoSet'
+  | 'mute'
+  | 'solo'
+  | 'faderDown'
+  | 'faderUp'
+  | 'meter'
+  | 'lowCut'
+  | 'eq'
+  | 'dynamics'
+  | 'send'
+  | 'fxSend'
+  | 'panLeft'
+  | 'panRight'
+  | 'prev'
+  | 'next'
+  | 'sendDown'
+  | 'sendUp'
+  | 'clearClip'
+  | 'none';
+
+export interface DetailSpec {
+  readonly type: 'detail';
+  readonly control: DetailControl;
+  /** For `send`: which visible output (from 0). */
+  readonly n?: number | undefined;
+}
+
 export type KeySpec =
   | { readonly type: 'empty' }
   | ChannelSpec
@@ -50,7 +86,8 @@ export type KeySpec =
   /** Goes to the next (or previous) page; a long press to the first. */
   | { readonly type: 'page'; readonly direction: Direction }
   /** Switches the deck to the Console profile. */
-  | { readonly type: 'console' };
+  | { readonly type: 'console' }
+  | DetailSpec;
 
 export type SpecType = KeySpec['type'];
 

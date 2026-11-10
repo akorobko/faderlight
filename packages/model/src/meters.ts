@@ -44,6 +44,8 @@ class MeterRing {
   private readonly levels: Float32Array;
   private next = 0;
   private size = 0;
+  /** Levels before this time no longer count for peak and clip hold (clearHold). */
+  heldFrom = -Infinity;
 
   constructor(capacity: number) {
     this.times = new Float64Array(capacity);
@@ -107,7 +109,7 @@ export class MeterBank {
     const level = ring?.latest() ?? floorDb;
     let peak = level;
     let clip = false;
-    const oldest = now - Math.max(peakHoldMs, clipHoldMs);
+    const oldest = Math.max(now - Math.max(peakHoldMs, clipHoldMs), ring?.heldFrom ?? -Infinity);
     ring?.scan((at, db) => {
       if (at < oldest) return false;
       if (at >= now - peakHoldMs && db > peak) peak = db;
@@ -115,6 +117,12 @@ export class MeterBank {
       return true;
     });
     return { level, peak, clip };
+  }
+
+  /** Clears a channel's peak and clip hold: only levels from `now` on count again. */
+  clearHold(bus: Bus, index: number, now: number): void {
+    const ring = this.rings.get(MeterBank.key(bus, index));
+    if (ring) ring.heldFrom = now;
   }
 
   /** Forgets every level, e.g. when the connection is lost. */

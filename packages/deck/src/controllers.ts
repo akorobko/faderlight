@@ -60,6 +60,17 @@ export interface BankState extends BankPosition {
   readonly total: number;
 }
 
+/** Where the ± send keys of the Channel Detail overlay go: a submix (its output) or FX. */
+export type SendTarget = number | 'fx';
+
+/** The channel the Channel Detail overlay shows. */
+export interface DetailState {
+  readonly bus: SourceBus;
+  readonly index: number;
+  /** The send the ± send keys and pan change (default: Main). */
+  readonly send?: SendTarget | undefined;
+}
+
 /** Navigation on the key's device that the controllers can ask for. */
 export interface Navigator {
   /** Opens the Channel Detail overlay for a strip; false when it cannot be shown. */
@@ -75,6 +86,13 @@ export interface Navigator {
   goToPage(index: number): void;
   /** Switches the device to the Console profile; false when there is none. */
   openConsole(): boolean;
+  /** The channel the Channel Detail overlay shows; undefined when it is closed. */
+  detail(): DetailState | undefined;
+  /** Closes the overlay (and goes back to the profile it was opened from). */
+  closeDetail(): void;
+  /** Shows the previous or next channel of the same bus. */
+  moveDetail(direction: Direction): void;
+  selectSend(send: SendTarget): void;
 }
 
 export interface KeyContext {
@@ -99,6 +117,8 @@ export interface Controller<S extends KeySpec> {
   /** What the key shows; undefined: nothing (a blank key). */
   view(spec: S, ctx: KeyContext): KeyView | undefined;
   gesture(spec: S, gesture: Gesture, ctx: KeyContext): void;
+  /** The key follows the meters without showing one (keys with a meter always do). */
+  animated?(spec: S): boolean;
 }
 
 // --- reading the mixer --------------------------------------------------------------------
@@ -621,9 +641,10 @@ const emptyController: Controller<Extract<KeySpec, { type: 'empty' }>> = {
   gesture: () => undefined,
 };
 
-type Controllers = { readonly [T in KeySpec['type']]: Controller<Extract<KeySpec, { type: T }>> };
-
-export const CONTROLLERS: Controllers = {
+/** Controllers for every spec type but the overlay's (detail.ts); keys.ts has them all. */
+export const CONTROLLERS: {
+  readonly [T in Exclude<KeySpec['type'], 'detail'>]: Controller<Extract<KeySpec, { type: T }>>;
+} = {
   empty: emptyController,
   channel: channelController,
   output: outputController,
@@ -637,8 +658,3 @@ export const CONTROLLERS: Controllers = {
   // A strip key is resolved into a channel key before it gets here (runtime.ts).
   strip: emptyController as unknown as Controller<Extract<KeySpec, { type: 'strip' }>>,
 };
-
-/** The controller for a spec, typed for that spec. */
-export function controllerFor<S extends KeySpec>(spec: S): Controller<S> {
-  return CONTROLLERS[spec.type] as unknown as Controller<S>;
-}

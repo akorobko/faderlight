@@ -87,6 +87,7 @@ const OUTPUTS = 'Main, phones and output keys';
 const TOGGLES = 'Monitor and global toggles';
 const FUNCTIONS = 'Snapshot, recorder, step and navigation keys';
 const STATUS = 'Status key';
+const CONTROLS = 'Channel Detail overlay keys';
 
 export const CASES: readonly Case[] = [
   // --- channel, full ---
@@ -461,6 +462,87 @@ export const CASES: readonly Case[] = [
     title: 'Page',
     group: FUNCTIONS,
     view: { kind: 'page', name: 'Inputs', index: 1, count: 4 },
+  },
+
+  // --- Channel Detail overlay ---
+  {
+    name: 'control-switch-on',
+    title: 'Switch on (48V)',
+    group: CONTROLS,
+    view: { kind: 'control', title: 'Phantom', word: '48V', switch: true, color: 'phantom' },
+  },
+  {
+    name: 'control-switch-off',
+    title: 'Switch off (phase)',
+    group: CONTROLS,
+    view: { kind: 'control', title: 'Phase', word: 'Ø', switch: false },
+  },
+  {
+    name: 'control-switch-unknown',
+    title: 'Switch, not read yet',
+    group: CONTROLS,
+    view: { kind: 'control', title: 'EQ', word: 'EQ', switch: 'unknown' },
+  },
+  {
+    name: 'control-switch-pending',
+    title: 'Switch, pending',
+    group: CONTROLS,
+    view: { kind: 'control', title: 'Low cut', word: '80 Hz', switch: true, pending: true },
+  },
+  {
+    name: 'control-arrow',
+    title: 'Gain +',
+    group: CONTROLS,
+    view: { kind: 'control', title: 'Gain', arrow: 'up', word: '+42 dB' },
+  },
+  {
+    name: 'control-arrow-held',
+    title: 'Fader −, held',
+    group: CONTROLS,
+    view: { kind: 'control', title: 'Fader', arrow: 'down', word: `${MINUS}6.0`, lit: true },
+  },
+  {
+    name: 'control-arrow-limit',
+    title: 'Pan at the limit',
+    group: CONTROLS,
+    view: { kind: 'control', title: 'Pan PH 9/10', arrow: 'right', word: 'R100', atLimit: true },
+  },
+  {
+    name: 'control-send-selected',
+    title: 'Send, selected',
+    group: CONTROLS,
+    view: {
+      kind: 'control',
+      title: '→ PH 9/10',
+      word: `${MINUS}3.0`,
+      caption: 'Phones 1',
+      lit: true,
+    },
+  },
+  {
+    name: 'control-back',
+    title: 'Back',
+    group: CONTROLS,
+    view: { kind: 'control', title: 'Detail', arrow: 'left', word: 'BACK' },
+  },
+  {
+    name: 'control-clear-clipped',
+    title: 'Clear clip, clipped',
+    group: CONTROLS,
+    view: {
+      kind: 'control',
+      title: 'Meter',
+      word: 'CLEAR',
+      caption: 'clipped',
+      lit: true,
+      color: 'record',
+    },
+  },
+  {
+    name: 'control-offline',
+    title: 'Offline',
+    group: CONTROLS,
+    view: { kind: 'control', title: 'Gain', arrow: 'up', word: '+42 dB', offline: true },
   },
 
   // --- status ---

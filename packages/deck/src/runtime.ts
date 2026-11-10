@@ -5,7 +5,7 @@
 // (docs/design/02-architecture.md). Console Slots get their spec from the layout, by their
 // coordinates and the page and banks their device shows now.
 
-import { strips, type Bus, type Strip } from '@faderlight/model';
+import { strips, type Bus, type SourceBus, type Strip } from '@faderlight/model';
 import {
   DARK,
   document,
@@ -16,16 +16,19 @@ import {
   type KeyView,
   type Theme,
 } from '@faderlight/render';
-import type { Clock } from '@faderlight/totalmix';
+import type { Clock, TimerHandle } from '@faderlight/totalmix';
 import type { ActionKind } from './actions.ts';
-import {
-  controllerFor,
-  type BankState,
-  type KeyContext,
-  type MixerControl,
-  type Navigator,
+import type {
+  BankState,
+  DetailState,
+  KeyContext,
+  MixerControl,
+  Navigator,
+  SendTarget,
 } from './controllers.ts';
+import { DETAIL_KEYS, neighbour } from './detail.ts';
 import { GestureRecogniser, type Gesture } from './gestures.ts';
+import { controllerFor } from './keys.ts';
 import {
   clampBank,
   CONSOLE_LAYOUT,
@@ -106,13 +109,24 @@ interface DeckKey {
 
 /** What a device's navigation needs from the runtime. */
 interface DeviceHost {
+  readonly clock: Clock;
   bankOf(page: number, banks: ReadonlyMap<number, BankPosition>): BankState | undefined;
   /** Draws the device's keys again. */
   redraw(): void;
   openConsole(): boolean;
+  /** The device shows Console Slots now. */
+  showsConsole(): boolean;
+  /** Back to the profile the device showed before the Console. */
+  switchBack(): void;
+  neighbour(bus: SourceBus, index: number, direction: Direction): number | undefined;
+  /** Closes the overlay after this long without a press; 0: never. */
+  detailTimeoutMs(): number;
 }
 
-/** Navigation state of one device: the Console page it shows and where its banks are. */
+/**
+ * Navigation state of one device: the Console page it shows, where its banks are, and the
+ * Channel Detail overlay when it is open.
+ */
 class DeckDevice implements Navigator {
   readonly id: string;
   readonly pages: readonly string[];
@@ -120,6 +134,10 @@ class DeckDevice implements Navigator {
   /** Bank position per page. */
   readonly banks = new Map<number, BankPosition>();
   private readonly host: DeviceHost;
+  private overlay: DetailState | undefined;
+  /** The overlay was opened from another profile: closing it goes back there. */
+  private returnBack = false;
+  private timer: TimerHandle | undefined;
 
   constructor(id: string, pages: readonly string[], host: DeviceHost) {
     this.id = id;
@@ -127,8 +145,62 @@ class DeckDevice implements Navigator {
     this.host = host;
   }
 
-  openDetail(): boolean {
-    return false;
+  detail(): DetailState | undefined {
+    return this.overlay;
+  }
+
+  openDetail(bus: Bus, index: number): boolean {
+    if (bus !== 'input' && bus !== 'playback') return false;
+    const onConsole = this.host.showsConsole();
+    if (!onConsole && !this.host.openConsole()) return false;
+    if (!this.overlay) this.returnBack = !onConsole;
+    this.overlay = { bus, index };
+    this.touch();
+    this.host.redraw();
+    return true;
+  }
+
+  closeDetail(): void {
+    if (!this.overlay) return;
+    this.overlay = undefined;
+    this.host.clock.clearTimeout(this.timer);
+    this.timer = undefined;
+    this.host.redraw();
+    if (this.returnBack) {
+      this.returnBack = false;
+      this.host.switchBack();
+    }
+  }
+
+  moveDetail(direction: Direction): void {
+    const at = this.overlay;
+    const to = at && this.host.neighbour(at.bus, at.index, direction);
+    if (!at || to === undefined || to === at.index) return;
+    this.overlay = { ...at, index: to };
+    this.host.redraw();
+  }
+
+  selectSend(send: SendTarget): void {
+    if (!this.overlay) return;
+    this.overlay = { ...this.overlay, send };
+    this.host.redraw();
+  }
+
+  /** A key of the device was pressed: the overlay stays open a while longer. */
+  touch(): void {
+    this.host.clock.clearTimeout(this.timer);
+    this.timer = undefined;
+    const ms = this.host.detailTimeoutMs();
+    if (!this.overlay || ms <= 0) return;
+    this.timer = this.host.clock.setTimeout(() => {
+      this.timer = undefined;
+      this.closeDetail();
+    }, ms);
+  }
+
+  dispose(): void {
+    this.host.clock.clearTimeout(this.timer);
+    this.timer = undefined;
   }
 
   bank(): BankState | undefined {
@@ -283,6 +355,7 @@ export class DeckRuntime {
   }
 
   dispose(): void {
+    for (const d of this.devices.values()) d.dispose();
     this.unsubscribe();
     this.scheduler.dispose();
     for (const key of this.keys.values()) key.gestures.cancel();
@@ -300,6 +373,7 @@ export class DeckRuntime {
     let d = this.devices.get(id);
     if (!d) {
       d = new DeckDevice(id, this.pageNames, {
+        clock: this.clock,
         bankOf: (page, banks) => this.bankOf(page, banks),
         redraw: () => {
           this.redraw(id);
@@ -309,6 +383,18 @@ export class DeckRuntime {
           this.host.switchToProfile(id, this.consoleProfile);
           return true;
         },
+        showsConsole: () => {
+          for (const key of this.keys.values()) {
+            if (key.placement.device === id && key.placement.kind === 'slot') return true;
+          }
+          return false;
+        },
+        switchBack: () => {
+          this.host.switchToProfile(id);
+        },
+        neighbour: (bus, index, direction) =>
+          neighbour(this.mixer.store, bus, index, direction)?.index,
+        detailTimeoutMs: () => this.settings.detail.timeoutSec * 1000,
       });
       this.devices.set(id, d);
     }
@@ -342,7 +428,13 @@ export class DeckRuntime {
   /** What a Console Slot is now. */
   private slotSpec(key: DeckKey): KeySpec {
     const d = this.device(key.placement.device);
-    const spec = keyAt(this.layout, d.page, key.placement.coordinates);
+    const at = key.placement.coordinates;
+    if (d.detail()) {
+      return at && at.column < 8 && at.row < 4
+        ? (DETAIL_KEYS[at.row * 8 + at.column] ?? EMPTY)
+        : EMPTY;
+    }
+    const spec = keyAt(this.layout, d.page, at);
     if (spec.type !== 'strip') return spec;
     const bank = this.bankOf(d.page, d.banks);
     const strip = bank && this.stripsOf(bank.bus)[bank.offset + spec.n];
@@ -408,16 +500,19 @@ export class DeckRuntime {
   private draw(key: DeckKey): string {
     const id = key.placement.id;
     let view: KeyView | undefined;
+    let animated = false;
     try {
       const spec = this.specOf(key);
-      view = controllerFor(spec).view(spec, this.context(key));
+      const controller = controllerFor(spec);
+      view = controller.view(spec, this.context(key));
+      animated = controller.animated?.(spec) === true;
     } catch (error) {
       this.log.error(`drawing key ${id} failed:`, error);
       view = undefined;
     }
     this.scheduler.setRate(
       id,
-      view !== undefined && hasMeter(view) ? this.settings.frames.meterFps : 0,
+      view !== undefined && (animated || hasMeter(view)) ? this.settings.frames.meterFps : 0,
     );
     if (view === undefined) return this.blank;
     const text = this.settings.theme + viewKey(view);
@@ -440,5 +535,6 @@ export class DeckRuntime {
     if (gesture.type === 'press' || gesture.type === 'release') {
       this.scheduler.invalidate(key.placement.id);
     }
+    if (gesture.type === 'press') this.device(key.placement.device).touch();
   }
 }

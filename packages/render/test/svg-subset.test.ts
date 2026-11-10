@@ -51,7 +51,9 @@ function tags(svg: string): Tag[] {
 const views: { name: string; view: KeyView }[] = [
   ...CASES.map((c) => ({ name: c.name, view: c.view })),
   ...CONSOLE_PAGES.flatMap((p, pi) =>
-    p.keys.map((view, i) => ({ name: `page${String(pi)}-${String(i)}`, view })),
+    p.keys.flatMap((view, i) =>
+      view === undefined ? [] : [{ name: `page${String(pi)}-${String(i)}`, view }],
+    ),
   ),
 ];
 

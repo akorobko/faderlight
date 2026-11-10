@@ -178,7 +178,57 @@ const inputs: KeyView[] = NAMES.map((name, i): KeyView => {
   };
 });
 
+// The Channel Detail overlay on Vocal (docs/design/03-ux.md §3.1), with Phones 1 selected.
+const vocal = mic(9, 'Vocal', 1, 42, -16, {
+  badges: { phantom: true, phase: false, instrument: false, autoSet: false },
+});
+const send = (title: string, name: string, db: string, lit = false): KeyView => ({
+  kind: 'control',
+  title,
+  word: db,
+  caption: name,
+  lit,
+});
+const detail: (KeyView | undefined)[] = [
+  { kind: 'control', title: 'Detail', arrow: 'left', word: 'BACK' },
+  vocal,
+  { kind: 'control', title: 'Gain', arrow: 'down', word: '+42 dB' },
+  { kind: 'control', title: 'Gain', arrow: 'up', word: '+42 dB' },
+  { kind: 'control', title: 'Phantom', word: '48V', switch: true, color: 'phantom' },
+  { kind: 'control', title: 'Phase', word: 'Ø', switch: false },
+  { kind: 'control', title: 'Input', word: 'INST', switch: false },
+  { kind: 'control', title: 'Autoset', word: 'AUTO', switch: true },
+
+  { kind: 'control', title: 'Channel', word: 'MUTE', switch: false, color: 'mute' },
+  { kind: 'control', title: 'Channel', word: 'SOLO', switch: false, color: 'solo' },
+  { kind: 'control', title: 'Fader', arrow: 'down', word: `${MINUS}6.0` },
+  { kind: 'control', title: 'Fader', arrow: 'up', word: `${MINUS}6.0` },
+  { ...vocal, style: 'meter' },
+  { kind: 'control', title: 'Low cut', word: '80 Hz', switch: true },
+  { kind: 'control', title: 'EQ', word: 'EQ', switch: true },
+  { kind: 'control', title: 'Dynamics', word: 'DYN', switch: false },
+
+  send('→ AN 1/2', 'Main', `${MINUS}6.0`),
+  send('→ PH 9/10', 'Phones 1', `${MINUS}3.0`, true),
+  send('→ PH 11/12', 'Phones 2', `${MINUS}6.0`),
+  send('→ AN 3/4', 'Monitors', '−∞'),
+  send('→ ADAT 1/2', 'Artist', '−∞'),
+  { kind: 'control', title: 'FX send', word: `${MINUS}20.0`, caption: 'FX' },
+  { kind: 'control', title: 'Pan PH 9/10', arrow: 'left', word: 'L20' },
+  { kind: 'control', title: 'Pan PH 9/10', arrow: 'right', word: 'L20' },
+
+  { kind: 'control', title: 'Channel', arrow: 'left', word: 'AN 7/8' },
+  { kind: 'control', title: 'Channel', arrow: 'right', word: 'MIC 10' },
+  { kind: 'control', title: 'Send → PH 9/10', arrow: 'down', word: `${MINUS}3.0` },
+  { kind: 'control', title: 'Send → PH 9/10', arrow: 'up', word: `${MINUS}3.0` },
+  undefined,
+  undefined,
+  { kind: 'control', title: 'Meter', word: 'CLEAR', caption: 'clip & peak', color: 'record' },
+  { kind: 'control', title: 'Detail', arrow: 'left', word: 'BACK' },
+];
+
 export const CONSOLE_PAGES: readonly DeckPage[] = [
   { title: 'Console page on a Stream Deck XL (96 px keys)', keys: console },
   { title: 'Inputs page, meter style (96 px keys)', keys: inputs },
+  { title: 'Channel Detail overlay (96 px keys)', keys: detail },
 ];
