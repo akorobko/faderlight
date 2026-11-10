@@ -19,7 +19,8 @@
     "lint": "eslint .",
     "typecheck": "tsc",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "sim": "node packages/simulator/src/cli.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
