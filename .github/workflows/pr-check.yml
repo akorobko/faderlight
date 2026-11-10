@@ -38,3 +38,8 @@ jobs:
 
       # Vendor guard, Prettier, ESLint, tsc and Vitest; see AGENTS.md.
       - run: npm run check
+
+      # The virtual deck in Chromium (tools/virtual-deck/e2e). Playwright downloads its browser
+      # once into its cache in the runner's home folder; later runs find it there.
+      - run: npx playwright install chromium
+      - run: npm run e2e

@@ -21,3 +21,6 @@ packages/plugin/*.sdPlugin/bin/
 packages/plugin/*.sdPlugin/fonts/
 packages/plugin/*.sdPlugin/profiles/
 packages/plugin/*.sdPlugin/logs/
+
+# Playwright output of the virtual deck's end-to-end tests (screenshots go to renders/).
+tools/virtual-deck/test-results/

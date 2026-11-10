@@ -14,6 +14,8 @@ npm run check            # vendor guard, format, lint, typecheck, tests
 npm run sim              # fake TotalMix FX on ports 7002/9002 (packages/simulator/README.md)
 npm run render:goldens   # key images and renders/contact-sheet.png (packages/render/README.md)
 npm run plugin:build     # the Stream Deck plugin (packages/plugin/README.md)
+npm run deck             # the keys on a web page, against the simulator (tools/virtual-deck)
+npm run e2e              # browser tests of the virtual deck, screenshots in renders/virtual-deck/
 ```
 
 | Path                 | Contents                                       |

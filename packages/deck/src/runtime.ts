@@ -90,7 +90,8 @@ export interface DeckRuntimeOptions {
   readonly consoleProfile?: string | undefined;
 }
 
-export type KeyRenderer = (view: KeyView, theme: Theme, size: number) => string;
+/** Draws a view as an image; `id` is the key it is for. */
+export type KeyRenderer = (view: KeyView, theme: Theme, size: number, id: string) => string;
 
 const renderSvg: KeyRenderer = (view, theme, size) => svgDataUrl(renderKey(view, theme, size));
 
@@ -517,7 +518,7 @@ export class DeckRuntime {
     if (view === undefined) return this.blank;
     const text = this.settings.theme + viewKey(view);
     if (text === key.lastView && key.lastImage !== undefined) return key.lastImage;
-    const image = this.render(view, THEMES[this.settings.theme] ?? DARK, this.imageSize);
+    const image = this.render(view, THEMES[this.settings.theme] ?? DARK, this.imageSize, id);
     key.lastView = text;
     key.lastImage = image;
     return image;
