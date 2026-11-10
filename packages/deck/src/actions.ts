@@ -57,7 +57,8 @@ export const ACTIONS: readonly ActionInfo[] = [
   {
     kind: 'status',
     name: 'Status',
-    tooltip: 'Connection to the mixer and the interface model. Hold to read the whole mixer again.',
+    tooltip:
+      'Connection to the mixer and the interface model. Tap opens the Control Center, hold reads the whole mixer again.',
   },
   {
     kind: 'step',
