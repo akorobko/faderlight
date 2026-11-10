@@ -9,7 +9,7 @@ Status: research draft, 2026-11-09. Target: TotalMix FX 2.1 or newer, the first 
 | Area | Detail | Relevance to plugin |
 |---|---|---|
 | Analog in | 12: AN 1–8 line (TRS, rear), Mic/Inst 9–12 (combo XLR/TRS, front) | Input channel keys. Gain + 48V + Inst + AutoSet only on 9–12 |
-| Preamp gain | Mic 9–12: 0 dB, then +8…+75 dB in 1 dB steps; Inst max +50 dB. Line 1–8: 0…+12 dB (per Companion profile) **[VERIFY]** | Gain display / step size per channel |
+| Preamp gain | Mic 9–12: 0 dB, then +8…+75 dB in 1 dB steps; Inst max +50 dB. Line 1–8: 0…+12 dB (per Companion profile). Capture: mic gain moves in 1 dB steps; a line input showed 6.5 dB, so line steps are finer (range still open, see `docs/protocol/global-osc.md`) | Gain display / step size per channel |
 | Phantom | 48V on XLR of 9–12 only | 48V badge only shown where supported |
 | AutoSet | Channels 9–12, keeps 6 dB headroom | Long-press option on mic channels |
 | Analog out | AN 1–8 (1/2 on XLR, 3–8 TRS), ref levels +24 (XLR only)/+19/+13/+2 dBV | Output keys, Main (typically AN 1/2) |
@@ -27,7 +27,7 @@ Status: research draft, 2026-11-09. Target: TotalMix FX 2.1 or newer, the first 
 Snapshots: TotalMix has **8 snapshots** per workspace (named). Groups: 4 mute, 4 solo (PFL), 4 fader groups. Layout presets 1–6 (Global OSC only). Quick Workspaces 1–30 (load only, no names returned).
 
 Monitoring ("Control Room") features available in TotalMix: Main Out volume, Dim, Recall, Mono, Speaker B (+ link A/B), External In, Talkback, Mute FX, Phones 1–4 assignment, Cue, Trim.
-**There is no dedicated "Main mute"** in the classic OSC surface; on Global OSC an output-channel mute exists **[VERIFY: `/output/N/mute`]**. Fallback: Dim set to −∞ in TotalMix settings.
+**There is no dedicated "Main mute"** in the classic OSC surface; on Global OSC an output-channel mute exists (`/output/N/mute`, confirmed by capture; Main is the output that `/controlroom/mainout` names). Fallback: Dim set to −∞ in TotalMix settings.
 
 ## 2. Elgato Stream Deck XL (target surface #1)
 
@@ -60,7 +60,7 @@ Absolute addressing, native units, state request commands. This removes the clas
 
 Required TotalMix settings (Options → Settings → OSC → Remote Controller n): *In Use*, ports (e.g. in 7002 / out 9002), Remote Controller Address = `127.0.0.1` (do **not** leave blank — Windows Global OSC does not send feedback without it), Mode = Global OSC, Details: **Send changes** ✓, **Send status** ✓, **Re-send received** ✓ (we never echo, so no loop), optionally **Send faders in linear scale**, bandwidth limit ~500 kB/s; **Send Level Data / Peak Level** ✓ for meters; global *Options → Enable OSC Control* ✓.
 
-Address space (compiled from the Bitfocus Companion RME module source and TotalControl spec; exact arg types **[VERIFY]**):
+Address space (compiled from the Bitfocus Companion RME module source and TotalControl spec; superseded by `docs/protocol/global-osc.md`, which lists what TotalMix actually sends; every number is float32):
 
 | Address | Meaning | Notes |
 |---|---|---|
@@ -71,18 +71,18 @@ Address space (compiled from the Bitfocus Companion RME module source and TotalC
 | `/input/{n}/gain`, `/gainright`, `/48v`, `/inst`, `/pad`, `/autoset`, `/reflevel` | Preamp | 48v/inst/autoset only where hardware supports |
 | `/input/{n}/fxsend`, `/output/{n}/fxreturn` | Reverb/Echo send/return | |
 | `/output/{n}/volume` (dB) · `/faderlin` (0–1) · `/balpan` (−1…+1) | Output fader / balance | |
-| `/output/{n}/mute`, `/loopback`, `/talkbacksel`, `/notrim`, `/pfl` (cue) | Output switches | `/output/n/mute` **[VERIFY]** |
+| `/output/{n}/mute`, `/loopback`, `/talkbacksel`, `/notrim`, `/pfl` (cue) | Output switches | `/output/n/mute` confirmed; `/notrim`, `/pfl` not seen |
 | `/mix/{in\|pb}/{src}/{out}/fader` (dB) · `/faderlin` · `/balpan` · `/solo` · `/groupflags` | Matrix send src → submix out | Full routing matrix |
 | `/{bus}/{n}/lowcut/{enable,freq,slope}`, `/eq/{enable,band1type,band1gain,band1freq,band1q,…band3*}`, `/dynamics/{enable,gain,attack,release,compthres,compratio,expthres,expratio}`, `/autolevel/{enable,maxgain,headroom,risetime}` | Channel DSP | |
 | `/output/{n}/roomeq/...` | Room EQ | |
 | `/controlroom/{dim,speakerb,linkab,mutefx,mainmono,externalin,talkback,recall}` | Monitoring section | |
 | `/globalmute`, `/globalsolo` | Global mute/solo | |
-| `/snapshot/load/{1..8}` (feedback value ≥2 = active), `/snapshot/save/{1..8}` | Snapshots | snapshot names **[VERIFY]** |
+| `/snapshot/load/{1..8}` (feedback 0 inactive, 2 active, 3 active and changed since loaded), `/snapshot/save/{1..8}` | Snapshots | snapshot names not seen yet (open) |
 | `/layout/load/{1..6}` | Layout presets | |
 | `/reverb/*`, `/echo/*` | Global FX | |
 | `/durec/{time,state}` + transport commands (`stop` uses value 11) | DURec | |
-| `/level/{in\|pb\|out}/{n}` | Meter level, **dB float** | per channel; stereo = two channels; peak/RMS variants **[VERIFY]** |
-| `/status/{device,connection,dsp}` | Device name, connection state, DSP load; also heartbeat | Use as liveness signal |
+| `/level/{in\|pb\|out}/{n}` | Meter level, **dB float** | per channel; stereo = two channels; no peak/RMS variants (capture); +6 marks an over |
+| `/status/{device,connection,dsp}` | Device name, connection state, DSP load | **No heartbeat** (capture): poll `/sendstate` for liveness |
 | `/sendall`, `/sendstate`, `/sendsettings`, `/sendchan/{bus}/{n}`, `/sendmix`, `/sendsubmix/{out}` | **State requests** | `/sendall 2` → ~2000 messages on a small interface; expect much more on UFX III (94 ch) → throttle |
 | `/showwindow` | Show/hide TotalMix window | |
 | `/loadQuickWorkspace` | Quick Workspace 1–30 | |

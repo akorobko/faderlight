@@ -89,7 +89,7 @@ describe('baseline script', () => {
     expect(result('write-mute-same')).toBe('same value echoed; restored');
     expect(result('write-send-fader')).toBe('changed; restored');
     expect(result('write-name')).toBe('changed; restored');
-    expect(result('write-dim')).toBe('echoed; restored');
+    expect(result('write-dim')).toBe('changed; restored');
     expect(runner.unconfirmedRestores).toEqual([]);
 
     expect(sent(sink.records)).toContain('/sendall');
