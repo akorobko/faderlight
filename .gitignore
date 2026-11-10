@@ -15,3 +15,13 @@ docs/vendor/*
 
 # Renders that did not match their golden image (packages/render/test/goldens.test.ts).
 renders/failures/
+
+# Plugin build output (packages/plugin/scripts/build.ts); manifest.json and imgs/ are committed.
+packages/plugin/*.sdPlugin/bin/
+packages/plugin/*.sdPlugin/fonts/
+packages/plugin/*.sdPlugin/profiles/
+packages/plugin/*.sdPlugin/debug/
+packages/plugin/*.sdPlugin/logs/
+
+# Playwright output of the virtual deck's end-to-end tests (screenshots go to renders/).
+tools/virtual-deck/test-results/

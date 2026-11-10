@@ -43,6 +43,18 @@ describe('MeterBank', () => {
     expect(m.read('input', 8, 3101).clip).toBe(false);
   });
 
+  it('clears the peak and clip hold of one channel on request', () => {
+    const m = new MeterBank();
+    m.push('input', 8, Math.fround(6), 0);
+    m.push('input', 8, -20, 100);
+    m.push('input', 9, Math.fround(6), 100);
+    m.clearHold('input', 8, 200);
+    expect(m.read('input', 8, 200)).toEqual({ level: -20, peak: -20, clip: false });
+    expect(m.read('input', 9, 200).clip).toBe(true);
+    m.push('input', 8, Math.fround(6), 300);
+    expect(m.read('input', 8, 300).clip).toBe(true);
+  });
+
   it('does not count the over decay (values below +6) as a new clip', () => {
     const m = new MeterBank();
     m.push('input', 8, Math.fround(5.2), 0);

@@ -33,17 +33,18 @@ All keys are drawn on a 144 x 144 canvas and scaled to `size` (96 on a Stream De
 key can be `offline` (grey, hatched, values shown as `––`) and most can be `pending` (dashed
 frame: sent, not confirmed).
 
-| `kind`     | Shows                                                                                   | States                                        |
-| ---------- | --------------------------------------------------------------------------------------- | --------------------------------------------- |
-| `channel`  | `style` full: colour tab, label, name, gain or level, badges, meter. meter, minimal too | muted, soloed, pending, offline               |
-| `output`   | Main, Phones or an output: volume, name, stereo meter; Main adds the monitor chips on   | muted, pending, offline                       |
-| `toggle`   | Dim, Mono, Talkback, Speaker B, External input, Global Mute, Global Solo                | on, off, unknown, pending, offline            |
-| `snapshot` | number, name                                                                            | loaded, edited since loading, save armed      |
-| `status`   | link state, device model, sample rate, clock, DSP load (each when known)                | idle, probing, syncing, live (beat), stale    |
-| `bank`     | row, range "9–16", total                                                                | at the end                                    |
-| `page`     | page number, the next page's name                                                       |                                               |
-| `step`     | ▲ or ▼, target, current level                                                           | held (repeating), at the limit                |
-| `recorder` | the interface's recorder: transport state, elapsed time                                 | not ready, stopped, recording, playing, armed |
+| `kind`     | Shows                                                                                   | States                                         |
+| ---------- | --------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `channel`  | `style` full: colour tab, label, name, gain or level, badges, meter. meter, minimal too | muted, soloed, pending, offline                |
+| `output`   | Main, Phones or an output: volume, name, stereo meter; Main adds the monitor chips on   | muted, pending, offline                        |
+| `toggle`   | Dim, Mono, Talkback, Speaker B, External input, Global Mute, Global Solo                | on, off, unknown, pending, offline             |
+| `snapshot` | number, name                                                                            | loaded, edited since loading, save armed       |
+| `status`   | link state, device model, sample rate, clock, DSP load (each when known)                | idle, probing, syncing, live (beat), stale     |
+| `bank`     | row, range "9–16", total                                                                | at the end                                     |
+| `page`     | page number, the next page's name                                                       |                                                |
+| `step`     | ▲ or ▼, target, current level                                                           | held (repeating), at the limit                 |
+| `recorder` | the interface's recorder: transport state, elapsed time                                 | not ready, stopped, recording, playing, armed  |
+| `control`  | one parameter in the Channel Detail overlay: a switch, a ± or ◀ ▶ key, or a plain key   | on, off, unknown, held, at the limit, selected |
 
 The look follows `docs/design/03-ux.md`: mute cyan/teal, solo orange, 48V and record red, dim
 amber; every state also has a shape (M and S chips, solid and dashed frames, filled and

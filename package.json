@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "description": "Stream Deck plugin for controlling and monitoring RME interfaces through TotalMix FX. Not affiliated with RME or Elgato.",
+  "author": "ratio32.com (https://ratio32.com)",
   "type": "module",
   "engines": {
     "node": ">=24"
@@ -21,7 +22,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "sim": "node packages/simulator/src/cli.ts",
-    "render:goldens": "node packages/render/test/render-goldens.ts"
+    "render:goldens": "node packages/render/test/render-goldens.ts",
+    "plugin:build": "node packages/plugin/scripts/build.ts",
+    "plugin:icons": "node packages/plugin/scripts/icons.ts",
+    "deck": "node tools/virtual-deck/src/cli.ts",
+    "e2e": "playwright test -c tools/virtual-deck/playwright.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

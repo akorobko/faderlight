@@ -45,8 +45,8 @@ function groups(cases: readonly Case[]): [string, Case[]][] {
 
 export interface DeckPage {
   readonly title: string;
-  /** Keys row by row, 8 per row. */
-  readonly keys: readonly KeyView[];
+  /** Keys row by row, 8 per row; undefined: a blank key. */
+  readonly keys: readonly (KeyView | undefined)[];
 }
 
 /** Builds the sheet SVG: grouped cases, then optional deck pages drawn at XL size (96 px). */
@@ -102,7 +102,10 @@ export function contactSheet(
     page.keys.forEach((k, i) => {
       const x = deckX + 28 + (i % 8) * (KEY + KEY_GAP);
       const ky = y + 24 + Math.floor(i / 8) * (KEY + KEY_GAP);
-      body += place(renderKey(k, DARK, KEY), x, ky);
+      body +=
+        k === undefined
+          ? `<rect x="${String(x)}" y="${String(ky)}" width="${String(KEY)}" height="${String(KEY)}" fill="#000000"/>`
+          : place(renderKey(k, DARK, KEY), x, ky);
     });
     y += deckH + GAP_Y + 12;
   }

@@ -34,9 +34,11 @@
 │  ├─ model/                     # protocol-agnostic mixer model: Store, entities, device profiles
 │  ├─ render/                    # key renderers (pure: (viewModel, theme, size) -> svg)
 │  ├─ simulator/                 # fake TotalMix (Global OSC server) + CLI + web panel
+│  ├─ deck/                      # deck runtime without the SDK: settings, gestures, frame
+│  │                             #   scheduler, layout engine, key controllers
 │  ├─ settings-app/              # Control Center SPA (Preact)
-│  └─ plugin/                    # *.sdPlugin: manifest, actions, PI html, layout engine
-│     └─ com.<org>.<name>.sdPlugin/
+│  └─ plugin/                    # SDK wiring, build, bundled profiles, PI html
+│     └─ com.ratio32.faderlight.mixer.sdPlugin/   # manifest, icons; bin/ and fonts/ are built
 └─ tools/
    ├─ capture/                   # records real TotalMix OSC traffic to JSONL fixtures
    └─ virtual-deck/              # browser page rendering a full XL from plugin pipeline

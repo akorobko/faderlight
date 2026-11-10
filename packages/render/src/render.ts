@@ -4,6 +4,7 @@
 // 144 for its high-resolution images, 72 on smaller decks). Pure: same input, same string.
 
 import { renderChannel, type ChannelKey } from './keys/channel.ts';
+import { renderControl, type ControlKey } from './keys/control.ts';
 import { renderBank, renderPage, type BankKey, type PageKey } from './keys/nav.ts';
 import { renderOutput, type OutputKey } from './keys/output.ts';
 import { renderRecorder, type RecorderKey } from './keys/recorder.ts';
@@ -25,7 +26,8 @@ export type KeyView =
   | BankKey
   | PageKey
   | StepKey
-  | RecorderKey;
+  | RecorderKey
+  | ControlKey;
 
 export type KeyKind = KeyView['kind'];
 
@@ -53,6 +55,8 @@ function draw(view: KeyView, theme: Theme): string {
       return renderStep(theme, view);
     case 'recorder':
       return renderRecorder(theme, view);
+    case 'control':
+      return renderControl(theme, view);
   }
 }
 

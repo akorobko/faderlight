@@ -1,0 +1,17 @@
+{
+  "name": "@faderlight/virtual-deck",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The Faderlight keys on a web page, driven by the simulator: node tools/virtual-deck/src/cli.ts",
+  "type": "module",
+  "dependencies": {
+    "@faderlight/deck": "0.0.0",
+    "@faderlight/model": "0.0.0",
+    "@faderlight/render": "0.0.0",
+    "@faderlight/simulator": "0.0.0",
+    "@faderlight/totalmix": "0.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

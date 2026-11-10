@@ -1,0 +1,213 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "UUID": "com.ratio32.faderlight.mixer",
+  "Name": "Faderlight",
+  "Version": "0.1.0.0",
+  "Author": "ratio32.com",
+  "Description": "Controls and monitors RME interfaces through TotalMix FX: channel keys with meters, monitoring, snapshots and a full console layout for the XL. Not affiliated with RME or Elgato.",
+  "Category": "Faderlight",
+  "CategoryIcon": "imgs/plugin/category",
+  "Icon": "imgs/plugin/icon",
+  "CodePath": "bin/plugin.js",
+  "SDKVersion": 3,
+  "Software": {
+    "MinimumVersion": "7.1"
+  },
+  "OS": [
+    {
+      "Platform": "mac",
+      "MinimumVersion": "13"
+    },
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Nodejs": {
+    "Version": "24",
+    "Debug": "enabled"
+  },
+  "Actions": [
+    {
+      "UUID": "com.ratio32.faderlight.mixer.slot",
+      "Name": "Console Slot",
+      "Tooltip": "One key of the Console layout: what it shows follows the page, the bank and the Channel Detail overlay.",
+      "Icon": "imgs/actions/slot",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/keys/key",
+          "ShowTitle": false
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.ratio32.faderlight.mixer.channel",
+      "Name": "Channel",
+      "Tooltip": "An input or playback channel: name, gain or level, meter. Tap mutes, hold opens details.",
+      "Icon": "imgs/actions/channel",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/keys/key",
+          "ShowTitle": false
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.ratio32.faderlight.mixer.output",
+      "Name": "Main / Output",
+      "Tooltip": "The Main output or another output: volume and meter. Tap mutes.",
+      "Icon": "imgs/actions/output",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/keys/key",
+          "ShowTitle": false
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.ratio32.faderlight.mixer.phones",
+      "Name": "Phones",
+      "Tooltip": "A headphone output: volume and meter. Tap mutes.",
+      "Icon": "imgs/actions/phones",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/keys/key",
+          "ShowTitle": false
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.ratio32.faderlight.mixer.snapshot",
+      "Name": "Snapshot",
+      "Tooltip": "Loads a mixer snapshot and shows which one is loaded.",
+      "Icon": "imgs/actions/snapshot",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/keys/key",
+          "ShowTitle": false
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.ratio32.faderlight.mixer.monitor",
+      "Name": "Monitor Switch",
+      "Tooltip": "Dim, Mono, Talkback, Speaker B or External input of the control room section.",
+      "Icon": "imgs/actions/monitor",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/keys/key",
+          "ShowTitle": false
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.ratio32.faderlight.mixer.global",
+      "Name": "Global Mute / Solo",
+      "Tooltip": "The mixer-wide mute or solo switch.",
+      "Icon": "imgs/actions/global",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/keys/key",
+          "ShowTitle": false
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.ratio32.faderlight.mixer.status",
+      "Name": "Status",
+      "Tooltip": "Connection to the mixer and the interface model. Hold to read the whole mixer again.",
+      "Icon": "imgs/actions/status",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/keys/key",
+          "ShowTitle": false
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.ratio32.faderlight.mixer.step",
+      "Name": "Volume Step",
+      "Tooltip": "Turns Main, a Phones output or another output up or down; hold to repeat.",
+      "Icon": "imgs/actions/step",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/keys/key",
+          "ShowTitle": false
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.ratio32.faderlight.mixer.console",
+      "Name": "Open Console",
+      "Tooltip": "Switches this device to the bundled Console profile.",
+      "Icon": "imgs/actions/console",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/keys/key",
+          "ShowTitle": false
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.ratio32.faderlight.mixer.test-image",
+      "Name": "Test Images",
+      "Tooltip": "Development aid: shows the renderer test images. Tap for the next page, hold to switch between the SVG and the reference PNG.",
+      "Icon": "imgs/actions/test-image",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/keys/key",
+          "ShowTitle": false
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false
+    }
+  ],
+  "Profiles": [
+    {
+      "Name": "profiles/Console",
+      "DeviceType": 2,
+      "Readonly": false,
+      "DontAutoSwitchWhenInstalled": true,
+      "AutoInstall": true
+    },
+    {
+      "Name": "profiles/RenderTest",
+      "DeviceType": 2,
+      "Readonly": false,
+      "DontAutoSwitchWhenInstalled": true,
+      "AutoInstall": true
+    }
+  ]
+}
