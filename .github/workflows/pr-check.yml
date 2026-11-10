@@ -1,0 +1,39 @@
+# The pull-request gate, on Alexey's Mac through a self-hosted runner rather than on GitHub's
+# cloud runners: a self-hosted runner is not billed, and the Mac is the primary target platform.
+#
+# Drafts are for reading, so nothing runs for one. Marking a PR ready asks for the gate, and every
+# push after that re-runs it. `checkout` on a `pull_request` event takes the merge of the branch
+# into its base, so this checks the merged result.
+
+name: PR check
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+
+permissions:
+  contents: read
+
+# A newer push supersedes the older run of the same PR.
+concurrency:
+  group: pr-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    if: github.event.pull_request.draft == false
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      # Pins Node from .nvmrc instead of whatever Node the Mac has installed. No npm cache step:
+      # ~/.npm already persists between runs on a self-hosted runner.
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+
+      - run: npm ci
+
+      # Vendor guard, Prettier, ESLint, tsc and Vitest; see AGENTS.md.
+      - run: npm run check
