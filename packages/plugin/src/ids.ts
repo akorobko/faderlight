@@ -3,7 +3,7 @@
 
 import { isActionKind, type ActionKind } from '@faderlight/deck';
 
-export const PLUGIN_UUID = 'dev.faderlight.mixer';
+export const PLUGIN_UUID = 'com.ratio32.faderlight.mixer';
 
 export const actionUuid = (kind: ActionKind): string => `${PLUGIN_UUID}.${kind}`;
 

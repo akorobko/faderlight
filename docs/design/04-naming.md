@@ -10,8 +10,10 @@ Also avoid: **MixKey** (Steinberg product), "TotalMix FX Control" (existing plug
 
 - Evokes the product exactly: a lit fader/channel strip on an LCD key.
 - No hits for the exact term in web search; npm package name free (2026-11-09).
-- Works as repo (`faderlight`), plugin UUID (`dev.faderlight.mixer`), and Marketplace name ("Faderlight for TotalMix FX" — nominative, allowed style).
+- Works as repo (`faderlight`), plugin UUID (`com.ratio32.faderlight.mixer`), and Marketplace name ("Faderlight for TotalMix FX" — nominative, allowed style).
 - Easy to say, no language collisions known.
+
+Publisher: **ratio32.com**. It is the manifest's `Author` (the name the Marketplace shows), and the plugin UUID starts with its reverse domain. The manifest's `URL` is left out until the website is up: `streamdeck validate` checks that it resolves.
 
 ## Alternatives
 

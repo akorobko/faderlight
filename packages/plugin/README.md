@@ -4,21 +4,21 @@ The Stream Deck plugin: the only code that talks to the Stream Deck SDK (`@elgat
 v3). It reads the global settings, keeps the connection to TotalMix FX, and passes key events
 to the deck runtime (`packages/deck`) and key images back to the Stream Deck app.
 
-| Path                             | Contents                                                       |
-| -------------------------------- | -------------------------------------------------------------- |
-| `dev.faderlight.mixer.sdPlugin/` | The folder the Stream Deck app loads: `manifest.json`, `imgs/` |
-| `src/plugin.ts`                  | Entry point, SDK wiring                                        |
-| `src/ids.ts`                     | Plugin and action UUIDs                                        |
-| `src/mixer.ts`                   | The TotalMix connection, restarted when its settings change    |
-| `scripts/build.ts`               | Builds `bin/`, `fonts/`, `profiles/` and `debug/`              |
-| `scripts/profile.ts`             | Writes the bundled profiles (`scripts/zip.ts` packs them)      |
-| `src/debug.ts`                   | The pages of the Test Images debug action                      |
-| `scripts/icons.ts`               | Draws the icons in `imgs/` (our own artwork)                   |
-| `test/fake-app.ts`               | A fake Stream Deck app for tests                               |
+| Path                                     | Contents                                                       |
+| ---------------------------------------- | -------------------------------------------------------------- |
+| `com.ratio32.faderlight.mixer.sdPlugin/` | The folder the Stream Deck app loads: `manifest.json`, `imgs/` |
+| `src/plugin.ts`                          | Entry point, SDK wiring                                        |
+| `src/ids.ts`                             | Plugin and action UUIDs                                        |
+| `src/mixer.ts`                           | The TotalMix connection, restarted when its settings change    |
+| `scripts/build.ts`                       | Builds `bin/`, `fonts/`, `profiles/` and `debug/`              |
+| `scripts/profile.ts`                     | Writes the bundled profiles (`scripts/zip.ts` packs them)      |
+| `src/debug.ts`                           | The pages of the Test Images debug action                      |
+| `scripts/icons.ts`                       | Draws the icons in `imgs/` (our own artwork)                   |
+| `test/fake-app.ts`                       | A fake Stream Deck app for tests                               |
 
 The manifest targets SDK 3, Stream Deck 7.1 or later and Node.js 24, on macOS 13+ and Windows
 10+. Its actions come from the registry in `packages/deck/src/actions.ts`; a test keeps the two
-in step. The plugin UUID is `dev.faderlight.mixer`.
+in step. The plugin UUID is `com.ratio32.faderlight.mixer`.
 
 The plugin itself holds no key logic: it passes each key that appears, each key down and up
 and each settings change to the `DeckRuntime` of `packages/deck` (its README lists what each
@@ -27,9 +27,9 @@ action does) and sends the images the runtime draws back to the app.
 ## Build and try it
 
 ```sh
-npm run plugin:build                                        # bundles into the .sdPlugin folder
-npx streamdeck link packages/plugin/dev.faderlight.mixer.sdPlugin   # once: the app loads it from here
-npx streamdeck restart dev.faderlight.mixer                 # after each build
+npm run plugin:build                                                        # bundles into the .sdPlugin folder
+npx streamdeck link packages/plugin/com.ratio32.faderlight.mixer.sdPlugin   # once: the app loads it from here
+npx streamdeck restart com.ratio32.faderlight.mixer                         # after each build
 ```
 
 The build bundles `src/plugin.ts` and everything it imports into `bin/plugin.js` with Rollup

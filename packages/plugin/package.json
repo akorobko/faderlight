@@ -2,11 +2,11 @@
   "name": "@faderlight/plugin",
   "version": "0.1.0",
   "private": true,
-  "description": "The Stream Deck plugin: SDK wiring, manifest, icons, bundled profiles and the build into dev.faderlight.mixer.sdPlugin.",
+  "description": "The Stream Deck plugin: SDK wiring, manifest, icons, bundled profiles and the build into com.ratio32.faderlight.mixer.sdPlugin.",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.ts",
-    "validate": "streamdeck validate dev.faderlight.mixer.sdPlugin"
+    "validate": "streamdeck validate com.ratio32.faderlight.mixer.sdPlugin"
   },
   "dependencies": {
     "@elgato/streamdeck": "3.0.4",

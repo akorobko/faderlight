@@ -38,7 +38,7 @@
 │  │                             #   scheduler, layout engine, key controllers
 │  ├─ settings-app/              # Control Center SPA (Preact)
 │  └─ plugin/                    # SDK wiring, build, bundled profiles, PI html
-│     └─ dev.faderlight.mixer.sdPlugin/   # manifest, icons; bin/ and fonts/ are built
+│     └─ com.ratio32.faderlight.mixer.sdPlugin/   # manifest, icons; bin/ and fonts/ are built
 └─ tools/
    ├─ capture/                   # records real TotalMix OSC traffic to JSONL fixtures
    └─ virtual-deck/              # browser page rendering a full XL from plugin pipeline

@@ -1,9 +1,9 @@
 {
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
-  "UUID": "dev.faderlight.mixer",
+  "UUID": "com.ratio32.faderlight.mixer",
   "Name": "Faderlight",
   "Version": "0.1.0.0",
-  "Author": "Faderlight",
+  "Author": "ratio32.com",
   "Description": "Controls and monitors RME interfaces through TotalMix FX: channel keys with meters, monitoring, snapshots and a full console layout for the XL. Not affiliated with RME or Elgato.",
   "Category": "Faderlight",
   "CategoryIcon": "imgs/plugin/category",
@@ -29,7 +29,7 @@
   },
   "Actions": [
     {
-      "UUID": "dev.faderlight.mixer.slot",
+      "UUID": "com.ratio32.faderlight.mixer.slot",
       "Name": "Console Slot",
       "Tooltip": "One key of the Console layout: what it shows follows the page, the bank and the Channel Detail overlay.",
       "Icon": "imgs/actions/slot",
@@ -44,7 +44,7 @@
       "UserTitleEnabled": false
     },
     {
-      "UUID": "dev.faderlight.mixer.channel",
+      "UUID": "com.ratio32.faderlight.mixer.channel",
       "Name": "Channel",
       "Tooltip": "An input or playback channel: name, gain or level, meter. Tap mutes, hold opens details.",
       "Icon": "imgs/actions/channel",
@@ -59,7 +59,7 @@
       "UserTitleEnabled": false
     },
     {
-      "UUID": "dev.faderlight.mixer.output",
+      "UUID": "com.ratio32.faderlight.mixer.output",
       "Name": "Main / Output",
       "Tooltip": "The Main output or another output: volume and meter. Tap mutes.",
       "Icon": "imgs/actions/output",
@@ -74,7 +74,7 @@
       "UserTitleEnabled": false
     },
     {
-      "UUID": "dev.faderlight.mixer.phones",
+      "UUID": "com.ratio32.faderlight.mixer.phones",
       "Name": "Phones",
       "Tooltip": "A headphone output: volume and meter. Tap mutes.",
       "Icon": "imgs/actions/phones",
@@ -89,7 +89,7 @@
       "UserTitleEnabled": false
     },
     {
-      "UUID": "dev.faderlight.mixer.snapshot",
+      "UUID": "com.ratio32.faderlight.mixer.snapshot",
       "Name": "Snapshot",
       "Tooltip": "Loads a mixer snapshot and shows which one is loaded.",
       "Icon": "imgs/actions/snapshot",
@@ -104,7 +104,7 @@
       "UserTitleEnabled": false
     },
     {
-      "UUID": "dev.faderlight.mixer.monitor",
+      "UUID": "com.ratio32.faderlight.mixer.monitor",
       "Name": "Monitor Switch",
       "Tooltip": "Dim, Mono, Talkback, Speaker B or External input of the control room section.",
       "Icon": "imgs/actions/monitor",
@@ -119,7 +119,7 @@
       "UserTitleEnabled": false
     },
     {
-      "UUID": "dev.faderlight.mixer.global",
+      "UUID": "com.ratio32.faderlight.mixer.global",
       "Name": "Global Mute / Solo",
       "Tooltip": "The mixer-wide mute or solo switch.",
       "Icon": "imgs/actions/global",
@@ -134,7 +134,7 @@
       "UserTitleEnabled": false
     },
     {
-      "UUID": "dev.faderlight.mixer.status",
+      "UUID": "com.ratio32.faderlight.mixer.status",
       "Name": "Status",
       "Tooltip": "Connection to the mixer and the interface model. Hold to read the whole mixer again.",
       "Icon": "imgs/actions/status",
@@ -149,7 +149,7 @@
       "UserTitleEnabled": false
     },
     {
-      "UUID": "dev.faderlight.mixer.step",
+      "UUID": "com.ratio32.faderlight.mixer.step",
       "Name": "Volume Step",
       "Tooltip": "Turns Main, a Phones output or another output up or down; hold to repeat.",
       "Icon": "imgs/actions/step",
@@ -164,7 +164,7 @@
       "UserTitleEnabled": false
     },
     {
-      "UUID": "dev.faderlight.mixer.console",
+      "UUID": "com.ratio32.faderlight.mixer.console",
       "Name": "Open Console",
       "Tooltip": "Switches this device to the bundled Console profile.",
       "Icon": "imgs/actions/console",
@@ -179,7 +179,7 @@
       "UserTitleEnabled": false
     },
     {
-      "UUID": "dev.faderlight.mixer.test-image",
+      "UUID": "com.ratio32.faderlight.mixer.test-image",
       "Name": "Test Images",
       "Tooltip": "Development aid: shows the renderer test images. Tap for the next page, hold to switch between the SVG and the reference PNG.",
       "Icon": "imgs/actions/test-image",

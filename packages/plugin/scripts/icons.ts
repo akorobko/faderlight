@@ -1,4 +1,4 @@
-// Writes the plugin's icons into dev.faderlight.mixer.sdPlugin/imgs: SVG action icons for the
+// Writes the plugin's icons into the .sdPlugin folder's imgs/: SVG action icons for the
 // action list (20 x 20, white on transparent), the default key image (72 x 72), the category
 // icon (28 x 28) and the plugin icon as PNG (256 and 512 px, the app wants PNG there).
 //
