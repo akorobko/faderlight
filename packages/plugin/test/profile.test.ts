@@ -1,7 +1,7 @@
 // The bundled Console profile: a Console Slot on every key of an XL, the same bytes every build.
 
 import { describe, expect, it } from 'vitest';
-import { PROFILES, profileEntries, stableUuid, XL_MODEL } from '../scripts/profile.ts';
+import { pageFolder, PROFILES, profileEntries, stableUuid, XL_MODEL } from '../scripts/profile.ts';
 import { unzip, zip } from '../scripts/zip.ts';
 import { actionUuid, PLUGIN_UUID } from '../src/ids.ts';
 
@@ -27,11 +27,16 @@ describe('the bundled profiles', () => {
   it('is one XL page with a Console Slot on each of the 32 keys', () => {
     const [root, page] = [...files.keys()];
     expect(root).toMatch(/^[0-9A-F-]{36}\.sdProfile\/manifest\.json$/);
-    expect(page).toMatch(/^[0-9A-F-]{36}\.sdProfile\/Profiles\/[0-9A-F-]{36}\/manifest\.json$/);
-    expect(files.get(root ?? '')).toMatchObject({
-      Device: { Model: XL_MODEL },
-      Pages: { Pages: [expect.any(String)] },
-    });
+    const manifest = files.get(root ?? '') as {
+      Pages: { Current: string; Default: string; Pages: string[] };
+      Version: string;
+    };
+    expect(manifest).toMatchObject({ Device: { Model: XL_MODEL }, Version: '2.0' });
+    expect(manifest.Pages.Pages).toEqual([manifest.Pages.Current]);
+    // The page lives in the folder named by its encoded ID, as in the app's own 2.0 bundles.
+    expect(page).toBe(
+      `${(root ?? '').split('/')[0] ?? ''}/Profiles/${pageFolder(manifest.Pages.Current)}/manifest.json`,
+    );
     const actions = (files.get(page ?? '') as PageManifest).Controllers[0]?.Actions ?? {};
     const keys = Object.keys(actions);
     expect(keys).toHaveLength(32);
@@ -41,6 +46,28 @@ describe('the bundled profiles', () => {
       expect(action.UUID).toBe(actionUuid('slot'));
       expect(action.Plugin.UUID).toBe(PLUGIN_UUID);
     }
+  });
+
+  it('has an empty default page that the page list leaves out, as the app writes it', () => {
+    const [root, , empty] = [...files.keys()];
+    const manifest = files.get(root ?? '') as { Pages: { Default: string; Pages: string[] } };
+    expect(manifest.Pages.Pages).not.toContain(manifest.Pages.Default);
+    expect(empty).toBe(
+      `${(root ?? '').split('/')[0] ?? ''}/Profiles/${pageFolder(manifest.Pages.Default)}/manifest.json`,
+    );
+    expect(files.get(empty ?? '')).toEqual({
+      Controllers: [{ Actions: {}, Type: 'Keypad' }],
+      Icon: '',
+      Name: '',
+    });
+  });
+
+  it('names page folders like the app: base32hex without U, then Z', () => {
+    // Page IDs from bundles the app ships or imports, and the folders it keeps them in.
+    expect(pageFolder('44bbdee2-49c7-4fa1-9946-d47f3bd6e582')).toBe('8ITTTOI9OT7Q36A6QHWJNLN5G8Z');
+    expect(pageFolder('4501671e-39a0-4771-bcfc-efb7bbf72204')).toBe('8K0ME7HPK13N3F7STVRRNTP20GZ');
+    expect(pageFolder('61d1eb3b-6084-425d-8886-8cf121c1b061')).toBe('C78VMER0GH15R246HJOI3GDGC4Z');
+    expect(pageFolder('F5BAC9C2-470D-53FB-9A68-99BC95DE96D5')).toBe('VMTCJGI71L9WN6J8J6V9BNKMQKZ');
   });
 
   it('is the same archive on every build, and reads back', () => {
