@@ -55,7 +55,7 @@
 
 ### Components
 
-**OscTransport** — binds the feedback port, sends to TotalMix host:port. Detects silence → `disconnected`. Reconnect with backoff. Several transports possible (multi-device later).
+**OscTransport** (`packages/osc`, `UdpTransport`) — binds the feedback port, sends to TotalMix host:port, decodes every datagram. A failed bind or socket error is retried with exponential backoff (250 ms doubling to 10 s, ±20 % jitter). Accepts feedback from any source port of the TotalMix host and reports each change of source port (a TotalMix restart). It does not judge liveness: silence means nothing without a heartbeat, so the adaptor polls (below). Several transports possible (multi-device later).
 
 **TotalMixAdaptor** — maps addresses ⇄ typed model updates (`{entity: 'input', index: 9, field: 'phantom', value: true}`). Owns:
 - *Connection state machine*: `idle → probing (/sendstate, wait for the reply) → syncing (/sendall 2) → live → stale (3 unanswered /sendstate polls, one per second) → probing`. TotalMix sends no heartbeat and meters stop when levels do not change (`docs/protocol/global-osc.md` §5, §8).
