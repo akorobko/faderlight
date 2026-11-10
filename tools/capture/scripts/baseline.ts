@@ -347,6 +347,22 @@ export const baseline: Script = {
       verify: sendchanIn,
     }),
     write({
+      id: 'write-globalmute',
+      title: 'Toggle Global Mute',
+      why: 'Global Mute is a master switch (lit while any mute is set; a press turns them all off and on again). Is /globalmute accepted as a set, and what does TotalMix send back?',
+      address: '/globalmute',
+      change: toggle('f'),
+      verify: msg('/sendsettings', f(1)),
+    }),
+    write({
+      id: 'write-globalsolo',
+      title: 'Toggle Global Solo',
+      why: 'The same for /globalsolo: accepted as a set, and what comes back?',
+      address: '/globalsolo',
+      change: toggle('f'),
+      verify: msg('/sendsettings', f(1)),
+    }),
+    write({
       id: 'write-name',
       title: 'Rename {inName} to "FL test"',
       why: 'Can a channel be renamed over Global OSC, and is the new name echoed?',

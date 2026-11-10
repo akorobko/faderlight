@@ -22,7 +22,9 @@ in step. The plugin UUID is `com.ratio32.faderlight.mixer`.
 
 The plugin itself holds no key logic: it passes each key that appears, each key down and up
 and each settings change to the `DeckRuntime` of `packages/deck` (its README lists what each
-action does) and sends the images the runtime draws back to the app.
+action does) and sends the images the runtime draws back to the app. It stores the global
+settings when a Level Preset is saved, and gives the runtime the snapshot names from TotalMix's
+state file on this computer.
 
 ## Build and try it
 

@@ -5,7 +5,14 @@
 // (docs/design/02-architecture.md). Console Slots get their spec from the layout, by their
 // coordinates and the page and banks their device shows now.
 
-import { strips, type Bus, type SourceBus, type Strip } from '@faderlight/model';
+import {
+  mainOutput,
+  phonesOutput,
+  strips,
+  type Bus,
+  type SourceBus,
+  type Strip,
+} from '@faderlight/model';
 import {
   DARK,
   document,
@@ -34,13 +41,14 @@ import {
   CONSOLE_LAYOUT,
   keyAt,
   moveBank,
-  nextBankBus,
+  nextBankSource,
   type BankPosition,
+  type BankSource,
   type Layout,
 } from './layout.ts';
 import { SILENT, type Logger } from './log.ts';
 import { FrameScheduler, type FrameStats } from './scheduler.ts';
-import { DEFAULT_SETTINGS, type GlobalSettings, type JsonObject } from './settings.ts';
+import { DEFAULT_SETTINGS, toJson, type GlobalSettings, type JsonObject } from './settings.ts';
 import { EMPTY, specFromAction, type Direction, type KeySpec } from './specs.ts';
 
 /** What the runtime needs from the app that shows the keys. */
@@ -53,6 +61,14 @@ export interface DeckHost {
   showOk(id: string): void;
   /** Switches a device to one of the plugin's profiles; undefined: back to the previous one. */
   switchToProfile(device: string, profile?: string): void;
+  /** Stores new global settings (a Level Preset was saved). */
+  saveSettings(settings: JsonObject): void;
+}
+
+/** Snapshot names from somewhere other than the mixer, which does not send them. */
+export interface SnapshotNames {
+  /** The name of snapshot n (1-8), if known. */
+  name(n: number): string | undefined;
 }
 
 export interface Coordinates {
@@ -85,11 +101,13 @@ export interface DeckRuntimeOptions {
   /** Turns a view into an image (default: renderKey as an SVG data URL). */
   readonly render?: KeyRenderer;
   /** What the Console Slots show (default CONSOLE_LAYOUT). */
-  readonly layout?: Layout;
+  readonly layout?: Layout | undefined;
   /** The plugin's Console profile, for switchToProfile; undefined: there is none. */
   readonly consoleProfile?: string | undefined;
   /** Images for the Test Images debug action; undefined: its keys stay blank. */
   readonly debugImages?: DebugImages | undefined;
+  /** Where snapshot names come from (TotalMix's own files); undefined: none known. */
+  readonly snapshotNames?: SnapshotNames | undefined;
 }
 
 export type DebugMode = 'svg' | 'png';
@@ -127,7 +145,7 @@ interface DeckKey {
 /** What a device's navigation needs from the runtime. */
 interface DeviceHost {
   readonly clock: Clock;
-  bankOf(page: number, banks: ReadonlyMap<number, BankPosition>): BankState | undefined;
+  bankOf(page: number, n: number, banks: ReadonlyMap<string, BankPosition>): BankState | undefined;
   /** Draws the device's keys again. */
   redraw(): void;
   openConsole(): boolean;
@@ -148,8 +166,8 @@ class DeckDevice implements Navigator {
   readonly id: string;
   readonly pages: readonly string[];
   page = 0;
-  /** Bank position per page. */
-  readonly banks = new Map<number, BankPosition>();
+  /** Bank positions, by page and bank ("0/1": the second bank of the first page). */
+  readonly banks = new Map<string, BankPosition>();
   private readonly host: DeviceHost;
   private overlay: DetailState | undefined;
   /** Test Images: the page and kind of image shown. */
@@ -223,18 +241,18 @@ class DeckDevice implements Navigator {
     this.timer = undefined;
   }
 
-  bank(): BankState | undefined {
-    return this.host.bankOf(this.page, this.banks);
+  bank(n = 0): BankState | undefined {
+    return this.host.bankOf(this.page, n, this.banks);
   }
 
-  moveBank(direction: Direction): void {
-    const b = this.bank();
-    if (b) this.setBank(moveBank(b, b.size, b.total, direction));
+  moveBank(n: number, direction: Direction): void {
+    const b = this.bank(n);
+    if (b) this.setBank(n, moveBank(b, b.size, b.total, direction));
   }
 
-  nextBankBus(): void {
-    const b = this.bank();
-    if (b) this.setBank(nextBankBus(b));
+  nextBankSource(n: number): void {
+    const b = this.bank(n);
+    if (b) this.setBank(n, nextBankSource(b));
   }
 
   goToPage(index: number): void {
@@ -247,8 +265,16 @@ class DeckDevice implements Navigator {
     return this.host.openConsole();
   }
 
-  private setBank(to: BankPosition): void {
-    this.banks.set(this.page, to);
+  exitConsole(): void {
+    if (this.overlay) {
+      this.returnBack = false;
+      this.closeDetail();
+    }
+    this.host.switchBack();
+  }
+
+  private setBank(n: number, to: BankPosition): void {
+    this.banks.set(`${String(this.page)}/${String(n)}`, { source: to.source, offset: to.offset });
     this.host.redraw();
   }
 }
@@ -278,12 +304,13 @@ export class DeckRuntime {
   private readonly pageNames: readonly string[];
   private readonly consoleProfile: string | undefined;
   private readonly debugImages: DebugImages | undefined;
+  private readonly snapshotNames: SnapshotNames | undefined;
   private settings: GlobalSettings;
   private scheduler: FrameScheduler;
   private readonly keys = new Map<string, DeckKey>();
   private readonly devices = new Map<string, DeckDevice>();
-  /** Strips per bus, until the store changes. */
-  private readonly stripCache = new Map<Bus, Strip[]>();
+  /** Strips per bank source, until the store changes. */
+  private readonly stripCache = new Map<BankSource, Strip[]>();
   private readonly unsubscribe: () => void;
 
   constructor(options: DeckRuntimeOptions) {
@@ -298,6 +325,7 @@ export class DeckRuntime {
     this.pageNames = this.layout.pages.map((p) => p.name);
     this.consoleProfile = options.consoleProfile;
     this.debugImages = options.debugImages;
+    this.snapshotNames = options.snapshotNames;
     this.settings = options.settings ?? DEFAULT_SETTINGS;
     this.scheduler = this.makeScheduler();
     // Any change may show on any key (a name, Main moving to another output): draw them all
@@ -398,7 +426,7 @@ export class DeckRuntime {
     if (!d) {
       d = new DeckDevice(id, this.pageNames, {
         clock: this.clock,
-        bankOf: (page, banks) => this.bankOf(page, banks),
+        bankOf: (page, n, banks) => this.bankOf(page, n, banks),
         redraw: () => {
           this.redraw(id);
         },
@@ -425,20 +453,39 @@ export class DeckRuntime {
     return d;
   }
 
-  private stripsOf(bus: Bus): Strip[] {
-    let list = this.stripCache.get(bus);
+  private stripsOf(source: BankSource): Strip[] {
+    let list = this.stripCache.get(source);
     if (!list) {
-      list = strips(this.mixer.store, bus);
-      this.stripCache.set(bus, list);
+      list = this.listStrips(source);
+      this.stripCache.set(source, list);
     }
     return list;
   }
 
-  private bankOf(page: number, banks: ReadonlyMap<number, BankPosition>): BankState | undefined {
-    const spec = this.layout.pages[page]?.bank;
+  private listStrips(source: BankSource): Strip[] {
+    const store = this.mixer.store;
+    if (source !== 'playback+output') return strips(store, source);
+    // Main and the Phones outputs have keys of their own on the Console page.
+    const own = new Set(
+      [mainOutput(store), ...([1, 2, 3, 4] as const).map((n) => phonesOutput(store, n))]
+        .filter((s) => s !== undefined)
+        .map((s) => s.index),
+    );
+    return [
+      ...strips(store, 'playback'),
+      ...strips(store, 'output').filter((s) => !own.has(s.index)),
+    ];
+  }
+
+  private bankOf(
+    page: number,
+    n: number,
+    banks: ReadonlyMap<string, BankPosition>,
+  ): BankState | undefined {
+    const spec = this.layout.pages[page]?.banks?.[n];
     if (!spec) return undefined;
-    const at = banks.get(page) ?? { bus: spec.bus, offset: 0 };
-    const total = this.stripsOf(at.bus).length;
+    const at = banks.get(`${String(page)}/${String(n)}`) ?? { source: spec.source, offset: 0 };
+    const total = this.stripsOf(at.source).length;
     return { ...clampBank(at, spec.size, total), size: spec.size, total };
   }
 
@@ -460,10 +507,10 @@ export class DeckRuntime {
     }
     const spec = keyAt(this.layout, d.page, at);
     if (spec.type !== 'strip') return spec;
-    const bank = this.bankOf(d.page, d.banks);
-    const strip = bank && this.stripsOf(bank.bus)[bank.offset + spec.n];
+    const bank = this.bankOf(d.page, spec.bank ?? 0, d.banks);
+    const strip = bank && this.stripsOf(bank.source)[bank.offset + spec.n];
     if (!bank || !strip) return EMPTY;
-    return { type: 'channel', bus: bank.bus, index: strip.index, style: spec.style };
+    return { type: 'channel', bus: strip.bus, index: strip.index, style: spec.style };
   }
 
   // --- internals --------------------------------------------------------------------------
@@ -518,7 +565,18 @@ export class DeckRuntime {
       ok: () => {
         this.host.showOk(id);
       },
+      savePreset: (preset, db) => {
+        this.savePreset(preset, db);
+      },
+      snapshotName: (n) => this.snapshotNames?.name(n),
     };
+  }
+
+  /** Keeps a preset's level, draws the keys again and hands the settings to the app. */
+  private savePreset(preset: string, db: number): void {
+    const settings = { ...this.settings, levels: { ...this.settings.levels, [preset]: db } };
+    this.configure(settings);
+    this.host.saveSettings(toJson(settings));
   }
 
   private draw(key: DeckKey): string {

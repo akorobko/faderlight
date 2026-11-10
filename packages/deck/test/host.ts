@@ -1,7 +1,8 @@
-// A DeckHost for tests: records every image, alert and profile switch. The runtime under test
-// is given a renderer that returns the view as JSON, so a test can read what a key shows.
+// A DeckHost for tests: records every image, alert, profile switch and saved setting. The
+// runtime under test is given a renderer that returns the view as JSON, so a test can read what
+// a key shows.
 import type { KeyView, Theme } from '@faderlight/render';
-import type { DeckHost } from '../src/index.ts';
+import type { DeckHost, JsonObject } from '../src/index.ts';
 
 export type ShownView = KeyView & Record<string, unknown>;
 
@@ -15,6 +16,7 @@ export class TestHost implements DeckHost {
   readonly alerts: string[] = [];
   readonly oks: string[] = [];
   readonly profiles: [string, string | undefined][] = [];
+  readonly saved: JsonObject[] = [];
 
   setImage(id: string, image: string): void {
     const list = this.images.get(id) ?? [];
@@ -32,6 +34,10 @@ export class TestHost implements DeckHost {
 
   switchToProfile(device: string, profile?: string): void {
     this.profiles.push([device, profile]);
+  }
+
+  saveSettings(settings: JsonObject): void {
+    this.saved.push(settings);
   }
 
   /** The view the key shows now; undefined: blank (or nothing sent yet). */

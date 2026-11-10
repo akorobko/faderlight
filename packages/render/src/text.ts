@@ -249,3 +249,29 @@ export function wrapLines(s: string, o: FitOptions & { readonly maxLines: number
   if (current !== '') lines.push(current);
   return lines;
 }
+
+/**
+ * One line if `s` fits `maxWidth` at the first size without narrowing, else two lines split at
+ * the space that makes the longer line shortest ("Fireface" / "UFX III", not "Fireface UFX" /
+ * "III"). A single word stays one line, for fitText to narrow or cut.
+ */
+export function balancedLines(s: string, o: FitOptions): string[] {
+  const style: TextStyle = { face: o.face, size: o.sizes[0] ?? 12, tracking: o.tracking };
+  const words = s
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w !== '');
+  const one = words.join(' ');
+  if (words.length < 2 || measure(one, style) <= o.maxWidth) return [one];
+  let best = [one];
+  let bestWidth = Infinity;
+  for (let i = 1; i < words.length; i++) {
+    const lines = [words.slice(0, i).join(' '), words.slice(i).join(' ')];
+    const width = Math.max(...lines.map((line) => measure(line, style)));
+    if (width < bestWidth) {
+      best = lines;
+      bestWidth = width;
+    }
+  }
+  return best;
+}

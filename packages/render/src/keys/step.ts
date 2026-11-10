@@ -21,8 +21,8 @@ export interface StepKey extends KeyState {
 }
 
 export function renderStep(theme: Theme, k: StepKey): string {
-  const { look: l, frame } = functionLook(theme, { ...k, lit: k.held === true });
-  const c = chrome(theme, l, frame, k);
+  const l = functionLook(theme, { ...k, lit: k.held === true });
+  const c = chrome(theme, l, '', k);
   const arrow = k.atLimit === true || k.offline === true ? theme.line : l.text;
   const value =
     k.offline === true ? 'OFFLINE' : `${formatLevel(k.db)}${k.db === undefined ? '' : ' dB'}`;

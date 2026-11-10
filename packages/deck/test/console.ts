@@ -1,11 +1,12 @@
 // A Stream Deck XL full of Console Slots, like the bundled profile, on a loopback mixer.
-import { DEFAULT_SETTINGS, DeckRuntime, type GlobalSettings } from '../src/index.ts';
+import { DEFAULT_SETTINGS, DeckRuntime, type GlobalSettings, type Layout } from '../src/index.ts';
 import { renderJson, TestHost } from './host.ts';
 import { Loopback } from './loopback.ts';
 
 export function consoleDeck(
   mixer = new Loopback().connect(),
   settings: GlobalSettings = DEFAULT_SETTINGS,
+  layout?: Layout,
 ) {
   const host = new TestHost();
   const deck = new DeckRuntime({
@@ -15,6 +16,7 @@ export function consoleDeck(
     settings,
     render: renderJson,
     consoleProfile: 'profiles/Console',
+    layout,
   });
   const id = (column: number, row: number, device = 'XL') =>
     `${device}:${String(column)},${String(row)}`;

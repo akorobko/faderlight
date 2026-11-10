@@ -46,6 +46,8 @@ test('shows the Console page once the simulator is live', async ({ page }) => {
   await expect(page.locator('.key[data-id^="console:"]')).toHaveCount(32);
   await shows(page, 'console:6,0', { kind: 'status', link: 'live' });
   await shows(page, 'console:1,1', { kind: 'channel', name: 'Vocal' });
+  await shows(page, 'console:0,0', { kind: 'snapshot', n: 1, name: 'Tracking' });
+  await shows(page, 'console:0,2', { kind: 'channel', name: 'DAW' });
   await shot(page, 'console');
 });
 
@@ -67,14 +69,17 @@ test('a long press opens the Channel Detail overlay, Back closes it', async ({ p
   await shows(page, 'console:0,0', { kind: 'snapshot', n: 1 });
 });
 
-test('the page key goes to the Inputs and Outputs pages and back', async ({ page }) => {
+test('the page key goes to the Inputs and Outputs pages, the top-right key back', async ({
+  page,
+}) => {
   await key(page, 'console', 7, 0).click();
   await shows(page, 'console:0,0', { kind: 'channel', style: 'meter', name: 'Synth' });
+  await shows(page, 'console:7,0', { kind: 'page', name: 'CONSOLE' });
   await shot(page, 'inputs');
   await key(page, 'console', 7, 3).click();
   await shows(page, 'console:0,0', { kind: 'output', name: 'Main' });
   await shot(page, 'outputs');
-  await longPress(page, 'console', 7, 3);
+  await key(page, 'console', 7, 0).click();
   await shows(page, 'console:0,0', { kind: 'snapshot' });
 });
 
@@ -82,7 +87,7 @@ test('My page: specific actions, the Console launcher, and Channel Detail from t
   page,
 }) => {
   await page.getByRole('button', { name: 'My page' }).click();
-  await expect(page.locator('.key[data-id^="own:"]')).toHaveCount(13);
+  await expect(page.locator('.key[data-id^="own:"]')).toHaveCount(14);
   await shows(page, 'own:2,0', { kind: 'channel', name: 'Vocal' });
   await shot(page, 'my-page');
 
@@ -92,8 +97,11 @@ test('My page: specific actions, the Console launcher, and Channel Detail from t
   await shows(page, 'console:1,0', { name: 'Guitar' });
   // ...and Back returns to My page.
   await key(page, 'console', 7, 3).click();
-  await expect(page.locator('.key[data-id^="own:"]')).toHaveCount(13);
+  await expect(page.locator('.key[data-id^="own:"]')).toHaveCount(14);
 
   await key(page, 'own', 7, 1).click();
   await expect(page.locator('.key[data-id^="console:"]')).toHaveCount(32);
+  // Exit, bottom right on the Console, goes back to My page.
+  await key(page, 'console', 7, 3).click();
+  await expect(page.locator('.key[data-id^="own:"]')).toHaveCount(14);
 });

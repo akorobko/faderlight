@@ -8,6 +8,8 @@ import {
   DeckRuntime,
   readGlobalSettings,
   toJson,
+  totalMixFolder,
+  TotalMixSnapshotNames,
   type DeckHost,
   type JsonObject,
   type Logger,
@@ -45,6 +47,9 @@ const host: DeckHost = {
   switchToProfile: (device, profile) => {
     streamDeck.profiles.switchToProfile(device, profile).catch(report('switchToProfile'));
   },
+  saveSettings: (settings) => {
+    streamDeck.settings.setGlobalSettings(settings).catch(report('setGlobalSettings'));
+  },
 };
 
 // The client stamps meters with the system clock: the runtime reads them on the same one.
@@ -56,6 +61,8 @@ const deck = new DeckRuntime({
   consoleProfile: CONSOLE_PROFILE,
   // The app starts the plugin in its folder; the build put the Test Images PNGs in debug/.
   debugImages: debugImages(join(process.cwd(), 'debug')),
+  // TotalMix's state file has the snapshot names, when TotalMix runs on this computer.
+  snapshotNames: new TotalMixSnapshotNames(totalMixFolder()),
 });
 
 function applySettings(stored: unknown): void {

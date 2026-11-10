@@ -11,7 +11,7 @@ export type JsonValue =
 export type JsonObject = Record<string, JsonValue>;
 
 /** The current settings version. Bump it with a migration in MIGRATIONS. */
-export const SETTINGS_VERSION = 1;
+export const SETTINGS_VERSION = 2;
 
 export interface ConnectionSettings {
   /** Computer running TotalMix (default 127.0.0.1). */
@@ -49,6 +49,13 @@ export interface DetailSettings {
 
 export type ThemeName = 'dark' | 'high-contrast';
 
+/** Saved output levels of the Level Preset keys, in dB, by presetKey() (e.g. "main/1"). */
+export type LevelPresets = Readonly<Record<string, number>>;
+
+/** The lowest and highest level a preset can hold (TotalMix's fader range). */
+export const PRESET_MIN_DB = -65;
+export const PRESET_MAX_DB = 6;
+
 export interface GlobalSettings {
   readonly version: typeof SETTINGS_VERSION;
   readonly connection: ConnectionSettings;
@@ -56,6 +63,7 @@ export interface GlobalSettings {
   readonly frames: FrameSettings;
   readonly detail: DetailSettings;
   readonly theme: ThemeName;
+  readonly levels: LevelPresets;
 }
 
 export const DEFAULT_SETTINGS: GlobalSettings = {
@@ -65,6 +73,7 @@ export const DEFAULT_SETTINGS: GlobalSettings = {
   frames: { budgetPerSecond: 120, maxKeyFps: 15, meterFps: 12 },
   detail: { timeoutSec: 20 },
   theme: 'dark',
+  levels: {},
 };
 
 export interface ReadSettings {
@@ -85,6 +94,8 @@ const MIGRATIONS: Readonly<Record<number, (stored: JsonObject) => JsonObject>> =
   // Version 0: anything stored before settings had a version (development builds). Its fields,
   // where present, already have today's names.
   0: (stored) => ({ ...stored, version: 1 }),
+  // Version 1 had no level presets.
+  1: (stored) => ({ ...stored, version: 2, levels: {} }),
 };
 
 const isObject = (v: unknown): v is JsonObject =>
@@ -163,6 +174,7 @@ export function readGlobalSettings(stored: unknown): ReadSettings {
       timeoutSec: read.int('detail.timeoutSec', DEFAULT_SETTINGS.detail.timeoutSec, 0, 600),
     },
     theme: read.choice('theme', DEFAULT_SETTINGS.theme, ['dark', 'high-contrast'] as const),
+    levels: read.levels('levels'),
   };
 
   const changed =
@@ -228,6 +240,27 @@ class Reader {
       return max;
     }
     return n;
+  }
+
+  /** Level presets: numbers in the fader's range, rounded to tenths; others are dropped. */
+  levels(path: string): LevelPresets {
+    const v = this.get(path);
+    if (v === undefined) return {};
+    if (!isObject(v)) {
+      this.problems.push(`${path}: expected an object`);
+      return {};
+    }
+    const out: Record<string, number> = {};
+    for (const [key, db] of Object.entries(v)) {
+      if (typeof db === 'number' && db >= PRESET_MIN_DB && db <= PRESET_MAX_DB) {
+        out[key] = Math.round(db * 10) / 10;
+      } else {
+        this.problems.push(
+          `${path}.${key}: expected a level from ${String(PRESET_MIN_DB)} to ${String(PRESET_MAX_DB)} dB`,
+        );
+      }
+    }
+    return out;
   }
 
   choice<T extends string>(path: string, fallback: T, options: readonly T[]): T {

@@ -33,7 +33,8 @@ const mic9: ChannelKey = {
   kind: 'channel',
   label: 'MIC 9',
   name: 'Vocal',
-  color: 1,
+  source: 'input',
+  color: 3,
   value: { kind: 'gain', db: 42, caption: 'Gain' },
   meter: { left: meter(-16, -9) },
   badges: { phantom: true, phase: false, instrument: false, autoSet: false, stereo: false },
@@ -43,6 +44,7 @@ const kick: ChannelKey = {
   kind: 'channel',
   label: 'MIC 10',
   name: 'Kick In',
+  source: 'input',
   color: 6,
   value: { kind: 'gain', db: 28, caption: 'Gain' },
   meter: { left: meter(-3, 0, true), right: meter(-4, -0.5, true) },
@@ -53,7 +55,8 @@ const synth: ChannelKey = {
   kind: 'channel',
   label: 'AN 1/2',
   name: 'Synth',
-  color: 7,
+  source: 'input',
+  color: 5,
   value: { kind: 'level', db: -6.5, caption: 'Fader → Main' },
   meter: { left: meter(-22, -14), right: meter(-20, -13) },
   badges: { phase: false, stereo: true },
@@ -149,6 +152,7 @@ export const CASES: readonly Case[] = [
       kind: 'channel',
       label: 'ADAT 3/4',
       name: '',
+      source: 'playback',
       value: { kind: 'level', db: 0, caption: 'Fader' },
       meter: { left: meter(-100), right: meter(-100) },
       badges: { stereo: true },
@@ -295,6 +299,20 @@ export const CASES: readonly Case[] = [
     },
   },
   { name: 'output-offline', title: 'Offline', group: OUTPUTS, view: { ...main, offline: true } },
+  {
+    name: 'output-unassigned',
+    title: 'Phones, not assigned',
+    group: OUTPUTS,
+    view: {
+      kind: 'output',
+      role: 'phones',
+      title: 'PHONES 2',
+      label: '',
+      name: 'Not assigned',
+      volume: undefined,
+      unassigned: true,
+    },
+  },
 
   // --- toggles ---
   {
@@ -376,6 +394,12 @@ export const CASES: readonly Case[] = [
     title: 'Loaded, edited',
     group: FUNCTIONS,
     view: { kind: 'snapshot', n: 2, name: 'Tracking', state: 'modified' },
+  },
+  {
+    name: 'snapshot-two-lines',
+    title: 'Long name',
+    group: FUNCTIONS,
+    view: { kind: 'snapshot', n: 4, name: 'Vocal Booth Mix', state: 'inactive' },
   },
   {
     name: 'snapshot-no-name',
@@ -462,6 +486,18 @@ export const CASES: readonly Case[] = [
     title: 'Page',
     group: FUNCTIONS,
     view: { kind: 'page', name: 'Inputs', index: 1, count: 4 },
+  },
+  {
+    name: 'launcher',
+    title: 'Console launcher',
+    group: FUNCTIONS,
+    view: { kind: 'launcher', device: 'Fireface UFX III' },
+  },
+  {
+    name: 'launcher-no-device',
+    title: 'Launcher, mixer not seen yet',
+    group: FUNCTIONS,
+    view: { kind: 'launcher' },
   },
 
   // --- Channel Detail overlay ---

@@ -31,6 +31,8 @@ const ACTION_ICONS: Readonly<Record<ActionKind, string>> = {
   status: `<circle cx="10" cy="13" r="2.2" fill="${W}"/><path d="M6 9.5a5.5 5.5 0 0 1 8 0M3.5 7a9 9 0 0 1 13 0" fill="none" stroke="${W}" stroke-width="1.6" stroke-linecap="round"/>`,
   step: `<path d="M10 2.5 15 8H5z" fill="${W}"/><path d="M10 17.5 5 12h10z" fill="${W}"/>`,
   console: `<rect x="2" y="3" width="16" height="14" rx="2" fill="none" stroke="${W}" stroke-width="1.5"/><rect x="5" y="6" width="2" height="8" fill="${W}"/><rect x="9" y="6" width="2" height="8" fill="${W}"/><rect x="13" y="6" width="2" height="8" fill="${W}"/>`,
+  preset: `${fader}<path d="M14 2.5h4.5v6l-2.25-1.6L14 8.5z" fill="${W}"/>`,
+  exit: `<path d="M11 3H4.5A1.5 1.5 0 0 0 3 4.5v11A1.5 1.5 0 0 0 4.5 17H11" fill="none" stroke="${W}" stroke-width="1.6"/><path d="M8 10h9M13.5 6.5 17 10l-3.5 3.5" fill="none" stroke="${W}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`,
   'test-image': `<rect x="2.5" y="2.5" width="15" height="15" rx="1.5" fill="none" stroke="${W}" stroke-width="1.5"/><rect x="5" y="5" width="5" height="5" fill="${W}"/><rect x="10" y="10" width="5" height="5" fill="${W}"/>`,
 };
 

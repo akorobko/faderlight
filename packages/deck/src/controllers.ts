@@ -29,6 +29,7 @@ import {
 } from '@faderlight/model';
 import {
   formatGain,
+  formatLevel,
   type ChannelKey,
   type ChannelValue,
   type KeyView,
@@ -39,9 +40,16 @@ import {
 } from '@faderlight/render';
 import { FADER_MAX_DB, FADER_MIN_DB } from '@faderlight/totalmix';
 import { stepSize, VOLUME_ACCELERATION, type Gesture, type GestureOptions } from './gestures.ts';
-import type { BankPosition } from './layout.ts';
+import type { BankPosition, BankSource } from './layout.ts';
 import type { GlobalSettings } from './settings.ts';
-import type { ChannelSpec, Direction, KeySpec, OutputRef } from './specs.ts';
+import {
+  presetKey,
+  type ChannelSpec,
+  type Direction,
+  type KeySpec,
+  type OutputRef,
+  type PresetSpec,
+} from './specs.ts';
 
 /** What controllers need from the mixer client (TotalMixClient has all of it). */
 export interface MixerControl {
@@ -56,7 +64,7 @@ export interface MixerControl {
 /** Where a bank is, and how far it can go. */
 export interface BankState extends BankPosition {
   readonly size: number;
-  /** Strips the bus has now. */
+  /** Strips the source has now. */
   readonly total: number;
 }
 
@@ -75,17 +83,19 @@ export interface DetailState {
 export interface Navigator {
   /** Opens the Channel Detail overlay for a strip; false when it cannot be shown. */
   openDetail(bus: Bus, index: number): boolean;
-  /** The bank of the Console page shown; undefined when the page has none. */
-  bank(): BankState | undefined;
-  moveBank(direction: Direction): void;
-  /** Switches the bank to the next bus (inputs, playback, outputs). */
-  nextBankBus(): void;
+  /** A bank of the Console page shown (default its first); undefined when there is none. */
+  bank(n?: number): BankState | undefined;
+  moveBank(n: number, direction: Direction): void;
+  /** Switches a bank to its next source (inputs, playback, outputs, playback and outputs). */
+  nextBankSource(n: number): void;
   /** The Console page shown, from 0. */
   readonly page: number;
   readonly pages: readonly string[];
   goToPage(index: number): void;
   /** Switches the device to the Console profile; false when there is none. */
   openConsole(): boolean;
+  /** Leaves the Console for the profile the device showed before it. */
+  exitConsole(): void;
   /** The channel the Channel Detail overlay shows; undefined when it is closed. */
   detail(): DetailState | undefined;
   /** Closes the overlay (and goes back to the profile it was opened from). */
@@ -109,6 +119,10 @@ export interface KeyContext {
   alert(): void;
   /** Shows the app's "done" mark on the key. */
   ok(): void;
+  /** Keeps a Level Preset's level in the global settings. */
+  savePreset(key: string, db: number): void;
+  /** A snapshot's name, if known (TotalMix does not send them). */
+  snapshotName(n: number): string | undefined;
 }
 
 export interface Controller<S extends KeySpec> {
@@ -220,7 +234,7 @@ export function channelView(spec: ChannelSpec, ctx: KeyContext): KeyView | undef
       spec.index === undefined
         ? upper(spec.bus)
         : upper(deviceProfile(store).label(spec.bus, spec.index));
-    return { kind: 'channel', style: spec.style, label, offline: true };
+    return { kind: 'channel', style: spec.style, label, source: sourceOf(spec.bus), offline: true };
   }
   const value = (f: ChannelField) => channelValue(store, strip.bus, strip.index, f);
   const sw = (f: ChannelField) => {
@@ -248,6 +262,7 @@ export function channelView(spec: ChannelSpec, ctx: KeyContext): KeyView | undef
     style: spec.style,
     label: upper(strip.label),
     name: strip.name,
+    source: sourceOf(strip.bus),
     color: typeof color === 'number' ? color : undefined,
     value: primary,
     meter: meterOf(store, strip, ctx.now),
@@ -269,6 +284,11 @@ export function channelView(spec: ChannelSpec, ctx: KeyContext): KeyView | undef
     ]),
     offline: !isOnline(store),
   } satisfies ChannelKey;
+}
+
+/** The type icon for a channel key's bus. */
+function sourceOf(bus: Bus): 'input' | 'playback' {
+  return bus === 'playback' ? 'playback' : 'input';
 }
 
 const channelController: Controller<ChannelSpec> = {
@@ -309,6 +329,15 @@ const channelController: Controller<ChannelSpec> = {
 
 // --- outputs ------------------------------------------------------------------------------
 
+const PHONES_FIELD = { 1: 'phones1', 2: 'phones2', 3: 'phones3', 4: 'phones4' } as const;
+
+/** TotalMix reports no output for Main or a Phones role (Phones 2 not set up, say). */
+function unassigned(store: MixerStore, ref: OutputRef): boolean {
+  if (ref.role === 'output' || !isOnline(store)) return false;
+  const f = ref.role === 'main' ? 'mainOut' : PHONES_FIELD[ref.n];
+  return store.value({ scope: 'controlRoom', field: f }) === NO_CHANNEL;
+}
+
 export function outputView(ref: OutputRef, ctx: KeyContext): OutputKey {
   const store = ctx.mixer.store;
   const strip = resolveOutput(store, ref);
@@ -322,7 +351,8 @@ export function outputView(ref: OutputRef, ctx: KeyContext): OutputKey {
       label: ref.role === 'output' ? upper(deviceProfile(store).label('output', ref.index)) : '',
       name: ref.role === 'output' ? '' : 'Not assigned',
       volume: undefined,
-      offline: true,
+      unassigned: unassigned(store, ref) || undefined,
+      offline: !unassigned(store, ref),
     };
   }
   const value = (f: ChannelField) => channelValue(store, 'output', strip.index, f);
@@ -428,6 +458,7 @@ const snapshotController: Controller<Extract<KeySpec, { type: 'snapshot' }>> = {
     return {
       kind: 'snapshot',
       n: spec.n,
+      name: ctx.snapshotName(spec.n),
       state: store.value(target) as SnapshotState | undefined,
       pending: store.isPending(target),
       offline: !isOnline(store),
@@ -563,21 +594,22 @@ const statusController: Controller<Extract<KeySpec, { type: 'status' }>> = {
 
 // --- console navigation -------------------------------------------------------------------
 
-const BANK_ROW: Readonly<Record<Bus, string>> = {
+const BANK_ROW: Readonly<Record<BankSource, string>> = {
   input: 'INPUTS',
   playback: 'PLAYBACK',
   output: 'OUTPUTS',
+  'playback+output': 'PLAY + OUT',
 };
 
 const bankController: Controller<Extract<KeySpec, { type: 'bank' }>> = {
   options: (_spec, ctx) => ({ longPressMs: ctx.settings.gestures.longPressMs }),
   view: (spec, ctx) => {
-    const b = ctx.nav.bank();
+    const b = ctx.nav.bank(spec.bank ?? 0);
     const last = b ? Math.min(b.offset + b.size, b.total) : 0;
     return {
       kind: 'bank',
       direction: spec.direction,
-      row: b ? BANK_ROW[b.bus] : '',
+      row: b ? BANK_ROW[b.source] : '',
       first: b && b.total > 0 ? b.offset + 1 : 0,
       last,
       total: b?.total ?? 0,
@@ -587,51 +619,112 @@ const bankController: Controller<Extract<KeySpec, { type: 'bank' }>> = {
     };
   },
   gesture: (spec, g, ctx) => {
-    if (!ctx.nav.bank()) {
+    const n = spec.bank ?? 0;
+    if (!ctx.nav.bank(n)) {
       if (g.type === 'tap' || g.type === 'longPress') ctx.alert();
       return;
     }
-    if (g.type === 'tap') ctx.nav.moveBank(spec.direction);
-    else if (g.type === 'longPress') ctx.nav.nextBankBus();
+    if (g.type === 'tap') ctx.nav.moveBank(n, spec.direction);
+    else if (g.type === 'longPress') ctx.nav.nextBankSource(n);
   },
 };
+
+/** The page a page key goes to: its own, or the next or previous one. */
+function pageTarget(spec: Extract<KeySpec, { type: 'page' }>, nav: Navigator): number {
+  const count = Math.max(1, nav.pages.length);
+  if (spec.to !== undefined) return Math.min(Math.max(0, spec.to), count - 1);
+  return (nav.page + (spec.direction === 'prev' ? count - 1 : 1)) % count;
+}
 
 const pageController: Controller<Extract<KeySpec, { type: 'page' }>> = {
   options: (_spec, ctx) => ({ longPressMs: ctx.settings.gestures.longPressMs }),
   view: (spec, ctx) => {
     const { page, pages } = ctx.nav;
-    const count = Math.max(1, pages.length);
-    const to = (page + (spec.direction === 'next' ? 1 : count - 1)) % count;
+    const to = pageTarget(spec, ctx.nav);
     return {
       kind: 'page',
-      direction: spec.direction,
+      // A key back to an earlier page points back.
+      direction: spec.direction ?? (to < page ? 'prev' : 'next'),
       name: upper(pages[to] ?? ''),
       index: page + 1,
-      count,
+      count: Math.max(1, pages.length),
     };
   },
   gesture: (spec, g, ctx) => {
-    const count = ctx.nav.pages.length;
-    if (count === 0) return;
-    if (g.type === 'tap') {
-      ctx.nav.goToPage((ctx.nav.page + (spec.direction === 'next' ? 1 : count - 1)) % count);
-    } else if (g.type === 'longPress') {
-      ctx.nav.goToPage(0);
-    }
+    if (ctx.nav.pages.length === 0) return;
+    if (g.type === 'tap') ctx.nav.goToPage(pageTarget(spec, ctx.nav));
+    else if (g.type === 'longPress') ctx.nav.goToPage(0);
   },
 };
 
 const consoleController: Controller<Extract<KeySpec, { type: 'console' }>> = {
   options: () => ({}),
-  view: (_spec, ctx) => ({
-    kind: 'page',
-    direction: 'next',
-    name: 'CONSOLE',
-    index: ctx.nav.page + 1,
-    count: Math.max(1, ctx.nav.pages.length),
-  }),
+  view: (_spec, ctx) => ({ kind: 'launcher', device: deviceModel(ctx.mixer.store) }),
   gesture: (_spec, g, ctx) => {
     if (g.type === 'tap' && !ctx.nav.openConsole()) ctx.alert();
+  },
+};
+
+const exitController: Controller<Extract<KeySpec, { type: 'exit' }>> = {
+  options: () => ({}),
+  view: () => ({
+    kind: 'control',
+    title: 'CONSOLE',
+    arrow: 'left',
+    word: 'EXIT',
+    caption: 'my profile',
+  }),
+  gesture: (_spec, g, ctx) => {
+    if (g.type === 'tap') ctx.nav.exitConsole();
+  },
+};
+
+/** Main is at the preset when it is within a twentieth of a dB of it (TotalMix rounds). */
+const atLevel = (volume: number, preset: number): boolean => Math.abs(volume - preset) < 0.05;
+
+function presetTitle(ref: OutputRef, store: MixerStore): string {
+  return outputTitle(ref) ?? upper(resolveOutput(store, ref)?.label ?? 'OUTPUT');
+}
+
+const presetController: Controller<PresetSpec> = {
+  options: (_spec, ctx) => ({ longPressMs: ctx.settings.gestures.longPressMs }),
+  view: (spec, ctx) => {
+    const store = ctx.mixer.store;
+    const strip = resolveOutput(store, spec.output);
+    const volume = strip ? channelValue(store, 'output', strip.index, 'volume') : undefined;
+    const preset = ctx.settings.levels[presetKey(spec)];
+    const at = preset !== undefined && typeof volume === 'number' && atLevel(volume, preset);
+    return {
+      kind: 'control',
+      title: `${presetTitle(spec.output, store)} PRESET`,
+      word: preset === undefined ? 'SET' : `${formatLevel(preset)} dB`,
+      caption: preset === undefined ? 'hold to save' : at ? 'now' : 'hold to save',
+      lit: at,
+      pending: strip !== undefined && store.isPending(field('output', strip.index, 'volume')),
+      offline: !isOnline(store) || strip === undefined,
+    };
+  },
+  gesture: (spec, g, ctx) => {
+    if (g.type !== 'tap' && g.type !== 'longPress') return;
+    const store = ctx.mixer.store;
+    const strip = resolveOutput(store, spec.output);
+    const target = strip && field('output', strip.index, 'volume');
+    if (!target || !isOnline(store)) {
+      ctx.alert();
+      return;
+    }
+    if (g.type === 'longPress') {
+      // Saves what TotalMix shows; an output that is off has nothing to save.
+      const volume = store.value(target);
+      if (typeof volume !== 'number' || !Number.isFinite(volume)) ctx.alert();
+      else {
+        ctx.savePreset(presetKey(spec), Math.round(volume * 10) / 10);
+        ctx.ok();
+      }
+      return;
+    }
+    const preset = ctx.settings.levels[presetKey(spec)];
+    if (preset === undefined || !ctx.mixer.set(target, preset)) ctx.alert();
   },
 };
 
@@ -655,6 +748,8 @@ export const CONTROLLERS: {
   bank: bankController,
   page: pageController,
   console: consoleController,
+  exit: exitController,
+  preset: presetController,
   // A strip key is resolved into a channel key before it gets here (runtime.ts).
   strip: emptyController as unknown as Controller<Extract<KeySpec, { type: 'strip' }>>,
 };

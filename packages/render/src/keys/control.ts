@@ -43,8 +43,8 @@ export function renderControl(theme: Theme, k: ControlKey): string {
   const color = colorOf(theme, k.color);
   const on = k.switch === undefined ? undefined : k.switch === 'unknown' ? undefined : k.switch;
   const lit = k.lit === true || on === true;
-  const { look: l, frame } = functionLook(theme, { ...k, lit, color });
-  const c = chrome(theme, l, frame, k);
+  const l = functionLook(theme, { ...k, lit, color });
+  const c = chrome(theme, l, '', k);
   const bottom = k.offline === true ? 'OFFLINE' : (k.caption ?? '');
   if (k.switch !== undefined) {
     return (

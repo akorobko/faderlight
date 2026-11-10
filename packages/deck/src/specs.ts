@@ -78,16 +78,44 @@ export type KeySpec =
   | { readonly type: 'snapshot'; readonly n: number }
   | { readonly type: 'toggle'; readonly function: ToggleFunction }
   | { readonly type: 'status' }
+  /** A saved level for an output: a tap sets it, a long press saves the current level. */
+  | PresetSpec
   // Console layout keys (layout.ts):
-  /** The n-th strip (from 0) of the page's bank. */
-  | { readonly type: 'strip'; readonly n: number; readonly style?: ChannelStyle | undefined }
-  /** Moves the page's bank; a long press switches it to the next bus. */
-  | { readonly type: 'bank'; readonly direction: Direction }
-  /** Goes to the next (or previous) page; a long press to the first. */
-  | { readonly type: 'page'; readonly direction: Direction }
+  /** The n-th strip (from 0) of one of the page's banks (default the first). */
+  | {
+      readonly type: 'strip';
+      readonly n: number;
+      readonly style?: ChannelStyle | undefined;
+      readonly bank?: number | undefined;
+    }
+  /** Moves one of the page's banks (default the first); a long press switches its source. */
+  | { readonly type: 'bank'; readonly direction: Direction; readonly bank?: number | undefined }
+  /** Goes to page `to`, or else the next (or previous) page; a long press to the first. */
+  | {
+      readonly type: 'page';
+      readonly direction?: Direction | undefined;
+      readonly to?: number | undefined;
+    }
   /** Switches the deck to the Console profile. */
   | { readonly type: 'console' }
+  /** Leaves the Console for the profile the deck showed before it. */
+  | { readonly type: 'exit' }
   | DetailSpec;
+
+export interface PresetSpec {
+  readonly type: 'preset';
+  readonly output: OutputRef;
+  /** Which of the output's presets (1-8). */
+  readonly n: number;
+}
+
+/** Where a preset's level is kept in the global settings, e.g. "main/1", "phones2/1", "4/1". */
+export function presetKey(spec: PresetSpec): string {
+  const o = spec.output;
+  const out =
+    o.role === 'main' ? 'main' : o.role === 'phones' ? `phones${String(o.n)}` : String(o.index);
+  return `${out}/${String(spec.n)}`;
+}
 
 export type SpecType = KeySpec['type'];
 
@@ -162,6 +190,14 @@ export function specFromAction(kind: ActionKind, settings: JsonObject): KeySpec 
       };
     case 'console':
       return { type: 'console' };
+    case 'preset':
+      return {
+        type: 'preset',
+        output: outputRefFrom(settings.output),
+        n: int(settings.n, 1, 8) ?? 1,
+      };
+    case 'exit':
+      return { type: 'exit' };
     case 'slot':
     case 'test-image':
       // Not specs of their own: the runtime resolves these.

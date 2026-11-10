@@ -1,13 +1,33 @@
-// Shared key parts: the key's look per state (background, frames, offline hatching), chips
-// (the M and S letters, DIM) and badges (48V, Ø, INST: filled when on, outlined when off).
+// Shared key parts: the key's look per state (background, the tinted pad, the pending frame,
+// offline hatching), chips (the M and S letters, DIM) and badges (48V, Ø, INST: filled when
+// on, outlined when off).
 
 import { mix } from './color.ts';
 import type { FaceName } from './fonts.ts';
-import { line, path, rect, roundRect, type Box } from './svg.ts';
+import { line, num, path, rect, roundRect, type Box } from './svg.ts';
 import { capHeight, measure, text } from './text.ts';
 import type { StateTokens, Theme } from './theme.ts';
 
 export const CANVAS = 144;
+
+/**
+ * Margin around the content canvas that only the key's background reaches. The Stream Deck's
+ * keycaps bend the outer part of each display, so text, values and meters stay on the
+ * 144 x 144 content canvas and the key shows it inside this margin (`renderKey` draws a
+ * viewBox of `KEY` on the full key).
+ */
+export const BLEED = 14;
+
+/** The whole key, margin included, in content canvas coordinates. */
+export const KEY: Box = { x: -BLEED, y: -BLEED, w: CANVAS + 2 * BLEED, h: CANVAS + 2 * BLEED };
+
+/**
+ * Where a state's colour goes (muted, soloed, lit): the content canvas and 3 px of the margin,
+ * with round corners. Colour that reaches the key's edge bends under the keycap into odd
+ * shapes, so the edge always keeps the plain background.
+ */
+export const PAD: Box = { x: -3, y: -3, w: CANVAS + 6, h: CANVAS + 6 };
+export const PAD_RADIUS = 13;
 
 /** Flags every key can carry. */
 export interface KeyState {
@@ -21,56 +41,65 @@ export interface Look extends StateTokens {
   readonly offline: boolean;
 }
 
-/** Colours for a key: offline wins over muted, muted over normal. */
-export function look(theme: Theme, s: KeyState & { readonly muted?: boolean | undefined }): Look {
+/** Colours for a key: offline wins over muted, muted over soloed, soloed over normal. */
+export function look(
+  theme: Theme,
+  s: KeyState & { readonly muted?: boolean | undefined; readonly soloed?: boolean | undefined },
+): Look {
   if (s.offline === true) return { ...theme.offline, offline: true };
   if (s.muted === true) return { ...theme.muted, offline: false };
+  if (s.soloed === true) return { ...theme.soloed, offline: false };
   return { ...theme.normal, offline: false };
 }
 
-/** Background for the whole key, with diagonal hatching when offline. */
+/**
+ * The key's background: the plain background to the edge, and the look's own colour (or
+ * `fill`) on the pad when it differs. Offline: grey with diagonal hatching.
+ */
 export function background(theme: Theme, l: Look | StateTokens, fill?: string): string {
-  let out = rect({ x: 0, y: 0, w: CANVAS, h: CANVAS }, { fill: fill ?? l.background });
-  if ('offline' in l && l.offline) out += hatch(theme.offline.hatch);
+  if ('offline' in l && l.offline) {
+    return rect(KEY, { fill: fill ?? l.background }) + hatch(theme.offline.hatch);
+  }
+  const base = theme.normal.background;
+  const tint = fill ?? l.background;
+  let out = rect(KEY, { fill: base });
+  if (tint !== base) out += rect(PAD, { fill: tint }, PAD_RADIUS);
   return out;
 }
 
 /** Diagonal stripes over the whole key. */
 export function hatch(color: string, spacing = 20, width = 6): string {
+  const size = KEY.w;
   let d = '';
-  for (let c = spacing / 2; c < 2 * CANVAS; c += spacing) {
-    const x1 = Math.max(0, c - CANVAS);
-    const x2 = Math.min(c, CANVAS);
-    d += `M${String(x1)} ${String(c - x1)}L${String(x2)} ${String(c - x2)}`;
+  for (let c = spacing / 2; c < 2 * size; c += spacing) {
+    const x1 = Math.max(0, c - size);
+    const x2 = Math.min(c, size);
+    d += `M${num(KEY.x + x1)} ${num(KEY.y + c - x1)}L${num(KEY.x + x2)} ${num(KEY.y + c - x2)}`;
   }
   return path(d, { stroke: color, strokeWidth: width });
 }
 
-/** Inset frame along the key edge: solid (solo, lit) or dashed (pending). */
+/** A frame along the inside of the pad's edge: dashed while a change is pending. */
 export function frame(color: string, width: number, dash?: readonly number[]): string {
-  const inset = width / 2 + 1;
-  const box = { x: inset, y: inset, w: CANVAS - 2 * inset, h: CANVAS - 2 * inset };
-  return path(roundRect(box, 14 - inset), { stroke: color, strokeWidth: width, dash });
+  const inset = width / 2;
+  const box = { x: PAD.x + inset, y: PAD.y + inset, w: PAD.w - 2 * inset, h: PAD.h - 2 * inset };
+  return path(roundRect(box, PAD_RADIUS - inset), { stroke: color, strokeWidth: width, dash });
 }
 
 /**
- * The frames a channel-like key needs: solo is a solid orange frame, pending a dashed one
- * (orange too when soloed, so both read).
+ * The frame a channel-like key needs: a dashed one while a change is pending, orange when
+ * the channel is soloed. Solo itself is the pad's colour and the S chip.
  */
 export function stateFrames(
   theme: Theme,
   s: KeyState & { readonly soloed?: boolean | undefined },
 ): string {
-  if (s.offline === true) return '';
-  const solo = s.soloed === true;
-  if (s.pending === true) {
-    return frame(
-      solo ? theme.accent.solo : theme.accent.pending,
-      solo ? theme.frame.solo : theme.frame.pending,
-      theme.frame.dash,
-    );
-  }
-  return solo ? frame(theme.accent.solo, theme.frame.solo) : '';
+  if (s.offline === true || s.pending !== true) return '';
+  return frame(
+    s.soloed === true ? theme.accent.solo : theme.accent.pending,
+    theme.frame.pending,
+    theme.frame.dash,
+  );
 }
 
 // --- chips and badges ----------------------------------------------------------------------

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   channelColor,
   DARK,
+  mix,
   look,
   nameAndLabel,
   renderKey,
@@ -28,28 +29,57 @@ describe('channel key', () => {
     expect(nameAndLabel({ label: 'AN 1' })).toEqual(['AN 1', '']);
   });
 
-  it('maps mixer colour numbers and custom colours to tab colours', () => {
+  it("maps TotalMix's colour numbers and custom colours to underline colours", () => {
     expect(channelColor(DARK, undefined)).toBeUndefined();
     expect(channelColor(DARK, 0)).toBeUndefined();
-    expect(channelColor(DARK, 1)).toBe(DARK.channelColors[1]);
+    // 1 is TotalMix's "no colour"; 3, 5 and 6 are its orange, blue and green.
+    expect(channelColor(DARK, 1)).toBeUndefined();
+    expect(channelColor(DARK, 3)).toBe('#ff6e0a');
+    expect(channelColor(DARK, 5)).toBe('#3c8cff');
+    expect(channelColor(DARK, 6)).toBe('#00f027');
+    expect(channelColor(DARK, 99)).toBeUndefined();
     expect(channelColor(DARK, '#123456')).toBe('#123456');
     expect(channelColor(DARK, '#nope')).toBeUndefined();
   });
 
-  it('draws offline over muted over normal', () => {
+  it('draws offline over muted over soloed over normal', () => {
     expect(look(DARK, {}).background).toBe(DARK.normal.background);
-    expect(look(DARK, { muted: true }).background).toBe(DARK.muted.background);
+    expect(look(DARK, { soloed: true }).background).toBe(DARK.soloed.background);
+    expect(look(DARK, { muted: true, soloed: true }).background).toBe(DARK.muted.background);
     expect(look(DARK, { muted: true, offline: true }).background).toBe(DARK.offline.background);
   });
 
-  it('marks state with colour and shape', () => {
+  it('marks state with colour and shape, on the pad and never at the edge', () => {
     const normal = renderKey(mic);
     expect(normal).not.toContain(DARK.accent.solo);
     expect(normal).not.toContain('stroke-dasharray');
-    expect(renderKey({ ...mic, soloed: true })).toContain(`stroke="${DARK.accent.solo}"`);
+    const soloed = renderKey({ ...mic, soloed: true });
+    expect(soloed).toContain(`fill="${DARK.soloed.background}"`);
+    expect(soloed).toContain(`fill="${DARK.accent.solo}"`); // the S chip
+    expect(soloed).not.toContain(`stroke="${DARK.accent.solo}"`);
     expect(renderKey({ ...mic, pending: true })).toContain('stroke-dasharray');
-    expect(renderKey({ ...mic, muted: true })).toContain(`fill="${DARK.accent.mute}"`);
-    expect(renderKey({ ...mic, muted: true })).toContain(`fill="${DARK.muted.background}"`);
+    const muted = renderKey({ ...mic, muted: true });
+    expect(muted).toContain(`fill="${DARK.accent.mute}"`);
+    // The tint is on the pad; the whole key keeps the plain background to its edge.
+    expect(muted).toContain(
+      `<rect x="-14" y="-14" width="172" height="172" fill="${DARK.normal.background}"/>`,
+    );
+    expect(muted).toMatch(
+      new RegExp(
+        `<rect x="-3" y="-3" width="150" height="150" rx="13" fill="${DARK.muted.background}"`,
+      ),
+    );
+  });
+
+  it('shows one name: the channel name, else the physical label', () => {
+    const shown = (k: ChannelKey) => renderKey(k).length;
+    expect(shown({ ...mic, name: 'Vocal' })).not.toBe(shown({ ...mic, name: 'Other' }));
+    expect(renderKey({ ...mic, name: '' })).toBe(renderKey({ ...mic, name: 'mic 9' }));
+  });
+
+  it('underlines the name in the channel colour', () => {
+    expect(renderKey({ ...mic, color: 5 })).toContain('fill="#3c8cff"');
+    expect(renderKey({ ...mic, color: 1 })).toBe(renderKey(mic));
   });
 
   it('lights 48V red only when on, and hides badges a channel does not have', () => {
@@ -76,7 +106,11 @@ describe('channel key', () => {
 });
 
 describe('other keys', () => {
-  const lit = (view: KeyView, color: string) => renderKey(view).includes(`stroke="${color}"`);
+  // A lit key is a dark tint of its colour on the pad; a key waiting for a second tap also
+  // has a frame in it.
+  const lit = (view: KeyView, color: string) =>
+    renderKey(view).includes(`fill="${mix(color, DARK.normal.background, 0.72)}"`);
+  const framed = (view: KeyView, color: string) => renderKey(view).includes(`stroke="${color}"`);
 
   it('light toggles in their own colour when on', () => {
     expect(lit({ kind: 'toggle', function: 'dim', on: true }, DARK.accent.dim)).toBe(true);
@@ -95,10 +129,10 @@ describe('other keys', () => {
 
   it('turn red while a save or a recording waits for confirmation', () => {
     expect(
-      lit({ kind: 'snapshot', n: 2, state: 'active', confirmSave: true }, DARK.accent.record),
+      framed({ kind: 'snapshot', n: 2, state: 'active', confirmSave: true }, DARK.accent.record),
     ).toBe(true);
     expect(
-      lit({ kind: 'recorder', state: 'stopped', confirmRecord: true }, DARK.accent.record),
+      framed({ kind: 'recorder', state: 'stopped', confirmRecord: true }, DARK.accent.record),
     ).toBe(true);
     expect(lit({ kind: 'recorder', state: 'recording', time: 1 }, DARK.accent.record)).toBe(true);
     expect(lit({ kind: 'recorder', state: 'stopped', time: 1 }, DARK.accent.record)).toBe(false);

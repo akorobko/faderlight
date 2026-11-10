@@ -84,11 +84,12 @@ describe('controllers', () => {
       openDetail: () => false,
       bank: () => undefined,
       moveBank: () => undefined,
-      nextBankBus: () => undefined,
+      nextBankSource: () => undefined,
       page: 0,
       pages: [],
       goToPage: () => undefined,
       openConsole: () => false,
+      exitConsole: () => undefined,
       detail: () => undefined,
       closeDetail: () => undefined,
       moveDetail: () => undefined,
@@ -96,6 +97,8 @@ describe('controllers', () => {
     },
     alert: () => undefined,
     ok: () => undefined,
+    savePreset: () => undefined,
+    snapshotName: () => undefined,
   });
 
   it('Dim shows how much it takes off, Global Solo how many channels are soloed', () => {

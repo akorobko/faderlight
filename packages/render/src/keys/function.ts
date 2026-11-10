@@ -1,6 +1,6 @@
 // Shared layout for function keys (toggles, snapshots, steps, banks, the recorder): a small
 // title on top, one big word or symbol in the middle, a caption at the bottom. "Lit" keys
-// (an active toggle, the loaded snapshot) take a tint of their colour and a frame of it.
+// (an active toggle, the loaded snapshot) take a tint of their colour on the pad.
 
 import { mix } from '../color.ts';
 import { background, CANVAS, frame, look, type KeyState, type Look } from '../parts.ts';
@@ -9,45 +9,46 @@ import { fittedText } from '../text.ts';
 import type { Theme } from '../theme.ts';
 
 export const CENTER = CANVAS / 2;
-export const WIDTH = CANVAS - 2 * 12;
+export const WIDTH = CANVAS - 2 * 7;
 
-/** Colours of a key lit in `color`: a dark tint of it, white text, a frame in it. */
-export function litLook(theme: Theme, color: string): Look & { readonly frame: string } {
+/** Colours of a key lit in `color`: a dark tint of it on the pad, white text. */
+export function litLook(theme: Theme, color: string): Look {
   const base = theme.normal.background;
   return {
     background: mix(color, base, 0.72),
     text: theme.lit.text,
     subtext: mix(color, '#ffffff', 0.55),
     offline: false,
-    frame: color,
   };
 }
 
-/** Normal, lit (in `color`) or offline colours, and the frame that goes with them. */
+/**
+ * Normal, lit (in `color`) or offline colours. A lit key shows its tint on the pad, with no
+ * frame: a frame at the key's edge bends under the keycap.
+ */
 export function functionLook(
   theme: Theme,
   s: KeyState & { readonly lit?: boolean | undefined; readonly color?: string | undefined },
-): { readonly look: Look; readonly frame: string } {
-  if (s.offline === true || s.lit !== true) return { look: look(theme, s), frame: '' };
-  const lit = litLook(theme, s.color ?? theme.lit.frame);
-  return { look: lit, frame: frame(lit.frame, 4) };
+): Look {
+  if (s.offline === true || s.lit !== true) return look(theme, s);
+  return litLook(theme, s.color ?? theme.lit.frame);
 }
 
-/** Background plus frames: the lit frame, or a dashed one while pending. */
+/**
+ * Background, and the frame on top: `keyFrame` (a save waiting for its second tap), or a
+ * dashed one while pending.
+ */
 export function chrome(
   theme: Theme,
   l: Look,
-  litFrame: string,
+  keyFrame: string,
   s: KeyState,
 ): { readonly under: string; readonly over: string } {
   const pending = s.pending === true && s.offline !== true;
+  const plain = l.background === theme.normal.background;
   const over = pending
-    ? frame(
-        litFrame === '' ? theme.accent.pending : theme.lit.text,
-        theme.frame.pending,
-        theme.frame.dash,
-      )
-    : litFrame;
+    ? frame(plain ? theme.accent.pending : l.text, theme.frame.pending, theme.frame.dash)
+    : keyFrame;
   return { under: background(theme, l), over };
 }
 

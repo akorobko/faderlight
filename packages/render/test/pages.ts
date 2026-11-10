@@ -21,6 +21,7 @@ const mic = (
   kind: 'channel',
   label: `MIC ${String(n)}`,
   name,
+  source: 'input',
   color,
   value: { kind: 'gain', db: gain, caption: 'Gain' },
   meter: { left: meter(level) },
@@ -38,25 +39,48 @@ const line = (
   kind: 'channel',
   label: `AN ${String(n)}`,
   name,
+  source: 'input',
   color,
   value: { kind: 'gain', db: 0, caption: 'Gain' },
   meter: { left: meter(level) },
   ...over,
 });
 
-const snapshots = ['Default', 'Tracking', 'Mixdown', 'Podcast', 'Live', 'Reference'];
+const snapshots = ['Tracking', 'Overdubs', 'Mixdown', 'Reference'];
 
-const console: KeyView[] = [
+const playback = (n: number, name: string, db: number, level: number): ChannelKey => ({
+  kind: 'channel',
+  label: `PB ${String(n)}/${String(n + 1)}`,
+  name,
+  source: 'playback',
+  value: { kind: 'level', db, caption: 'Fader' },
+  meter: { left: meter(level), right: meter(level - 1) },
+  badges: { stereo: true },
+});
+
+const output = (label: string, name: string, volume: number, level: number): KeyView => ({
+  kind: 'output',
+  role: 'output',
+  label,
+  name,
+  volume,
+  meter: { left: meter(level), right: meter(level - 1) },
+});
+
+// The default Console page (packages/deck/src/layout.ts) on a small studio setup.
+const console: (KeyView | undefined)[] = [
   ...snapshots.map((name, i): KeyView => ({
     kind: 'snapshot',
     n: i + 1,
     name,
     state: i === 1 ? 'active' : 'inactive',
   })),
+  { kind: 'toggle', function: 'dim', on: true, caption: `${MINUS}20 dB` },
+  { kind: 'toggle', function: 'mono', on: false, caption: 'Main out' },
   { kind: 'status', link: 'live', device: 'Fireface UFX III', beat: true },
-  { kind: 'page', name: 'Inputs', index: 1, count: 4 },
+  { kind: 'page', name: 'Inputs', index: 1, count: 3 },
 
-  mic(9, 'Vocal', 1, 42, -16, {
+  mic(9, 'Vocal', 3, 42, -16, {
     badges: { phantom: true, phase: false, instrument: false, autoSet: false },
   }),
   mic(10, 'Kick In', 6, 28, -3, {
@@ -64,14 +88,31 @@ const console: KeyView[] = [
     badges: { phantom: false, phase: true, instrument: false, autoSet: false },
   }),
   mic(11, 'Snare', 6, 31, -9, { muted: true }),
-  mic(12, 'Guitar DI', 4, 18, -20, {
+  mic(12, 'Guitar DI', 5, 18, -20, {
     soloed: true,
     badges: { phantom: false, phase: false, instrument: true, autoSet: false },
   }),
-  line(1, 'Synth L', 7, -24),
-  line(2, 'Synth R', 7, -25),
-  line(3, 'Drum Mach', 2, -100),
-  line(4, 'Talkback', 0, -100),
+  line(1, 'Synth L', 5, -24),
+  line(2, 'Synth R', 5, -25),
+  line(3, 'Drum Mach', 1, -100),
+  { kind: 'bank', direction: 'next', row: 'Inputs', first: 1, last: 7, total: 12 },
+
+  playback(1, 'DAW', -6, -14),
+  playback(3, 'Browser', -12, -30),
+  playback(5, 'Calls', -10, -100),
+  output('AN 3/4', 'NS10', -10, -100),
+  output('AN 5/6', 'Reamp', 0, -18),
+  output('AN 7/8', 'Gtr Ret', -3, -26),
+  output('ADAT 1/2', 'To PC', 0, -22),
+  {
+    kind: 'bank',
+    direction: 'next',
+    row: 'Play + Out',
+    first: 1,
+    last: 7,
+    total: 7,
+    atEnd: true,
+  },
 
   {
     kind: 'output',
@@ -95,36 +136,24 @@ const console: KeyView[] = [
     kind: 'output',
     role: 'phones',
     title: 'PHONES 2',
-    label: 'PH 11/12',
-    name: 'Artist',
-    volume: -20,
-    muted: true,
-    meter: { left: meter(-30), right: meter(-31) },
+    label: '',
+    name: 'Not assigned',
+    volume: undefined,
+    unassigned: true,
   },
   {
-    kind: 'output',
-    role: 'output',
-    label: 'AN 3/4',
-    name: 'NS10',
-    volume: -10,
-    meter: { left: meter(-100), right: meter(-100) },
+    kind: 'control',
+    title: 'Main preset',
+    word: `${MINUS}20.0 dB`,
+    caption: 'hold to save',
   },
-  { kind: 'toggle', function: 'dim', on: true, caption: `${MINUS}20 dB` },
-  { kind: 'toggle', function: 'mono', on: false, caption: 'Main out' },
-  { kind: 'toggle', function: 'talkback', on: false, caption: 'hold to talk' },
-  { kind: 'bank', direction: 'next', row: 'Inputs', first: 9, last: 16, total: 94 },
-
-  { kind: 'step', direction: 'down', target: 'Main', db: -18.5 },
-  { kind: 'step', direction: 'up', target: 'Main', db: -18.5 },
-  { kind: 'step', direction: 'down', target: 'Phones 1', db: -12 },
-  { kind: 'step', direction: 'up', target: 'Phones 1', db: -12 },
-  { kind: 'step', direction: 'down', target: 'Phones 2', db: -20 },
-  { kind: 'step', direction: 'up', target: 'Phones 2', db: -20 },
-  { kind: 'toggle', function: 'globalMute', on: false },
-  { kind: 'toggle', function: 'globalSolo', on: true, caption: '1 soloed' },
+  undefined,
+  undefined,
+  undefined,
+  { kind: 'control', title: 'Console', arrow: 'left', word: 'EXIT', caption: 'my profile' },
 ];
 
-// Inputs page: 32 meter-style keys, a monitoring wall.
+// Inputs page: meter-style keys, a monitoring wall.
 const NAMES = [
   'Kick In',
   'Kick Out',
@@ -164,22 +193,31 @@ const LEVELS = [
   -8, -26, -27, -100, -100, -100, -100, -100, -40, -38, -100, -100,
 ];
 
-const inputs: KeyView[] = NAMES.map((name, i): KeyView => {
+const meters: KeyView[] = NAMES.slice(0, 29).map((name, i): KeyView => {
   const level = LEVELS[i] ?? -100;
   return {
     kind: 'channel',
     style: 'meter',
     label: i < 28 ? `IN ${String(i + 1)}` : `ADAT ${String(i - 27)}`,
     name,
-    color: 1 + (Math.floor(i / 4) % 8),
+    color: [3, 5, 6, 1][Math.floor(i / 4) % 4],
     meter: { left: meter(level, level + 6, i === 0) },
     muted: i === 26 || i === 27,
     soloed: i === 20,
   };
 });
 
+// Like packages/deck/src/layout.ts: the Console key top right, the bank and page keys last.
+const inputs: KeyView[] = [
+  ...meters.slice(0, 7),
+  { kind: 'page', direction: 'prev', name: 'Console', index: 2, count: 3 },
+  ...meters.slice(7),
+  { kind: 'bank', direction: 'next', row: 'Inputs', first: 1, last: 29, total: 32 },
+  { kind: 'page', name: 'Outputs', index: 2, count: 3 },
+];
+
 // The Channel Detail overlay on Vocal (docs/design/03-ux.md §3.1), with Phones 1 selected.
-const vocal = mic(9, 'Vocal', 1, 42, -16, {
+const vocal = mic(9, 'Vocal', 3, 42, -16, {
   badges: { phantom: true, phase: false, instrument: false, autoSet: false },
 });
 const send = (title: string, name: string, db: string, lit = false): KeyView => ({
@@ -203,7 +241,7 @@ const detail: (KeyView | undefined)[] = [
   { kind: 'control', title: 'Channel', word: 'SOLO', switch: false, color: 'solo' },
   { kind: 'control', title: 'Fader', arrow: 'down', word: `${MINUS}6.0` },
   { kind: 'control', title: 'Fader', arrow: 'up', word: `${MINUS}6.0` },
-  { ...vocal, style: 'meter' },
+  { ...vocal, style: 'meter', name: undefined }, // the physical label
   { kind: 'control', title: 'Low cut', word: '80 Hz', switch: true },
   { kind: 'control', title: 'EQ', word: 'EQ', switch: true },
   { kind: 'control', title: 'Dynamics', word: 'DYN', switch: false },

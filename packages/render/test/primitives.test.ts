@@ -160,7 +160,7 @@ describe('meter', () => {
 
 describe('themes', () => {
   it.each(Object.values(THEMES))('$name keeps text readable', (theme) => {
-    for (const s of [theme.normal, theme.muted, theme.lit]) {
+    for (const s of [theme.normal, theme.muted, theme.soloed, theme.lit]) {
       expect(contrast(s.text, s.background)).toBeGreaterThanOrEqual(4.5);
       expect(contrast(s.subtext, s.background)).toBeGreaterThanOrEqual(4.5);
     }
@@ -184,6 +184,6 @@ describe('themes', () => {
     expect(contrast(HIGH_CONTRAST.normal.text, HIGH_CONTRAST.normal.background)).toBeGreaterThan(
       contrast(DARK.normal.text, DARK.normal.background),
     );
-    expect(HIGH_CONTRAST.frame.solo).toBeGreaterThan(DARK.frame.solo);
+    expect(HIGH_CONTRAST.frame.pending).toBeGreaterThan(DARK.frame.pending);
   });
 });

@@ -1,13 +1,13 @@
 // Status key (docs/design/03-ux.md §2.3 and §6): the link to the mixer at a glance. A link
 // dot and word on top (green live, amber connecting or syncing, red no reply, grey off), the
-// device model, then sample rate, clock and DSP load when the mixer reports them, or why
-// the link is down.
+// device model large, then sample rate, clock and DSP load when the mixer reports them, or
+// why the link is down.
 
 import { mix } from '../color.ts';
 import { formatRate } from '../format.ts';
 import { circle } from '../svg.ts';
 import { background, CANVAS, look, rule } from '../parts.ts';
-import { fittedText, fitText, text, wrapLines } from '../text.ts';
+import { balancedLines, fittedText, fitText, text } from '../text.ts';
 import type { Theme } from '../theme.ts';
 
 /** The connection states of the mixer client (packages/model ConnectionState). */
@@ -37,7 +37,7 @@ const WORDS: Readonly<Record<LinkState, string>> = {
   stale: 'NO REPLY',
 };
 
-const X = 14;
+const X = 7;
 const WIDTH = CANVAS - 2 * X;
 
 export function renderStatus(theme: Theme, k: StatusKey): string {
@@ -54,44 +54,45 @@ export function renderStatus(theme: Theme, k: StatusKey): string {
           : theme.link.busy;
   let out = background(theme, l);
 
-  // Link dot (a ring between heartbeats) and word.
+  // Link dot (a ring between heartbeats) and word, big enough to read from an angle.
   const dotFill = k.link === 'live' && k.beat === false ? mix(color, l.background, 0.6) : color;
-  out += circle(X + 6, 18, 6, { fill: dotFill });
-  out += text(WORDS[k.link], {
+  out += circle(X + 8, 21, 8, { fill: dotFill });
+  out += fittedText(WORDS[k.link], {
     face: 'bold',
-    size: t.small,
-    tracking: 0.6,
-    x: X + 18,
-    y: 23,
+    sizes: [t.medium, t.small + 3, t.small],
+    maxWidth: WIDTH - 22,
+    minScaleX: 0.75,
+    tracking: 0.4,
+    x: X + 22,
+    y: 29,
     fill: color,
-  });
+  }).svg;
 
-  // Device model, on up to two lines.
+  // Device model, on up to two lines: large, or smaller when the mixer's figures follow.
+  const extras =
+    !down &&
+    k.link !== 'probing' &&
+    (k.sampleRate !== undefined || k.clock !== undefined || k.dsp !== undefined);
+  const size = extras ? t.medium : t.medium + 8;
+  const lineH = extras ? 23 : 32;
   const device = (k.device ?? '').trim();
-  const deviceColor = down ? l.subtext : l.text;
-  let y = 50;
+  let y = extras ? 56 : 70;
   if (device !== '') {
-    const lines = wrapLines(device, {
-      face: 'semibold',
-      sizes: [t.medium],
-      maxWidth: WIDTH,
-      maxLines: 2,
-    });
+    const lines = balancedLines(device, { face: 'bold', sizes: [size], maxWidth: WIDTH });
     for (const line of lines) {
       out += fittedText(line, {
-        face: 'semibold',
-        sizes: [t.medium, t.small],
+        face: 'bold',
+        sizes: [size, t.medium],
         maxWidth: WIDTH,
         minScaleX: 0.78,
         x: X,
         y,
-        fill: deviceColor,
+        fill: down ? l.subtext : l.text,
       }).svg;
-      y += 23;
+      y += lineH;
     }
   } else {
-    out += text('No device', { face: 'semibold', size: t.medium, x: X, y, fill: l.subtext });
-    y += 23;
+    out += text('No device', { face: 'bold', size, x: X, y, fill: l.subtext });
   }
 
   if (down || k.link === 'probing') {
@@ -103,12 +104,7 @@ export function renderStatus(theme: Theme, k: StatusKey): string {
         : k.link === 'stale'
           ? 'Mixer not answering'
           : 'Waiting for reply');
-    const lines = wrapLines(message, {
-      face: 'semibold',
-      sizes: [t.small],
-      maxWidth: WIDTH,
-      maxLines: 2,
-    });
+    const lines = balancedLines(message, { face: 'semibold', sizes: [t.small], maxWidth: WIDTH });
     let my = 136 - (lines.length - 1) * 18;
     for (const line of lines) {
       const fit = fitText(line, { face: 'semibold', sizes: [t.small], maxWidth: WIDTH });
@@ -126,8 +122,8 @@ export function renderStatus(theme: Theme, k: StatusKey): string {
   }
 
   // Sample rate, then clock and DSP on one line: each only when the mixer reports it.
-  if (k.sampleRate === undefined && k.clock === undefined && k.dsp === undefined) return out;
-  out += rule(X, CANVAS - X, Math.max(y - 9, 74), theme.line);
+  if (!extras) return out;
+  out += rule(X, CANVAS - X, 92, theme.line);
   if (k.sampleRate !== undefined) {
     out += fittedText(formatRate(k.sampleRate), {
       face: 'bold',
@@ -135,7 +131,7 @@ export function renderStatus(theme: Theme, k: StatusKey): string {
       maxWidth: WIDTH,
       tabular: true,
       x: X,
-      y: 108,
+      y: 116,
       fill: l.text,
     }).svg;
   }
@@ -146,7 +142,7 @@ export function renderStatus(theme: Theme, k: StatusKey): string {
       size: t.small,
       tracking: 0.4,
       x: X,
-      y: 134,
+      y: 138,
       fill: locked ? theme.link.live : theme.link.lost,
     });
   }
@@ -157,7 +153,7 @@ export function renderStatus(theme: Theme, k: StatusKey): string {
       size: t.small,
       tabular: true,
       x: CANVAS - X,
-      y: 134,
+      y: 138,
       anchor: 'end',
       fill: l.subtext,
     });

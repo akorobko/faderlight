@@ -80,6 +80,19 @@ describe('readGlobalSettings', () => {
     expect(r.settings.theme).toBe('high-contrast');
   });
 
+  it('migrates version 1 to level presets, and keeps only presets in the fader range', () => {
+    expect(readGlobalSettings({ version: 1 }).settings.levels).toEqual({});
+    const r = readGlobalSettings({
+      version: 2,
+      levels: { 'main/1': -20.04, 'phones1/2': -80, 'main/2': 'loud' },
+    });
+    expect(r.settings.levels).toEqual({ 'main/1': -20 });
+    expect(r.problems).toEqual([
+      'levels.phones1/2: expected a level from -65 to 6 dB',
+      'levels.main/2: expected a level from -65 to 6 dB',
+    ]);
+  });
+
   it('drops fields it does not know when writing back', () => {
     const r = readGlobalSettings({ ...toJson(DEFAULT_SETTINGS), stale: 1 });
     expect(r.changed).toBe(true);

@@ -8,7 +8,8 @@
 //  → out1  → out2  → out3  → out4  → out5  FX SEND PAN ◀   PAN ▶      (tap: send for the ± keys)
 //  ◀ PREV  NEXT ▶  SEND −  SEND +  -       -       CLEAR   BACK
 //
-// The fader keys set the channel's level into Main (an input's fader is its route into a
+// The meter key shows the channel's physical label ("MIC 9"), which the channel keys leave out
+// when the channel has a name. The fader keys set the channel's level into Main (an input's fader is its route into a
 // submix); the send keys set the route into the selected submix, or the FX send. The five send
 // keys are the first five visible outputs. Pan is the pan of the route into the selected
 // submix. Keys for something the channel does not have (gain on a playback channel, 48V on a
@@ -213,11 +214,14 @@ function detailView(spec: DetailSpec, ctx: KeyContext): KeyView | undefined {
   switch (spec.control) {
     case 'header':
       return channelView({ type: 'channel', bus: c.bus, index: c.strip.index, style: 'full' }, ctx);
-    case 'meter':
-      return channelView(
+    case 'meter': {
+      // With the physical label: the channel keys and the header show only the name.
+      const view = channelView(
         { type: 'channel', bus: c.bus, index: c.strip.index, style: 'meter' },
         ctx,
       );
+      return view?.kind === 'channel' ? { ...view, name: undefined } : view;
+    }
     case 'gainDown':
     case 'gainUp': {
       const range = gainRange(c);

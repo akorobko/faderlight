@@ -33,7 +33,7 @@ export interface PageKey extends KeyState {
 const EN_DASH = '–';
 
 export function renderBank(theme: Theme, k: BankKey): string {
-  const { look: l } = functionLook(theme, k);
+  const l = functionLook(theme, k);
   const c = chrome(theme, l, '', k);
   const arrow = k.atEnd === true ? theme.line : l.text;
   const range = `${String(k.first)}${EN_DASH}${String(k.last)}`;
@@ -48,7 +48,7 @@ export function renderBank(theme: Theme, k: BankKey): string {
 }
 
 export function renderPage(theme: Theme, k: PageKey): string {
-  const { look: l } = functionLook(theme, k);
+  const l = functionLook(theme, k);
   const c = chrome(theme, l, '', k);
   const direction = k.direction ?? 'next';
   return (
