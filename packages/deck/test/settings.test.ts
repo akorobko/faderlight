@@ -93,6 +93,47 @@ describe('readGlobalSettings', () => {
     ]);
   });
 
+  it('migrates version 2 to snapshot names, colours and channel settings', () => {
+    const r = readGlobalSettings({ version: 2, levels: { 'main/1': -20 } });
+    expect(r.settings).toMatchObject({
+      version: SETTINGS_VERSION,
+      levels: { 'main/1': -20 },
+      snapshots: {},
+      colors: {},
+      channels: {},
+    });
+    expect(r.changed).toBe(true);
+  });
+
+  it('keeps snapshot names, colours and channel settings that make sense', () => {
+    const r = readGlobalSettings({
+      ...toJson(DEFAULT_SETTINGS),
+      snapshots: { '1': '  Tracking ', '2': '', '9': 'Nine', '3': 7 },
+      colors: { '5': '#3C8CFF', '40': '#ffffff', '2': 'red' },
+      channels: {
+        'input/8': { name: ' Lead vox ', color: '#FF0000', hidden: false },
+        'playback/2': { hidden: true },
+        'output/0': { name: '' },
+        'aux/1': { hidden: true },
+        'input/9': { color: 'blue' },
+      },
+    });
+    expect(r.settings.snapshots).toEqual({ '1': 'Tracking' });
+    expect(r.settings.colors).toEqual({ '5': '#3c8cff' });
+    expect(r.settings.channels).toEqual({
+      'input/8': { name: 'Lead vox', color: '#ff0000' },
+      'playback/2': { hidden: true },
+    });
+    expect(r.problems).toEqual([
+      'snapshots.3: expected text',
+      'snapshots.9: expected a snapshot number from 1 to 8',
+      'colors.2: expected a colour like #3c8cff',
+      'colors.40: expected a colour number from 0 to 31',
+      'channels.aux/1: expected a channel like input/8',
+      'channels.input/9.color: expected a colour like #3c8cff',
+    ]);
+  });
+
   it('drops fields it does not know when writing back', () => {
     const r = readGlobalSettings({ ...toJson(DEFAULT_SETTINGS), stale: 1 });
     expect(r.changed).toBe(true);

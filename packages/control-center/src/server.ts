@@ -26,6 +26,7 @@ import {
   type ReadSettings,
   type SnapshotNameRead,
 } from '@faderlight/deck';
+import { DARK } from '@faderlight/render';
 import { keyOf, type Key, type MixerStore } from '@faderlight/model';
 import type { Diagnostics } from './diagnostics.ts';
 import {
@@ -425,6 +426,9 @@ export class ControlCenterServer {
       version: this.host.version,
       settings: this.host.settings(),
       defaults: DEFAULT_SETTINGS,
+      palette: Object.fromEntries(
+        Object.entries(DARK.channelColors).flatMap(([n, hex]) => (hex ? [[n, hex]] : [])),
+      ),
     }),
     'settings.save': (_c, params): SaveResult => {
       const settings = objectParam(params, 'settings');

@@ -115,6 +115,11 @@ describe('the Control Center server', () => {
       version: '0.1.0',
       settings: DEFAULT_SETTINGS,
       defaults: DEFAULT_SETTINGS,
+      palette: expect.objectContaining({
+        '3': '#ff6e0a',
+        '5': '#3c8cff',
+        '6': '#00f027',
+      }) as unknown,
     });
   });
 

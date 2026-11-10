@@ -46,6 +46,7 @@ long presses, double taps (Talkback) and held ± keys work as on the hardware.
 | `e2e/deck.spec.ts`           | Browser tests that press keys and save screenshots (Playwright) |
 | `e2e/control-center.spec.ts` | Browser tests of the Control Center, with screenshots           |
 | `e2e/inspector.spec.ts`      | Browser tests of the Property Inspector, with screenshots       |
+| `e2e/settings.spec.ts`       | Browser tests of the Control Center's settings pages            |
 
 ## End-to-end tests
 

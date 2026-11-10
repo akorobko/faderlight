@@ -54,7 +54,13 @@ import {
 } from './layout.ts';
 import { SILENT, type Logger } from './log.ts';
 import { FrameScheduler, type FrameStats } from './scheduler.ts';
-import { DEFAULT_SETTINGS, toJson, type GlobalSettings, type JsonObject } from './settings.ts';
+import {
+  channelSettings,
+  DEFAULT_SETTINGS,
+  toJson,
+  type GlobalSettings,
+  type JsonObject,
+} from './settings.ts';
 import { EMPTY, specFromAction, type Direction, type KeySpec } from './specs.ts';
 
 /** What the runtime needs from the app that shows the keys. */
@@ -397,7 +403,7 @@ export class DeckRuntime {
       store: this.mixer.store,
       global: this.settings,
       slot: kind === 'slot' ? this.slotSpec(key) : undefined,
-      snapshotName: (n) => this.snapshotNames?.name(n),
+      snapshotName: (n) => this.snapshotName(n),
     });
   }
 
@@ -431,10 +437,12 @@ export class DeckRuntime {
     this.keys.get(id)?.gestures.up();
   }
 
-  /** New global settings: timings apply from the next press, the theme and budget now. */
+  /** New global settings: timings apply from the next press, everything else now. */
   configure(settings: GlobalSettings): void {
     const frames = JSON.stringify(settings.frames) !== JSON.stringify(this.settings.frames);
     this.settings = settings;
+    // Hidden channels change what the banks hold.
+    this.stripCache.clear();
     if (frames) {
       this.scheduler.dispose();
       this.scheduler = this.makeScheduler();
@@ -500,19 +508,23 @@ export class DeckRuntime {
     return list;
   }
 
+  /** The strips of a bus the Console shows: those not hidden in the Control Center. */
+  private shown(bus: Bus): Strip[] {
+    return strips(this.mixer.store, bus).filter(
+      (s) => channelSettings(this.settings, s.bus, s.index)?.hidden !== true,
+    );
+  }
+
   private listStrips(source: BankSource): Strip[] {
     const store = this.mixer.store;
-    if (source !== 'playback+output') return strips(store, source);
+    if (source !== 'playback+output') return this.shown(source);
     // Main and the Phones outputs have keys of their own on the Console page.
     const own = new Set(
       [mainOutput(store), ...([1, 2, 3, 4] as const).map((n) => phonesOutput(store, n))]
         .filter((s) => s !== undefined)
         .map((s) => s.index),
     );
-    return [
-      ...strips(store, 'playback'),
-      ...strips(store, 'output').filter((s) => !own.has(s.index)),
-    ];
+    return [...this.shown('playback'), ...this.shown('output').filter((s) => !own.has(s.index))];
   }
 
   private bankOf(
@@ -606,13 +618,18 @@ export class DeckRuntime {
       savePreset: (preset, db) => {
         this.savePreset(preset, db);
       },
-      snapshotName: (n) => this.snapshotNames?.name(n),
+      snapshotName: (n) => this.snapshotName(n),
       openControlCenter: (section) => {
         if (!this.host.openControlCenter) return false;
         this.host.openControlCenter(section);
         return true;
       },
     };
+  }
+
+  /** A snapshot's name: the Control Center's, else TotalMix's (from its state file). */
+  private snapshotName(n: number): string | undefined {
+    return this.settings.snapshots[String(n)] ?? this.snapshotNames?.name(n);
   }
 
   /** Keeps a preset's level, draws the keys again and hands the settings to the app. */

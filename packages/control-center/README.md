@@ -23,11 +23,17 @@ builds them in memory when it starts. `node packages/control-center/scripts/buil
 <folder>` writes them anywhere. The page has no other files and loads nothing from elsewhere
 (the server's `Content-Security-Policy` allows only its own origin).
 
-| Section    | Shows                                                                                   |
-| ---------- | --------------------------------------------------------------------------------------- |
-| Connection | where TotalMix is (host, ports), the Setup Assistant, the packet log, the mixer's state |
+| Section           | Shows                                                                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Connection        | where TotalMix is (host, ports), the Setup Assistant, the packet log, the mixer's state                                                          |
+| Device & Channels | the interface, snapshot names, every channel with its meter, its name and colour on the keys and whether the Console shows it, the Level Presets |
+| Behaviour         | long press, double tap, how held step keys repeat, when Channel Detail closes by itself                                                          |
+| Appearance        | the theme, the key colour of each TotalMix colour number, how often key images are drawn                                                         |
 
-The section is the address's fragment (`#connection`), so the plugin can open one directly.
+The section is the address's fragment (`#connection`, `#channels`, `#behaviour`,
+`#appearance`), so the plugin can open one directly. An empty box uses what TotalMix has: a
+name, colour or snapshot name emptied again takes the entry out of the settings
+(`ui/edits.ts`).
 Edits go into a draft: a bar at the bottom saves or discards them, and the page asks before it
 is closed with unsaved edits. When the plugin stops (or the Stream Deck app restarts) the page
 says so; a new link from the Stream Deck opens it again.

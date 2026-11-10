@@ -71,12 +71,14 @@ names the page shown.
 ## Settings
 
 Global settings (`packages/deck/src/settings.ts`) hold the connection, gesture timings, frame
-budget, overlay timeout and theme. They carry a version number: the plugin reads any earlier
-version through the migrations there, fills in missing fields, clamps bad values and writes
-the result back. Settings written by a newer build are used but never written back.
+budget, overlay timeout, theme, Level Preset levels, snapshot names, the key colour of each
+TotalMix colour number, and each channel's own name, colour and whether the Console shows it
+(version 3). They carry a version number: the plugin reads any earlier version through the
+migrations there, fills in missing fields, clamps bad values and writes the result back.
+Settings written by a newer build are used but never written back.
 
-The defaults: TotalMix on `127.0.0.1`, sending to port 7002 and listening on 9002. The
-Control Center changes them (the Connection page), and more settings follow there (M5).
+The defaults: TotalMix on `127.0.0.1`, sending to port 7002 and listening on 9002, and
+everything else as TotalMix has it. The Control Center changes them.
 
 ## Property Inspector
 
