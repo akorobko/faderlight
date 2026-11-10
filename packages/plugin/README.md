@@ -18,6 +18,10 @@ The manifest targets SDK 3, Stream Deck 7.1 or later and Node.js 24, on macOS 13
 10+. Its actions come from the registry in `packages/deck/src/actions.ts`; a test keeps the two
 in step. The plugin UUID is `dev.faderlight.mixer`.
 
+The plugin itself holds no key logic: it passes each key that appears, each key down and up
+and each settings change to the `DeckRuntime` of `packages/deck` (its README lists what each
+action does) and sends the images the runtime draws back to the app.
+
 ## Build and try it
 
 ```sh

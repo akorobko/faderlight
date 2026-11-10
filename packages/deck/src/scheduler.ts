@@ -71,6 +71,8 @@ export class FrameScheduler {
   private tokens: number;
   private refilledAt: number;
   private timer: TimerHandle | undefined;
+  /** In a tick: sources and the sink may call back in; the tick reschedules itself. */
+  private ticking = false;
   private disposed = false;
 
   constructor(sink: FrameSink, clock: Clock, options: Partial<FrameSchedulerOptions> = {}) {
@@ -155,7 +157,7 @@ export class FrameScheduler {
 
   /** Runs a tick soon if none is scheduled. */
   private wake(): void {
-    if (this.timer !== undefined || this.disposed) return;
+    if (this.timer !== undefined || this.ticking || this.disposed) return;
     this.timer = this.clock.setTimeout(() => {
       this.tick();
     }, 0);
@@ -164,9 +166,14 @@ export class FrameScheduler {
   private tick(): void {
     this.timer = undefined;
     const now = this.clock.now();
-    this.refill(now);
-    this.sendStatic(now);
-    this.sendMeters(now);
+    this.ticking = true;
+    try {
+      this.refill(now);
+      this.sendStatic(now);
+      this.sendMeters(now);
+    } finally {
+      this.ticking = false;
+    }
     if (this.hasWork() && !this.disposed) {
       this.timer = this.clock.setTimeout(() => {
         this.tick();

@@ -6,3 +6,6 @@ export * from './log.ts';
 export * from './actions.ts';
 export * from './gestures.ts';
 export * from './scheduler.ts';
+export * from './specs.ts';
+export * from './controllers.ts';
+export * from './runtime.ts';

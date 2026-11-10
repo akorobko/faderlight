@@ -70,4 +70,24 @@ describe('the built plugin', () => {
     app.appear('k1', actionUuid('status'), { column: 6, row: 0 });
     await drawn;
   });
+
+  it('mutes a channel when its key is tapped', async () => {
+    const channel = actionUuid('channel');
+    app.appear('k2', channel, { column: 0, row: 0 }, { bus: 'input', index: 8 });
+    await app.waitFor((m) => m.event === 'setImage' && m.context === 'k2');
+    const images = app.images('k2').length;
+    app.key('keyDown', 'k2', channel);
+    app.key('keyUp', 'k2', channel);
+    await until(() => sim.mixer.channelValue('input', 8, 'mute') === 1);
+    // Drawn again, muted.
+    await until(() => app.images('k2').length > images);
+  });
 });
+
+async function until(test: () => boolean, timeoutMs = 5000): Promise<void> {
+  const end = Date.now() + timeoutMs;
+  while (!test()) {
+    if (Date.now() > end) throw new Error('timed out');
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+}

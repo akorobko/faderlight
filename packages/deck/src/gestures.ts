@@ -74,6 +74,11 @@ export class GestureRecogniser {
     return this.down_;
   }
 
+  /** No press in progress and no double-tap window open: the next press starts a new gesture. */
+  get idle(): boolean {
+    return !this.down_ && this.tapTimer === undefined;
+  }
+
   down(): void {
     if (this.down_) return;
     const now = this.clock.now();
