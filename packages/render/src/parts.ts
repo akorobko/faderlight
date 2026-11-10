@@ -1,0 +1,182 @@
+// Shared key parts: the key's look per state (background, frames, offline hatching), chips
+// (the M and S letters, DIM) and badges (48V, Ø, INST: filled when on, outlined when off).
+
+import { mix } from './color.ts';
+import type { FaceName } from './fonts.ts';
+import { line, path, rect, roundRect, type Box } from './svg.ts';
+import { capHeight, measure, text } from './text.ts';
+import type { StateTokens, Theme } from './theme.ts';
+
+export const CANVAS = 144;
+
+/** Flags every key can carry. */
+export interface KeyState {
+  /** The mixer is not reachable: grey, hatched, no values. */
+  readonly offline?: boolean | undefined;
+  /** Sent, not confirmed by the mixer yet: dashed frame. */
+  readonly pending?: boolean | undefined;
+}
+
+export interface Look extends StateTokens {
+  readonly offline: boolean;
+}
+
+/** Colours for a key: offline wins over muted, muted over normal. */
+export function look(theme: Theme, s: KeyState & { readonly muted?: boolean | undefined }): Look {
+  if (s.offline === true) return { ...theme.offline, offline: true };
+  if (s.muted === true) return { ...theme.muted, offline: false };
+  return { ...theme.normal, offline: false };
+}
+
+/** Background for the whole key, with diagonal hatching when offline. */
+export function background(theme: Theme, l: Look | StateTokens, fill?: string): string {
+  let out = rect({ x: 0, y: 0, w: CANVAS, h: CANVAS }, { fill: fill ?? l.background });
+  if ('offline' in l && l.offline) out += hatch(theme.offline.hatch);
+  return out;
+}
+
+/** Diagonal stripes over the whole key. */
+export function hatch(color: string, spacing = 20, width = 6): string {
+  let d = '';
+  for (let c = spacing / 2; c < 2 * CANVAS; c += spacing) {
+    const x1 = Math.max(0, c - CANVAS);
+    const x2 = Math.min(c, CANVAS);
+    d += `M${String(x1)} ${String(c - x1)}L${String(x2)} ${String(c - x2)}`;
+  }
+  return path(d, { stroke: color, strokeWidth: width });
+}
+
+/** Inset frame along the key edge: solid (solo, lit) or dashed (pending). */
+export function frame(color: string, width: number, dash?: readonly number[]): string {
+  const inset = width / 2 + 1;
+  const box = { x: inset, y: inset, w: CANVAS - 2 * inset, h: CANVAS - 2 * inset };
+  return path(roundRect(box, 14 - inset), { stroke: color, strokeWidth: width, dash });
+}
+
+/**
+ * The frames a channel-like key needs: solo is a solid orange frame, pending a dashed one
+ * (orange too when soloed, so both read).
+ */
+export function stateFrames(
+  theme: Theme,
+  s: KeyState & { readonly soloed?: boolean | undefined },
+): string {
+  if (s.offline === true) return '';
+  const solo = s.soloed === true;
+  if (s.pending === true) {
+    return frame(
+      solo ? theme.accent.solo : theme.accent.pending,
+      solo ? theme.frame.solo : theme.frame.pending,
+      theme.frame.dash,
+    );
+  }
+  return solo ? frame(theme.accent.solo, theme.frame.solo) : '';
+}
+
+// --- chips and badges ----------------------------------------------------------------------
+
+export interface ChipStyle {
+  readonly fill: string;
+  readonly ink: string;
+  /** Outline only (an off badge). */
+  readonly outline?: boolean | undefined;
+  readonly size: number;
+  readonly height: number;
+  readonly face?: FaceName | undefined;
+}
+
+const CHIP_PAD = 4;
+
+export function chipWidth(label: string, s: ChipStyle): number {
+  const w = measure(label, { face: s.face ?? 'bold', size: s.size }) + 2 * CHIP_PAD;
+  return Math.max(s.height, Math.ceil(w));
+}
+
+/** A rounded label: filled (fill colour, ink text) or outlined (fill as the outline). */
+export function chip(label: string, x: number, y: number, s: ChipStyle): string {
+  const w = chipWidth(label, s);
+  const box: Box = { x, y, w, h: s.height };
+  const r = Math.min(5, s.height / 2);
+  const fill = s.outline === true ? undefined : s.fill;
+  const body =
+    s.outline === true
+      ? path(roundRect({ x: x + 1, y: y + 1, w: w - 2, h: s.height - 2 }, r - 1), {
+          stroke: s.fill,
+          strokeWidth: 2,
+        })
+      : path(roundRect(box, r), { fill });
+  const face = s.face ?? 'bold';
+  const baseline = y + s.height / 2 + capHeight({ face, size: s.size }) / 2;
+  return (
+    body +
+    text(label, { face, size: s.size, x: x + w / 2, y: baseline, anchor: 'middle', fill: s.ink })
+  );
+}
+
+export interface Placed {
+  readonly label: string;
+  readonly style: ChipStyle;
+}
+
+/**
+ * Lays chips out left to right from `x`, `gap` apart, until `maxWidth`. Chips that do not
+ * fit are dropped and an ellipsis chip says so.
+ */
+export function chipRow(
+  items: readonly Placed[],
+  x: number,
+  y: number,
+  maxWidth: number,
+  gap: number,
+  overflow: ChipStyle,
+): string {
+  let shown = items;
+  if (chipsWidth(items, gap) > maxWidth) {
+    const room = maxWidth - gap - chipWidth('…', overflow);
+    let n = items.length - 1;
+    while (n > 0 && chipsWidth(items.slice(0, n), gap) > room) n--;
+    shown = [...items.slice(0, n), { label: '…', style: overflow }];
+  }
+  let out = '';
+  let cx = x;
+  for (const item of shown) {
+    out += chip(item.label, cx, y, item.style);
+    cx += chipWidth(item.label, item.style) + gap;
+  }
+  return out;
+}
+
+/** Same chips right-aligned to `right`, laid out right to left. */
+export function chipsRightAligned(
+  items: readonly Placed[],
+  right: number,
+  y: number,
+  gap: number,
+): string {
+  let out = '';
+  let cx = right;
+  for (const item of items) {
+    const w = chipWidth(item.label, item.style);
+    cx -= w;
+    out += chip(item.label, cx, y, item.style);
+    cx -= gap;
+  }
+  return out;
+}
+
+/** Total width of chips laid out with `gap`. */
+export function chipsWidth(items: readonly Placed[], gap: number): number {
+  return items.reduce((w, item, i) => w + chipWidth(item.label, item.style) + (i > 0 ? gap : 0), 0);
+}
+
+// --- small helpers -------------------------------------------------------------------------
+
+/** A thin separator line. */
+export function rule(x1: number, x2: number, y: number, color: string): string {
+  return line(x1, y, x2, y, { stroke: color, strokeWidth: 2 });
+}
+
+/** Dims a colour towards a background (for muted or inactive parts). */
+export function dimmed(color: string, backgroundColor: string, amount: number): string {
+  return amount > 0 ? mix(color, backgroundColor, amount) : color;
+}
