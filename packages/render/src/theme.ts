@@ -89,12 +89,13 @@ export interface Theme {
 }
 
 const DARK_BG: Hex = '#16181c';
-const MUTE_BG: Hex = '#0d2a2d';
+// Teal strong enough to see from across the room: the first, darker tint read as barely there.
+const MUTE_BG: Hex = '#1f6165';
 
 export const DARK: Theme = {
   name: 'dark',
   normal: { background: DARK_BG, text: '#f2f4f7', subtext: '#8f97a3' },
-  muted: { background: MUTE_BG, text: '#a7d3d5', subtext: '#68a2a5' },
+  muted: { background: MUTE_BG, text: '#e6f6f7', subtext: '#a8dfe1' },
   soloed: { background: '#3e2c18', text: '#fff4e6', subtext: '#ffc98a' },
   offline: { background: '#111215', text: '#737a84', subtext: '#646a74', hatch: '#1a1c20' },
   lit: { background: '#22405f', text: '#ffffff', subtext: '#c9ddf5', frame: '#4ea1ff' },
