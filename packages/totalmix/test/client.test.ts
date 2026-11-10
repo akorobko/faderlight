@@ -208,6 +208,74 @@ describe('connection state machine', () => {
     expect(s.link.texts()).toContain('/sendall f:2');
   });
 
+  it('syncs again after a stereo pair is linked in TotalMix, and drops the old right channel', () => {
+    const s = setup();
+    goLive(s);
+    // AN 5/6 linked in TotalMix's window: it reports the left index as stereo, nothing else.
+    s.client.receive([message('/input/4/stereo', float(1))]);
+    expect(strips(s.store, 'input').map((x) => x.name)).not.toContain('AN 6');
+    s.clock.advance(249);
+    expect(s.client.state).toBe('live');
+    s.clock.advance(1);
+    expect(s.client.state).toBe('syncing');
+    s.clock.advance(10);
+    expect(s.link.texts()).toContain('/sendall f:2');
+    // The new dump no longer has a name for AN 6, and the sync removes it.
+    for (const d of sendall2) {
+      s.client.receive(
+        d.messages
+          .filter((m) => !m.address.startsWith('/input/5/'))
+          .map((m) => (m.address === '/input/4/stereo' ? message(m.address, float(1)) : m)),
+      );
+    }
+    s.clock.advance(150);
+    s.client.receive(statusReply);
+    expect(s.client.state).toBe('live');
+    expect(s.store.get(channel('input', 5, 'name'))).toBeUndefined();
+    expect(strips(s.store, 'input').find((x) => x.index === 4)).toMatchObject({
+      name: 'RD 2000',
+      label: 'AN 5/6',
+      right: 5,
+    });
+  });
+
+  it('syncs once for a burst of stereo changes, and only for changes', () => {
+    const s = setup();
+    goLive(s);
+    s.client.receive([message('/input/4/stereo', float(0))]); // already mono: not a change
+    s.clock.advance(1000);
+    expect(s.client.state).toBe('live');
+    s.client.receive([message('/input/4/stereo', float(1))]);
+    s.clock.advance(100);
+    s.client.receive([message('/input/10/stereo', float(1))]);
+    s.clock.advance(249);
+    expect(s.client.state).toBe('live');
+    s.clock.advance(1);
+    expect(s.client.state).toBe('syncing');
+    s.clock.advance(10);
+    expect(s.link.count('/sendall f:2')).toBe(1);
+  });
+
+  it('does not sync for a stereo setting it had not seen before', () => {
+    const s = setup();
+    goLive(s);
+    s.client.receive([message('/input/0/name', str('AN 1')), message('/input/0/stereo', float(1))]);
+    s.clock.advance(1000);
+    expect(s.client.state).toBe('live');
+    expect(s.link.count('/sendall f:2')).toBe(0);
+  });
+
+  it('drops a planned layout sync when the connection goes stale first', () => {
+    const s = setup({ layoutSyncDelayMs: 5000 });
+    goLive(s);
+    s.client.receive([message('/input/4/stereo', float(1))]);
+    s.clock.advance(4000);
+    expect(s.client.state).toBe('stale');
+    s.clock.advance(2000);
+    expect(s.client.state).toBe('stale');
+    expect(s.link.count('/sendall f:2')).toBe(0);
+  });
+
   it('goes idle on stop() and sends nothing more', () => {
     const s = setup();
     goLive(s);

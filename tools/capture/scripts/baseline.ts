@@ -227,6 +227,17 @@ export const baseline: Script = {
       ],
     }),
     manual({
+      id: 'ui-stereo',
+      title: 'Link two mono inputs into a stereo pair',
+      optional: true,
+      why: 'What TotalMix sends when a pair is linked or split: only /input/n/stereo, or names and settings too?',
+      text: [
+        'Pick two mono inputs next to each other, such as AN 5 and AN 6, where the first has an odd number.',
+        'In the channel settings of the first, switch Stereo on, wait 2 seconds, then switch it off again.',
+        'If there are no two such inputs, type s and press Enter to skip.',
+      ],
+    }),
+    manual({
       id: 'ui-snapshot',
       title: 'Load a snapshot',
       optional: true,

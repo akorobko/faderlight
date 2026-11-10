@@ -127,6 +127,25 @@ describe('selectors', () => {
     expect(stripOf(store, 'input', 5)).toBeUndefined();
   });
 
+  it('skips the right channel of a pair linked since the last full sync', () => {
+    // AN 5 and AN 6 were two mono strips; then AN 5/6 was linked in TotalMix, which reports
+    // the left index as stereo. The name at AN 6 stays until a full sync removes it.
+    const s = new MixerStore();
+    s.applyDevice([
+      { target: { scope: 'status', field: 'device' }, value: 'Fireface UFX III' },
+      { target: channel('input', 4, 'name'), value: 'RD 2000' },
+      { target: channel('input', 4, 'stereo'), value: false },
+      { target: channel('input', 5, 'name'), value: 'AN 6' },
+      { target: channel('input', 5, 'stereo'), value: false },
+    ]);
+    expect(strips(s, 'input').map((x) => x.index)).toEqual([4, 5]);
+    s.applyDevice([{ target: channel('input', 4, 'stereo'), value: true }]);
+    expect(strips(s, 'input')).toEqual([
+      { bus: 'input', index: 4, right: 5, stereo: true, name: 'RD 2000', label: 'AN 5/6' },
+    ]);
+    expect(stripOf(s, 'input', 5)?.name).toBe('RD 2000');
+  });
+
   it('finds Main and the phones through the control room assignment', () => {
     expect(mainOutput(store)?.name).toBe('Main');
     expect(mainOutput(store)?.label).toBe('AN 3/4');
