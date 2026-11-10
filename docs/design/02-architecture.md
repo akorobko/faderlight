@@ -36,7 +36,8 @@
 │  ├─ simulator/                 # fake TotalMix (Global OSC server) + CLI + web panel
 │  ├─ deck/                      # deck runtime without the SDK: settings, gestures, frame
 │  │                             #   scheduler, layout engine, key controllers
-│  ├─ settings-app/              # Control Center SPA (Preact)
+│  ├─ control-center/            # Control Center: server in the plugin (HTTP+WS, JSON-RPC)
+│  │                             #   and the settings page it serves
 │  └─ plugin/                    # SDK wiring, build, bundled profiles, PI html
 │     └─ com.ratio32.faderlight.mixer.sdPlugin/   # manifest, icons; bin/ and fonts/ are built
 └─ tools/
@@ -76,7 +77,7 @@
 
 **FrameScheduler** — global budget for `setImage` (default 120 img/s, max 15 fps per key). Static changes (mute, name) jump the queue; meter-only frames are coalesced and dropped first. Skips sends when SVG hash is unchanged. Meter ballistics computed at render time (decay 20 dB/s, peak hold 1.5 s, clip hold 3 s — configurable).
 
-**Control Center** — HTTP+WS server started lazily when the user clicks "Open Control Center" in a PI (or via a dedicated key). Serves SPA, exposes JSON-RPC over WS: read store snapshot + live diff stream, edit layout/global settings, run diagnostics. Binds `127.0.0.1` only, random port, one-time token in URL.
+**Control Center** (`packages/control-center`) — HTTP+WS server started lazily when the user clicks "Open Control Center" in a PI (or taps the Status key). Serves SPA, exposes JSON-RPC over WS: read store snapshot + live diff stream, edit layout/global settings, run diagnostics (packet log, Setup Assistant). Binds `127.0.0.1` only, random port, one-time token in URL that the first request swaps for a `SameSite=Strict` session cookie; requests must carry the server's own `Host` and the WebSocket the page's own `Origin`.
 
 ### Settings storage
 

@@ -1,0 +1,21 @@
+{
+  "name": "@faderlight/control-center",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The Control Center: a local web page for the plugin's settings, and the HTTP + WebSocket server inside the plugin that serves and answers it.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@faderlight/deck": "0.0.0",
+    "@faderlight/model": "0.0.0",
+    "@faderlight/osc": "0.0.0",
+    "@faderlight/totalmix": "0.0.0",
+    "ws": "8.22.0"
+  },
+  "devDependencies": {
+    "@faderlight/simulator": "0.0.0",
+    "@types/ws": "8.18.2"
+  }
+}

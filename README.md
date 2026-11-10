@@ -18,16 +18,17 @@ npm run deck             # the keys on a web page, against the simulator (tools/
 npm run e2e              # browser tests of the virtual deck, screenshots in renders/virtual-deck/
 ```
 
-| Path                 | Contents                                       |
-| -------------------- | ---------------------------------------------- |
-| `packages/osc`       | OSC codec and UDP transport                    |
-| `packages/totalmix`  | TotalMix FX Global OSC adaptor                 |
-| `packages/model`     | Mixer model, device profiles, meters           |
-| `packages/render`    | Key renderers (SVG)                            |
-| `packages/deck`      | Deck runtime: settings, gestures, layouts      |
-| `packages/plugin`    | The Stream Deck plugin (SDK wiring, manifest)  |
-| `packages/simulator` | Fake TotalMix FX for hardware-free development |
-| `tools/`             | Developer tools (capture, virtual deck)        |
+| Path                      | Contents                                       |
+| ------------------------- | ---------------------------------------------- |
+| `packages/osc`            | OSC codec and UDP transport                    |
+| `packages/totalmix`       | TotalMix FX Global OSC adaptor                 |
+| `packages/model`          | Mixer model, device profiles, meters           |
+| `packages/render`         | Key renderers (SVG)                            |
+| `packages/deck`           | Deck runtime: settings, gestures, layouts      |
+| `packages/plugin`         | The Stream Deck plugin (SDK wiring, manifest)  |
+| `packages/control-center` | Control Center: settings page and its server   |
+| `packages/simulator`      | Fake TotalMix FX for hardware-free development |
+| `tools/`                  | Developer tools (capture, virtual deck)        |
 
 RME reference documents are not in the repo; run `scripts/fetch-vendor.sh` to download them into `docs/vendor/`.
 
