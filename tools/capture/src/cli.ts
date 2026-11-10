@@ -512,6 +512,10 @@ export async function main(argv: readonly string[]): Promise<number> {
 
 if (process.argv[1] !== undefined && import.meta.filename === process.argv[1]) {
   void main(process.argv.slice(2)).then((code) => {
-    process.exit(code);
+    // Let Node exit on its own so buffered stdout reaches a pipe in full (pipe writes are
+    // asynchronous on macOS; process.exit() would cut `summary --json | ...` at 64 KiB).
+    // The unref'd timer only fires if some handle is still holding the process open.
+    process.exitCode = code;
+    setTimeout(() => process.exit(code), 3000).unref();
   });
 }
