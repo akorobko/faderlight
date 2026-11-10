@@ -12,3 +12,6 @@ docs/vendor/*
 
 # Capture tool work files (renamed to fixtures/captures/<name>.jsonl when a capture ends).
 *.partial.jsonl
+
+# Renders that did not match their golden image (packages/render/test/goldens.test.ts).
+renders/failures/

@@ -20,7 +20,8 @@
     "typecheck": "tsc",
     "test": "vitest run",
     "test:watch": "vitest",
-    "sim": "node packages/simulator/src/cli.ts"
+    "sim": "node packages/simulator/src/cli.ts",
+    "render:goldens": "node packages/render/test/render-goldens.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

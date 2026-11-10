@@ -1,3 +1,20 @@
 // Pure key renderers: (view model, theme, size) to SVG string.
-// Placeholder: implemented in M3 (docs/design/05-agentic-plan.md).
-export {};
+export * from './render.ts';
+export * from './theme.ts';
+export * from './keys/channel.ts';
+export * from './keys/output.ts';
+export * from './keys/toggle.ts';
+export * from './keys/snapshot.ts';
+export * from './keys/status.ts';
+export * from './keys/nav.ts';
+export * from './keys/step.ts';
+export * from './keys/recorder.ts';
+export * from './parts.ts';
+export * from './meter.ts';
+export * from './icons.ts';
+export * from './format.ts';
+export * from './text.ts';
+export * from './fonts.ts';
+export * from './font.ts';
+export * from './svg.ts';
+export * from './color.ts';

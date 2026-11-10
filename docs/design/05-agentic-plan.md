@@ -62,9 +62,9 @@ Legend: 🤖 agent-only · 👤 needs the maintainer (≤15 min) · deps in brac
 - **M2.4 🤖 Simulator web panel** (optional).
 
 ### M3 — Rendering (week 2–3, parallel)
-- **M3.1 🤖 Theme tokens + SVG primitives** (text fitting at 96 px, meters, badges, chips).
-- **M3.2 🤖 Channel key renderer** — Full / Meter / Minimal; states: normal, muted, solo, pending, offline. *AC: PNG goldens; contact sheet `renders/contact-sheet.png` attached to PR.*
-- **M3.3 🤖 Monitor, Phones, Snapshot, Status, Bank, Step, DURec renderers.**
+- **M3.1 🤖 Theme tokens + SVG primitives** ✅ (text fitting at 96 px, meters, badges, chips; text drawn as outlines with a bundled open font).
+- **M3.2 🤖 Channel key renderer** — Full / Meter / Minimal; states: normal, muted, solo, pending, offline. *AC: PNG goldens; contact sheet `renders/contact-sheet.png` attached to PR.* ✅
+- **M3.3 🤖 Monitor, Phones, Snapshot, Status, Bank, Step, DURec renderers.** ✅ (plus Page and the monitor/global toggles)
 - **M3.4 👤 Visual review** of contact sheet on a real XL (load test images via a debug action). Feedback → tweaks.
 
 ### M4 — Stream Deck plugin (week 3–4)
