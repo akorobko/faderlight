@@ -1,6 +1,6 @@
 # 01 — Capability analysis: Fireface UFX III, Stream Deck XL, TotalMix FX control protocols
 
-Status: research draft, 2026-11-09. Target: the latest TotalMix FX (2.10 at the time of writing, Global OSC available). Items marked **[VERIFY]** must be confirmed against the official RME OSC table (`osc_table_totalmix_new.zip`, RME downloads page) or by capturing real TotalMix traffic (see `05-agentic-plan.md`, task M0.3).
+Status: research draft, 2026-11-09. Target: TotalMix FX 2.1 or newer, the first version with Global OSC (correction 2026-11-10: 2.1 is still a beta, posted in RME's forum; the downloads page offers 2.0, whose OSC modes are only "TotalMix 1.90" and "TotalMix 1.96"). Items marked **[VERIFY]** must be confirmed against the official RME OSC table (`osc_table_totalmix_new.zip`, RME downloads page) or by capturing real TotalMix traffic (see `05-agentic-plan.md`, task M0.3).
 
 ---
 
@@ -52,7 +52,7 @@ Monitoring ("Control Room") features available in TotalMix: Main Out volume, Dim
 
 ## 3. TotalMix FX remote protocols
 
-TotalMix FX offers OSC (4 independent "Remote Controller" slots, each with its own in/out ports and remote IP) and MIDI (incl. Mackie Control emulation). Since **TotalMix FX 2.1**, each OSC slot has a **Compatibility (Mode)** selector: *1.96 / classic* or **Global OSC**.
+TotalMix FX offers OSC (4 independent "Remote Controller" slots, each with its own in/out ports and remote IP) and MIDI (incl. Mackie Control emulation). Each OSC slot has a **Compatibility (Mode)** selector: *TotalMix 1.90* and *TotalMix 1.96* (classic) in 2.0, plus **Global OSC** since **TotalMix FX 2.1**.
 
 ### 3.1 Global OSC (TotalMix FX 2.1+) — **primary target**
 

@@ -14,8 +14,13 @@ dependencies.
 
 - Node 24 or newer: `node -v`. If it is missing or older, install the current LTS from
   <https://nodejs.org> (or `brew install node`).
-- Get this branch of the repository: `git fetch && git switch <branch>` (or `git pull` on main
-  once it is merged). Run every command below from the repository root.
+- TotalMix FX 2.1 or newer. Global OSC is new in 2.1: if **Compatibility (Mode)** (step 2
+  below) lists only "TotalMix 1.90" and "TotalMix 1.96", your TotalMix is older. At the time
+  of writing 2.1 is a beta, posted in RME's forum thread "TotalMix FX 2.1"
+  (<https://forum.rme-audio.de/viewtopic.php?id=43485>); the RME downloads page still offers
+  2.0. Save your workspace (File → Save Workspace As) before you update.
+- The latest main of this repository: `git switch main && git pull`. Run every command below
+  from the repository root.
 - Do not run the capture while recording or performing. A few steps change a value for about a
   second (you are asked first, and everything is put back).
 
@@ -28,9 +33,11 @@ In TotalMix FX:
    if slot 1 is used by another controller) and set:
    - **In Use**: ticked
    - **Port incoming**: `7002`, **Port outgoing**: `9002`
-   - **Remote Controller Address** (IP or Host Name): `127.0.0.1`. Do not leave it empty.
+   - **Remote Controller Address** (IP or Host Name): `127.0.0.1`. Do not leave it empty,
+     and do not use `localhost`, which can resolve to the IPv6 address the tool does not
+     listen on. Leave the **Found Remote Services** list alone.
    - **Compatibility (Mode)**: **Global OSC**
-   - **Details**: tick **Send changes**, **Send status** and **Re-send received**. Leave
+   - Click **Details** and tick **Send changes**, **Send status** and **Re-send received**. Leave
      **Send all data on start**, **Re-send if different**, **Send faders in linear scale** and
      **Receive to hidden channels** unticked. Keep the bandwidth limit as it is.
    - Tick **Send Level Data** (and **Send Peak Level**, if your version has it).

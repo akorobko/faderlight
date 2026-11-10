@@ -210,7 +210,7 @@ async function check(values: Values, io: Io): Promise<number> {
   const classic = [...rec.values.keys()].find((a) => /^\/\d+\//.test(a));
   if (classic !== undefined) {
     io.warn(
-      `TotalMix is in classic OSC mode (${classic}). Set Compatibility (Mode) to Global OSC.`,
+      `TotalMix is in classic OSC mode (${classic}). Set Compatibility (Mode) to Global OSC (needs TotalMix FX 2.1 or newer).`,
     );
     return 1;
   }
