@@ -25,14 +25,14 @@ Goal: a coding agent (in a cloud sandbox, no hardware) can implement and verify 
 
 ### 2.1 Simulator ("fake TotalMix")
 
-`packages/simulator` — a Node process speaking **Global OSC** on UDP:
-- Loads a device profile (UFX III first) → full channel model (names, colours, gain ranges, 48V…).
-- Implements commands from the address map, echoes "Re-send received", answers `/sendall`, `/sendchan/...`, emits `/status/*` heartbeats.
-- **Meter generator**: per channel signal scenarios (silence, pink noise −18 dBFS, drum hits with clips, sine sweep) → `/level/...` at configurable rate.
+`packages/simulator` — a Node process speaking **Global OSC** on UDP, behaving as the captures show (`docs/protocol/global-osc.md`); see `packages/simulator/README.md`:
+- Loads a device profile (UFX III first) → full channel model (names, colours, gain ranges, 48V…), with only the strips of the chosen layout visible.
+- Answers `/sendstate`, `/sendsettings`, `/sendchan/...`, `/sendsubmix/...`, `/sendmix` and `/sendall` the way TotalMix does (same order, same bundle packing), applies writes without echoing them (names excepted), and has **no heartbeat**, like TotalMix.
+- **Meter generator**: per channel signal scenarios (silence, noise around −18 dBFS, drum hits with clips, level sweep) → `/level/...` every 40 ms with TotalMix's ballistics; output meters follow the mix.
 - **Fault injection**: packet loss %, latency, TotalMix "quit" (silence), restart, sample-rate change (channel count changes), bandwidth limit.
 - **Replay mode**: play back a captured JSONL trace with original timing.
-- CLI (`npx sim --profile ufx3 --port-in 7002 --port-out 9002 --scenario studio`) and a tiny web panel showing simulated TotalMix state (for screenshots/debugging).
-- Conformance test: run the same command script against a captured real trace and the simulator; diff the responses.
+- CLI (`npm run sim -- --profile ufx3 --port-in 7002 --port-out 9002 --layout studio`) and a tiny web panel showing simulated TotalMix state (for screenshots/debugging; M2.4, not built yet).
+- Conformance test: every request and write in every capture is sent to the simulator, starting from the state the capture shows at that moment; the replies must match message by message.
 
 ### 2.2 Capture tool (run once by the human)
 
@@ -56,9 +56,9 @@ Legend: 🤖 agent-only · 👤 needs the maintainer (≤15 min) · deps in brac
 - **M1.5 🤖 Connection state machine + paced sync + optimistic commands with rollback.**
 
 ### M2 — Simulator (week 2, parallel with M1.3+)
-- **M2.1 🤖 Simulator core** (state, command handling, sendall, heartbeat).
-- **M2.2 🤖 Meter scenarios + fault injection.**
-- **M2.3 🤖 Replay + conformance test vs captures.**
+- **M2.1 🤖 Simulator core** ✅ (state, command handling, sendall; no heartbeat, as TotalMix has none).
+- **M2.2 🤖 Meter scenarios + fault injection.** ✅
+- **M2.3 🤖 Replay + conformance test vs captures.** ✅
 - **M2.4 🤖 Simulator web panel** (optional).
 
 ### M3 — Rendering (week 2–3, parallel)
