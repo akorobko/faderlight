@@ -61,15 +61,15 @@ browser that came through a link from the plugin:
 
 JSON-RPC 2.0 over the WebSocket at `/rpc` (`src/protocol.ts` has the types):
 
-| Method           | Does                                                                  |
-| ---------------- | --------------------------------------------------------------------- |
-| `hello`          | the plugin version, the global settings and their defaults            |
-| `settings.save`  | checks, applies and stores global settings; returns them and problems |
-| `subscribe`      | follows topics (below); the first notification of each has it all     |
-| `unsubscribe`    | stops following topics                                                |
-| `mixer.resync`   | reads the whole mixer again                                           |
-| `packets.clear`  | empties the packet log                                                |
-| `packets.meters` | keeps meter messages in the packet log too (off by default)           |
+| Method           | Does                                                                                                                              |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `hello`          | the plugin version, the global settings and their defaults                                                                        |
+| `settings.save`  | checks, applies and stores global settings; returns them and problems                                                             |
+| `subscribe`      | follows topics (below); the first notification of each has it all, also for a topic followed already (a new listener on the page) |
+| `unsubscribe`    | stops following topics                                                                                                            |
+| `mixer.resync`   | reads the whole mixer again                                                                                                       |
+| `packets.clear`  | empties the packet log                                                                                                            |
+| `packets.meters` | keeps meter messages in the packet log too (off by default)                                                                       |
 
 | Topic        | Notifications                                                                |
 | ------------ | ---------------------------------------------------------------------------- |

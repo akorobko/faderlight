@@ -132,6 +132,21 @@ test('the Appearance page maps a TotalMix colour number to a key colour', async 
   await shows(page, 'console:2,1', { name: 'Guitar', color: 6 });
 });
 
+test('a section opened from the navigation shows the mixer at once', async ({ page }) => {
+  // The page header follows the mixer already, so the section joins a topic that is running.
+  await open(page, 'connection');
+  await page
+    .getByRole('navigation', { name: 'Sections' })
+    .getByRole('link', { name: 'Appearance' })
+    .click();
+  await expect(page.locator('[data-color="6"]')).toContainText('Guitar');
+  await page
+    .getByRole('navigation', { name: 'Sections' })
+    .getByRole('link', { name: 'Device & Channels' })
+    .click();
+  await expect(page.locator('[data-channel="input/9"]')).toContainText('Guitar');
+});
+
 test('the Behaviour page keeps gesture timings within their range', async ({ page }) => {
   await open(page, 'behaviour');
   const hold = page.getByRole('spinbutton', { name: 'Long press' });

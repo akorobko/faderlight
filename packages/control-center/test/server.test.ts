@@ -168,6 +168,20 @@ describe('the Control Center server', () => {
     expect(strip).toMatchObject({ bus: 'input', index: 8, name: 'Vocal', stereo: false });
   });
 
+  it('sends a topic it follows already again when asked, for a new listener on the page', async () => {
+    host.store.applyDevice([
+      { target: { scope: 'channel', bus: 'input', index: 8, field: 'name' }, value: 'Vocal' },
+    ]);
+    const c = await connect();
+    const first = c.waitFor((n) => n.method === 'mixer');
+    await c.call('subscribe', { topics: ['mixer'] });
+    await first;
+    // Nothing changed in the mixer, and the summary still comes again.
+    const again = c.waitFor((n) => n.method === 'mixer');
+    await c.call('subscribe', { topics: ['mixer'] });
+    expect(((await again).params as MixerSummary).strips.input[0]).toMatchObject({ name: 'Vocal' });
+  });
+
   it('streams the store itself: everything first, then what changed', async () => {
     const mute = { scope: 'channel', bus: 'input', index: 8, field: 'mute' } as const;
     host.store.applyDevice([{ target: mute, value: false }]);

@@ -437,8 +437,9 @@ export class ControlCenterServer {
       return { settings: read.settings, problems: read.problems };
     },
     subscribe: (client, params) => {
+      // A topic the client follows already gets its first message again: the page has a new
+      // listener for it (a section opened from the navigation) that needs everything there is.
       for (const topic of topicsParam(params)) {
-        if (client.topics.has(topic)) continue;
         client.topics.add(topic);
         this.first(client, topic);
       }
