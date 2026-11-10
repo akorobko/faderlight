@@ -45,10 +45,15 @@ The plugin writes its log to the plugin folder's `logs/` (gitignored). `Nodejs.D
 `profiles/Console.streamDeckProfile` is one Stream Deck XL page with a Console Slot on each of
 its 32 keys; the deck runtime decides what each slot shows (`packages/deck`, "The Console
 layout"). The Console launcher action and Back in the Channel Detail overlay switch to it and
-back. The profile format is not documented: `scripts/profile.ts` follows exported profiles. If
-the app does not install it, build the same profile by hand (a new XL profile with a Console
-Slot on every key), export it from the app as `Console.streamDeckProfile` and put it in
-`profiles/` of the plugin folder.
+back. The profile format is not documented: `scripts/profile.ts` writes what the app's own
+version 2.0 bundles hold, page folders named by their encoded ID included (the app rejects plain
+UUID folder names as "content corrupted"). Stream Deck 7.6 installs it.
+
+A plugin linked with `streamdeck link` is not installed from a package, so the app does not
+offer its profiles on its own: press the Console launcher (or any key that opens the Console)
+and the app asks to install them. If the app's log
+(`~/Library/Logs/ElgatoStreamDeck/StreamDeck.log` on macOS) says an import failed, compare the
+file with a profile exported from the app.
 
 ## Test Images (debug)
 

@@ -3,11 +3,13 @@
 // runtime's layout, by coordinates, so the profile never changes when the layout does) and
 // Render Test (Test Images on each key, for reviewing the renderer on the XL).
 //
-// The .streamDeckProfile format is not documented. This follows exported profiles: a ZIP with
+// The .streamDeckProfile format is not documented. This follows the version 2.0 bundles the app
+// itself ships and imports (its own XL default profile, other plugins' profiles): a ZIP with
 // `<profile>.sdProfile/manifest.json` (device model, page list) and one
-// `Profiles/<page>/manifest.json` per page whose Keypad controller maps "column,row" to actions.
-// The maintainer checks it on the real XL (see the PR's hardware questions); if the app refuses
-// it, a profile built in the app (a Console Slot on every key) and exported works the same.
+// `Profiles/<page folder>/manifest.json` per page whose Keypad controller maps "column,row" to
+// actions. In 2.0 a page's folder is named by its encoded ID (pageFolder), not the plain UUID:
+// with plain UUIDs the app finds no page and rejects the file as "content corrupted". As in the
+// app's own profiles, `Pages.Default` names a separate empty page that `Pages.Pages` leaves out.
 
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -29,6 +31,31 @@ export function stableUuid(name: string): string {
   h[8] = ((h[8] ?? 0) & 0x3f) | 0x80; // RFC 4122 variant
   const x = h.subarray(0, 16).toString('hex');
   return `${x.slice(0, 8)}-${x.slice(8, 12)}-${x.slice(12, 16)}-${x.slice(16, 20)}-${x.slice(20)}`;
+}
+
+/** The alphabet of page folder names: base32hex with "U" left out and "W" added. */
+const PAGE_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTVW';
+
+/**
+ * The folder a version 2.0 profile keeps a page in: the page UUID's 16 bytes, 5 bits at a time
+ * from the first byte (the last group padded with zero bits), in PAGE_ALPHABET, then "Z".
+ */
+export function pageFolder(uuid: string): string {
+  const bytes = Buffer.from(uuid.replaceAll('-', ''), 'hex');
+  let out = '';
+  let bits = 0;
+  let value = 0;
+  for (const byte of bytes) {
+    value = (value << 8) | byte;
+    bits += 8;
+    while (bits >= 5) {
+      bits -= 5;
+      out += PAGE_ALPHABET[(value >> bits) & 31] ?? '';
+    }
+    value &= (1 << bits) - 1;
+  }
+  if (bits > 0) out += PAGE_ALPHABET[(value << (5 - bits)) & 31] ?? '';
+  return `${out}Z`;
 }
 
 export interface BundledProfile {
@@ -83,6 +110,7 @@ const json = (value: unknown): Buffer => Buffer.from(`${JSON.stringify(value, nu
 export function profileEntries(p: BundledProfile, version: string): ZipEntry[] {
   const profile = stableUuid(`${p.file}/profile`).toUpperCase();
   const page = stableUuid(`${p.file}/page/1`);
+  const empty = stableUuid(`${p.file}/page/default`);
   const actions: Record<string, unknown> = {};
   for (let row = 0; row < XL_ROWS; row++) {
     for (let column = 0; column < XL_COLUMNS; column++) {
@@ -96,13 +124,17 @@ export function profileEntries(p: BundledProfile, version: string): ZipEntry[] {
       data: json({
         Device: { Model: XL_MODEL, UUID: '' },
         Name: p.name,
-        Pages: { Current: page, Default: page, Pages: [page] },
+        Pages: { Current: page, Default: empty, Pages: [page] },
         Version: '2.0',
       }),
     },
     {
-      name: `${root}/Profiles/${page.toUpperCase()}/manifest.json`,
+      name: `${root}/Profiles/${pageFolder(page)}/manifest.json`,
       data: json({ Controllers: [{ Actions: actions, Type: 'Keypad' }], Icon: '', Name: '' }),
+    },
+    {
+      name: `${root}/Profiles/${pageFolder(empty)}/manifest.json`,
+      data: json({ Controllers: [{ Actions: {}, Type: 'Keypad' }], Icon: '', Name: '' }),
     },
   ];
 }
