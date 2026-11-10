@@ -1,6 +1,6 @@
 # 05 — Agentic development plan
 
-Goal: a coding agent (in a cloud sandbox, no hardware) can implement and verify ~90 % of the work. Hardware-dependent truth enters through **captured traces** and short **human verification checkpoints** on Alexey's Mac (UFX III + XL).
+Goal: a coding agent (in a cloud sandbox, no hardware) can implement and verify ~90 % of the work. Hardware-dependent truth enters through **captured traces** and short **human verification checkpoints** on the maintainer's Mac (UFX III + XL).
 
 ## 1. Principles for agent-driven work
 
@@ -36,16 +36,16 @@ Goal: a coding agent (in a cloud sandbox, no hardware) can implement and verify 
 
 ### 2.2 Capture tool (run once by the human)
 
-`tools/capture`: listens on the feedback port, optionally sends a scripted sequence (`/sendall`, toggle 48V on MIC 9, load snapshot 2, …), writes `fixtures/captures/<device>-<tmfx-version>-<date>.jsonl` with timestamps. Alexey runs it on the Mac (or a Remote Control session does) at M0 and whenever a protocol question arises.
+`tools/capture`: listens on the feedback port, optionally sends a scripted sequence (`/sendall`, toggle 48V on MIC 9, load snapshot 2, …), writes `fixtures/captures/<device>-<tmfx-version>-<date>.jsonl` with timestamps. The maintainer runs it on the Mac (or a coding agent on that Mac does) at M0 and whenever a protocol question arises.
 
 ## 3. Milestones and tasks
 
-Legend: 🤖 agent-only · 👤 needs Alexey (≤15 min) · deps in brackets.
+Legend: 🤖 agent-only · 👤 needs the maintainer (≤15 min) · deps in brackets.
 
 ### M0 — Foundations (week 1)
 - **M0.1 🤖 Repo scaffold** ✅: npm workspaces, TS strict, ESLint/Prettier, Vitest, GitHub Actions matrix (ubuntu/macos/windows), `AGENTS.md`, issue/PR templates. *AC: `npm test` green on all OSes.*
 - **M0.2 🤖 Vendor docs** ✅ partly done: agent downloads RME files (rme-audio.de is allowed in the cloud environment) into the **gitignored** `docs/vendor/` (`scripts/fetch-vendor.sh`). RME material is copyrighted and is never committed; we commit our own spec derived from it. Fetched so far: classic OSC table `OscTableTotalMix_240722`, UFX III manual, RME's own Stream Deck proof-of-concept plugin (Global OSC, alpha). Still missing: the official **Global OSC protocol table** for TotalMix FX 2.10 (the alpha-era `globalosc_protocol_alpha8.zip` link is gone) → get the current file from RME / forum, else derive from captures.
-- **M0.3 🤖+👤 Capture tool** [M0.1] → Alexey runs a 5-minute scripted capture with UFX III. *AC: JSONL fixture committed.*
+- **M0.3 🤖+👤 Capture tool** [M0.1] → the maintainer runs a 5-minute scripted capture with UFX III. *AC: JSONL fixture committed.*
 - **M0.4 🤖 Protocol spec**: `docs/protocol/global-osc.md` — authoritative address table reconciled from vendor table + captures; resolve all **[VERIFY]** items from 01. [M0.2, M0.3]
 
 ### M1 — Protocol core (week 1–2)
@@ -97,7 +97,7 @@ SD+ dials (gain/fader on encoders, touch strip meters), Neo infobar, multiple To
 
 Agent rules live in [`/AGENTS.md`](../../AGENTS.md) (harness-neutral; read natively by current coding agents, no tool-specific pointer files). Keep rules there, not here.
 
-## 5. Hardware checkpoint script (10 min, Alexey)
+## 5. Hardware checkpoint script (10 min, maintainer)
 
 1. TotalMix FX: Remote Controller 2 = Global OSC, ports 7002/9002, IP 127.0.0.1, Send changes/status/levels on.
 2. `streamdeck link` dev build, open Console profile on XL.

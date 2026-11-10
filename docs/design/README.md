@@ -9,7 +9,6 @@ A Stream Deck plugin (XL first) to control and monitor RME interfaces (Fireface 
 | [03-ux.md](03-ux.md) | Key anatomy, gestures, Channel Detail overlay, default XL layout, PI + Control Center settings |
 | [04-naming.md](04-naming.md) | Trademark-safe name + alternatives |
 | [05-agentic-plan.md](05-agentic-plan.md) | Milestones/tasks, simulator, capture tool, testing without hardware, AGENTS.md rules |
-| [UX mockup (canvas)](https://claude.ai/artifact/UwZ1hZm3rRiLWQBF9sqoYm) (private link, owner only) | Key states, XL Console page, Channel Detail overlay, Control Center, Property Inspector |
 
 ## Key decisions
 
@@ -19,7 +18,7 @@ A Stream Deck plugin (XL first) to control and monitor RME interfaces (Fireface 
 4. **Settings split**: minimal Property Inspector + a local browser "Control Center" with live device data.
 5. **Hardware-free development**: own OSC simulator, captured traffic fixtures, PNG goldens, virtual deck with Playwright.
 
-## Open questions for Alexey
+## Open questions
 
 - ~~TotalMix version~~ latest (2.10) ✓ · ~~repo name~~ `akorobko/faderlight` ✓
 - RME vendor files stay out of git (gitignored `docs/vendor/`).
