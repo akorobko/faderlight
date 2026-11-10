@@ -312,6 +312,40 @@ export const baseline: Script = {
       // TotalMix does not echo numeric writes, so read the setting back.
       verify: msg('/sendsettings', f(1)),
     }),
+    // Writes the plugin's keys make (M4) that no capture has shown yet.
+    write({
+      id: 'write-solo',
+      title: 'Toggle solo of {inName} on its route to {outName}',
+      why: 'Solo keys write /mix/in/n/out/solo (seen only as a reply): is it accepted, and does solo follow the route or the channel?',
+      address: '/mix/in/{in}/{out}/solo',
+      change: toggle('f'),
+      verify: msg('/sendsubmix/{out}', f(1)),
+    }),
+    write({
+      id: 'write-pan',
+      title: 'Move the pan of {inName} into {outName} a little to the left',
+      why: 'The Channel Detail pan keys write /mix/in/n/out/balpan (−1…1): is it accepted in that range?',
+      address: '/mix/in/{in}/{out}/balpan',
+      // Pan is not in dB, but the same nudge works: 0.1 to the left, skipped at the far left.
+      change: nudgeDb(-0.1, -0.9),
+      verify: msg('/sendsubmix/{out}', f(1)),
+    }),
+    write({
+      id: 'write-fxsend',
+      title: 'Lower the FX send of {inName} by 1 dB',
+      why: 'The Channel Detail send keys write /input/n/fxsend in dB: is it accepted? (Skipped when the send is off.)',
+      address: '/input/{in}/fxsend',
+      change: nudgeDb(-1),
+      verify: sendchanIn,
+    }),
+    write({
+      id: 'write-lowcut',
+      title: 'Toggle the low cut of {inName}',
+      why: 'Can /input/n/lowcut/enable (and so EQ and dynamics enable) be set over Global OSC?',
+      address: '/input/{in}/lowcut/enable',
+      change: toggle('f'),
+      verify: sendchanIn,
+    }),
     write({
       id: 'write-name',
       title: 'Rename {inName} to "FL test"',
