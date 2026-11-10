@@ -282,6 +282,8 @@ export const baseline: Script = {
       why: 'Is /controlroom/dim an explicit set or a toggle?',
       address: '/controlroom/dim',
       change: toggle('f'),
+      // TotalMix does not echo numeric writes, so read the setting back.
+      verify: msg('/sendsettings', f(1)),
     }),
     write({
       id: 'write-name',

@@ -58,8 +58,8 @@
 **OscTransport** — binds the feedback port, sends to TotalMix host:port. Detects silence → `disconnected`. Reconnect with backoff. Several transports possible (multi-device later).
 
 **TotalMixAdaptor** — maps addresses ⇄ typed model updates (`{entity: 'input', index: 9, field: 'phantom', value: true}`). Owns:
-- *Connection state machine*: `idle → probing (/sendstatus, wait heartbeat) → syncing (/sendall paced) → live → stale (no heartbeat 3s) → probing`.
-- *Command queue*: optimistic update in store (flag `pending`), confirmed by "Re-send received" echo; rollback after 500 ms without confirmation.
+- *Connection state machine*: `idle → probing (/sendstate, wait for the reply) → syncing (/sendall 2) → live → stale (3 unanswered /sendstate polls, one per second) → probing`. TotalMix sends no heartbeat and meters stop when levels do not change (`docs/protocol/global-osc.md` §5, §8).
+- *Command queue*: optimistic update in store (flag `pending`), confirmed by a targeted request (`/sendchan/...` or `/sendsettings`) shortly after the write, because TotalMix does not echo numeric writes (only names). Correct the store from that reply; no rollback timer for a missing echo.
 - *Rate-limited requests*: never flood (UFX III `/sendall` is thousands of messages).
 - Pure functions: `decode(msg) → Update[]`, `encode(Command) → OscMessage[]` ⇒ trivial to unit-test.
 
