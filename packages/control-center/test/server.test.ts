@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { DEFAULT_SETTINGS } from '@faderlight/deck';
+import { CONSOLE_LAYOUT, DEFAULT_SETTINGS, LAYOUT_TEMPLATES } from '@faderlight/deck';
 import type { MixerSummary } from '../src/summary.ts';
 import type { Notifications } from '../src/protocol.ts';
 import { ControlCenterServer, type UiFiles } from '../src/server.ts';
@@ -120,6 +120,8 @@ describe('the Control Center server', () => {
         '5': '#3c8cff',
         '6': '#00f027',
       }) as unknown,
+      defaultLayout: CONSOLE_LAYOUT,
+      templates: LAYOUT_TEMPLATES,
     });
   });
 
@@ -150,6 +152,37 @@ describe('the Control Center server', () => {
     });
     expect(host.saved).toHaveLength(1);
     await told;
+  });
+
+  it('checks settings without saving them (an imported file)', async () => {
+    const c = await connect();
+    const reply = await c.call('settings.check', {
+      settings: { ...DEFAULT_SETTINGS, theme: 'neon', layout: { columns: 8 } },
+    });
+    expect(reply.result).toMatchObject({
+      settings: { theme: 'dark' },
+      problems: [
+        'theme: expected one of dark, high-contrast',
+        'layout: expected a layout with columns, rows and pages',
+      ],
+    });
+    expect(host.saved).toEqual([]);
+  });
+
+  it('draws a layout page with the settings it is sent (a draft)', async () => {
+    const c = await connect();
+    const draft = { ...DEFAULT_SETTINGS, theme: 'high-contrast' };
+    expect((await c.call('layout.preview', { settings: draft, page: 0 })).result).toEqual({
+      images: ['data:image/svg+xml,a', 'data:image/svg+xml,b'],
+    });
+    expect((await c.call('layout.preview', { settings: draft, page: 4 })).result).toEqual({
+      images: [],
+    });
+    expect((await c.call('layout.preview', { settings: draft })).error?.code).toBe(-32602);
+    expect(host.previews).toEqual([
+      { page: 0, theme: 'high-contrast' },
+      { page: 4, theme: 'high-contrast' },
+    ]);
   });
 
   it('streams the mixer: a summary first, then changes', async () => {

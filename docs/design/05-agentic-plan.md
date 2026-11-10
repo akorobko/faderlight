@@ -82,7 +82,7 @@ Legend: 🤖 agent-only · 👤 needs the maintainer (≤15 min) · deps in brac
 - **M5.2 🤖 Control Center server** ✅ (HTTP+WS, token, JSON-RPC, live store stream).
 - **M5.3 🤖 Control Center UI** ✅: Connection + Setup Assistant + packet log.
 - **M5.4 🤖 Device & Channels, Behaviour, Appearance sections** ✅ (snapshot names that win over TotalMix's, channel names, colours and hiding, Level Preset levels, colour-number mapping; settings v3).
-- **M5.5 🤖 Layout builder** (drag & drop, live key previews, templates, export/import).
+- **M5.5 🤖 Layout builder** ✅ (drag & drop, live key previews, templates, export/import; plus the Backup section).
 - **M5.6 👤 Hardware checkpoint #2** + UX feedback round.
 
 ### M6 — Release (week 6)

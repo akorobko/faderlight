@@ -47,6 +47,7 @@ long presses, double taps (Talkback) and held ± keys work as on the hardware.
 | `e2e/control-center.spec.ts` | Browser tests of the Control Center, with screenshots           |
 | `e2e/inspector.spec.ts`      | Browser tests of the Property Inspector, with screenshots       |
 | `e2e/settings.spec.ts`       | Browser tests of the Control Center's settings pages            |
+| `e2e/layout.spec.ts`         | Browser tests of the layout builder and Backup                  |
 
 ## End-to-end tests
 

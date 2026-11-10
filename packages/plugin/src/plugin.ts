@@ -88,6 +88,7 @@ const controlCenterHost: ControlCenterHost = {
     mixer.resync();
   },
   snapshotNames: () => snapshotNames.read(),
+  preview: (settings, page) => deck.preview(settings, page),
 };
 
 const controlCenter = new ControlCenter(controlCenterHost, log, (url) =>

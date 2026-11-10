@@ -7,9 +7,11 @@ import { useEffect, useMemo, useState } from 'preact/hooks';
 import { Button, Dot, type DotState } from './components.tsx';
 import { useLive, useTopic } from './live.ts';
 import { AppearancePage } from './pages/appearance.tsx';
+import { BackupPage } from './pages/backup.tsx';
 import { BehaviourPage } from './pages/behaviour.tsx';
 import { ChannelsPage } from './pages/channels.tsx';
 import { ConnectionPage } from './pages/connection.tsx';
+import { LayoutPage } from './pages/layout.tsx';
 import type { Rpc } from './rpc.ts';
 import { SettingsModel } from './settings.ts';
 
@@ -27,8 +29,10 @@ interface Section {
 export const SECTIONS: readonly Section[] = [
   { id: 'connection', title: 'Connection', page: ConnectionPage },
   { id: 'channels', title: 'Device & Channels', page: ChannelsPage },
+  { id: 'layout', title: 'Layout', page: LayoutPage },
   { id: 'behaviour', title: 'Behaviour', page: BehaviourPage },
   { id: 'appearance', title: 'Appearance', page: AppearancePage },
+  { id: 'backup', title: 'Backup', page: BackupPage },
 ];
 
 const sectionOf = (hash: string): Section => {

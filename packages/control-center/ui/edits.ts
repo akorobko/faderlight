@@ -1,7 +1,22 @@
-// Edits of the settings draft that keep it tidy: an emptied box takes its entry out, so a draft
-// that was changed and changed back compares equal to what the plugin has.
+// Edits of the settings draft that keep it tidy: an emptied box takes its entry out, and a layout
+// that is the default again leaves the settings, so a draft that was changed and changed back
+// compares equal to what the plugin has. Types only from @faderlight/deck: the page must not
+// bundle the deck runtime.
 
-import type { ChannelSettings, ColorHex, GlobalSettings } from '@faderlight/deck';
+import type {
+  BankSource,
+  ChannelSettings,
+  ColorHex,
+  GlobalSettings,
+  KeySpec,
+  Layout,
+  Page,
+} from '@faderlight/deck';
+
+/** An object without one of its fields. */
+export function omit<T extends object, K extends keyof T>(o: T, key: K): Omit<T, K> {
+  return Object.fromEntries(Object.entries(o).filter(([k]) => k !== key)) as Omit<T, K>;
+}
 
 /** A map with one entry set, or taken out (undefined). */
 export function withEntry<T>(
@@ -46,3 +61,135 @@ export function parsePreset(key: string): PresetName | undefined {
   const output = /^\d+$/.test(m[1]) ? Number(m[1]) : (m[1] as PresetName['output']);
   return { output, n: Number(m[2]) };
 }
+
+// --- layouts ------------------------------------------------------------------------------
+
+/**
+ * A layout as the builder keeps it: on each page the strip keys of a bank are numbered in
+ * reading order, each bank is as long as its strip keys, and the page has the banks its strip
+ * and bank keys name (keeping where each starts). So moving keys never leaves gaps in a bank.
+ */
+export function tidyLayout(layout: Layout): Layout {
+  return { ...layout, pages: layout.pages.map(tidyPage) };
+}
+
+function tidyPage(page: Page): Page {
+  const counts: number[] = [];
+  let banks = 0;
+  const keys = page.keys.map((k): KeySpec => {
+    if (k.type === 'bank') banks = Math.max(banks, (k.bank ?? 0) + 1);
+    if (k.type !== 'strip') return k;
+    const bank = k.bank ?? 0;
+    banks = Math.max(banks, bank + 1);
+    const n = counts[bank] ?? 0;
+    counts[bank] = n + 1;
+    return { type: 'strip', n, ...(k.style ? { style: k.style } : {}), bank };
+  });
+  // In the order the plugin writes a page back, so a saved draft compares equal.
+  if (banks === 0) return { name: page.name, keys };
+  return {
+    name: page.name,
+    banks: Array.from({ length: banks }, (_, i) => ({
+      source: page.banks?.[i]?.source ?? 'input',
+      size: Math.max(1, counts[i] ?? 0),
+    })),
+    keys,
+  };
+}
+
+const json = (v: unknown): string => JSON.stringify(v);
+
+export const sameLayout = (a: Layout, b: Layout): boolean =>
+  json(tidyLayout(a)) === json(tidyLayout(b));
+
+/** The draft with a new layout; one that is the default again leaves the settings. */
+export function withLayout(
+  draft: GlobalSettings,
+  layout: Layout,
+  fallback: Layout,
+): GlobalSettings {
+  const rest: GlobalSettings = omit(draft, 'layout');
+  return sameLayout(layout, fallback) ? rest : { ...rest, layout: tidyLayout(layout) };
+}
+
+/** One key of a page set. */
+export function setKey(layout: Layout, page: number, index: number, spec: KeySpec): Layout {
+  return {
+    ...layout,
+    pages: layout.pages.map((p, i) =>
+      i === page ? { ...p, keys: p.keys.map((k, j) => (j === index ? spec : k)) } : p,
+    ),
+  };
+}
+
+/** Two keys of a page swapped (a key dragged onto another). */
+export function swapKeys(layout: Layout, page: number, a: number, b: number): Layout {
+  const keys = layout.pages[page]?.keys;
+  const ka = keys?.[a];
+  const kb = keys?.[b];
+  if (!ka || !kb) return layout;
+  return setKey(setKey(layout, page, a, kb), page, b, ka);
+}
+
+/** Page keys that go to a page by number follow it to its new place (`move(old)`). */
+function remapPages(layout: Layout, move: (old: number) => number | undefined): Layout {
+  return {
+    ...layout,
+    pages: layout.pages.map((p) => ({
+      ...p,
+      keys: p.keys.map((k): KeySpec => {
+        if (k.type !== 'page' || k.to === undefined) return k;
+        const to = move(k.to);
+        return to === undefined ? { type: 'page', direction: 'next' } : { type: 'page', to };
+      }),
+    })),
+  };
+}
+
+export function movePage(layout: Layout, from: number, to: number): Layout {
+  const pages = [...layout.pages];
+  const [page] = pages.splice(from, 1);
+  if (!page || to < 0 || to > pages.length) return layout;
+  pages.splice(to, 0, page);
+  const order = pages.map((p) => layout.pages.indexOf(p));
+  return remapPages({ ...layout, pages }, (old) => order.indexOf(old));
+}
+
+/** A page taken out; keys that went to it go to the next page instead. */
+export function removePage(layout: Layout, index: number): Layout {
+  if (layout.pages.length <= 1) return layout;
+  const pages = layout.pages.filter((_, i) => i !== index);
+  return remapPages({ ...layout, pages }, (old) =>
+    old === index ? undefined : old > index ? old - 1 : old,
+  );
+}
+
+export function addPage(layout: Layout, name: string): Layout {
+  const keys = Array.from({ length: layout.columns * layout.rows }, () => EMPTY_KEY);
+  return { ...layout, pages: [...layout.pages, { name, keys }] };
+}
+
+export function renamePage(layout: Layout, index: number, name: string): Layout {
+  return {
+    ...layout,
+    pages: layout.pages.map((p, i) => (i === index ? { ...p, name } : p)),
+  };
+}
+
+export function setBankSource(
+  layout: Layout,
+  page: number,
+  bank: number,
+  source: BankSource,
+): Layout {
+  return {
+    ...layout,
+    pages: layout.pages.map((p, i) =>
+      i === page && p.banks
+        ? { ...p, banks: p.banks.map((b, j) => (j === bank ? { ...b, source } : b)) }
+        : p,
+    ),
+  };
+}
+
+export const EMPTY_KEY: KeySpec = { type: 'empty' };

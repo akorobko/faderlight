@@ -96,8 +96,15 @@ fits on its row, its key is blank. A Phones key for a role TotalMix shows no out
 too. The last source is what
 the Console's third row starts on: the playback strips, then the outputs that are not Main or a
 Phones output, since those have keys of their own. A page key goes to its page (`to`) or the
-next one; a long press goes back to the Console. The layout is built in (`CONSOLE_LAYOUT`)
-until the Control Center can edit it (M5).
+next one; a long press goes back to the Console.
+
+The built-in layout is `CONSOLE_LAYOUT`. The Control Center's layout builder stores one of the
+user's own in the global settings (`layout`); `readLayout` checks it key by key (`readKeySpec`),
+leaving a key that is not one empty, and the slots follow a new layout at once (each device
+stays on its page if it is still there, and its banks start again). `LAYOUT_TEMPLATES` are the
+builder's starting points: Studio Console (the built-in layout), Tracking and Monitoring only.
+`DeckRuntime.preview(settings, page)` draws a page's keys as the deck would, with settings that
+may be a draft, for the builder's grid.
 
 ## The Channel Detail overlay
 

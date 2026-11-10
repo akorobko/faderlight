@@ -2,8 +2,8 @@
 // the plugin until Save, so typing a port number does not reconnect on every key. The plugin
 // checks and clamps what it gets and sends back what it kept (and what it changed).
 
-import type { GlobalSettings, JsonObject } from '@faderlight/deck';
-import type { HelloResult } from '../src/protocol.ts';
+import type { GlobalSettings, JsonObject, Layout, LayoutTemplate } from '@faderlight/deck';
+import type { HelloResult, SaveResult } from '../src/protocol.ts';
 import { Live } from './live.ts';
 import type { Rpc } from './rpc.ts';
 
@@ -15,6 +15,9 @@ export interface SettingsState {
   readonly defaults: GlobalSettings;
   /** The theme's colour for each TotalMix colour number it knows. */
   readonly palette: Readonly<Record<string, string>>;
+  /** What the Console shows while the settings have no layout of their own. */
+  readonly defaultLayout: Layout;
+  readonly templates: readonly LayoutTemplate[];
   readonly saving: boolean;
   /** What the plugin changed or refused at the last save. */
   readonly problems: readonly string[];
@@ -58,6 +61,8 @@ export class SettingsModel {
       draft: dirty ? s.draft : hello.settings,
       defaults: hello.defaults,
       palette: hello.palette,
+      defaultLayout: hello.defaultLayout,
+      templates: hello.templates,
       saving: false,
       problems: [],
     });
@@ -93,6 +98,17 @@ export class SettingsModel {
     } catch (e) {
       this.patch({ saving: false, error: e instanceof Error ? e.message : String(e) });
     }
+  }
+
+  /** Checks settings (an imported file) as a save would, without saving them. */
+  async check(settings: JsonObject): Promise<SaveResult> {
+    return this.rpc.call('settings.check', { settings });
+  }
+
+  /** The layout the Console shows with the draft. */
+  get layout(): Layout | undefined {
+    const s = this.state.value;
+    return s && (s.draft.layout ?? s.defaultLayout);
   }
 
   private patch(change: Partial<SettingsState>): void {
