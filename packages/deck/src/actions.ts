@@ -13,6 +13,8 @@ export type ActionKind =
   | 'status'
   | 'step'
   | 'console'
+  | 'preset'
+  | 'exit'
   | 'test-image';
 
 export interface ActionInfo {
@@ -66,6 +68,17 @@ export const ACTIONS: readonly ActionInfo[] = [
     kind: 'console',
     name: 'Open Console',
     tooltip: 'Switches this device to the bundled Console profile.',
+  },
+  {
+    kind: 'preset',
+    name: 'Level Preset',
+    tooltip:
+      'A saved level for Main, a Phones output or another output. Tap sets it, hold saves the current level.',
+  },
+  {
+    kind: 'exit',
+    name: 'Exit Console',
+    tooltip: 'Leaves the Console profile for the profile this device showed before it.',
   },
   {
     kind: 'test-image',

@@ -4,38 +4,52 @@ The deck runtime without the Stream Deck SDK: what each key is, what it shows an
 does (docs/design/02-architecture.md). `packages/plugin` connects it to the Stream Deck app;
 the virtual deck (`tools/virtual-deck`) connects it to a browser.
 
-| File                 | Contents                                                                |
-| -------------------- | ----------------------------------------------------------------------- |
-| `src/settings.ts`    | Global settings: schema, defaults, migrations, clamping                 |
-| `src/actions.ts`     | The action registry the plugin manifest is checked against              |
-| `src/specs.ts`       | Key specs (what a key is) and the spec of a specific action's settings  |
-| `src/controllers.ts` | One controller per spec type: mixer state to view, gestures to commands |
-| `src/gestures.ts`    | Tap, long press, double tap and auto-repeat from key down and up        |
-| `src/scheduler.ts`   | FrameScheduler: image budget, per-key rate, static before meter frames  |
-| `src/detail.ts`      | The Channel Detail overlay: its keys, views and gestures                |
-| `src/keys.ts`        | The controller for each spec type                                       |
-| `src/layout.ts`      | The Console layout: pages, banks, what each Console Slot is             |
-| `src/runtime.ts`     | DeckRuntime: keys appear, get pressed and are drawn through a DeckHost  |
+| File                    | Contents                                                                |
+| ----------------------- | ----------------------------------------------------------------------- |
+| `src/settings.ts`       | Global settings: schema, defaults, migrations, clamping                 |
+| `src/actions.ts`        | The action registry the plugin manifest is checked against              |
+| `src/specs.ts`          | Key specs (what a key is) and the spec of a specific action's settings  |
+| `src/controllers.ts`    | One controller per spec type: mixer state to view, gestures to commands |
+| `src/gestures.ts`       | Tap, long press, double tap and auto-repeat from key down and up        |
+| `src/scheduler.ts`      | FrameScheduler: image budget, per-key rate, static before meter frames  |
+| `src/detail.ts`         | The Channel Detail overlay: its keys, views and gestures                |
+| `src/keys.ts`           | The controller for each spec type                                       |
+| `src/layout.ts`         | The Console layout: pages, banks, what each Console Slot is             |
+| `src/runtime.ts`        | DeckRuntime: keys appear, get pressed and are drawn through a DeckHost  |
+| `src/snapshot-names.ts` | Snapshot names from TotalMix's own state file                           |
 
 ## Specific actions
 
 Each action dropped onto any page of any profile reads its own settings; missing or unusable
 values fall back to the defaults below, so a freshly dropped action does something.
 
-| Action             | Settings (default)                                                           | Tap             | Hold                             |
-| ------------------ | ---------------------------------------------------------------------------- | --------------- | -------------------------------- |
-| Channel            | `bus` (input), `index` (first strip), `style`, `tap` (mute), `hold` (detail) | mute (or solo)  | Channel Detail (or solo, 48V)    |
-| Main / Output      | `output`: `main`, `phones1`-`phones4` or an output index (main)              | mute            |                                  |
-| Phones             | `n` 1-4 (1)                                                                  | mute            |                                  |
-| Snapshot           | `n` 1-8 (1)                                                                  | load            |                                  |
-| Monitor Switch     | `function`: dim, mono, talkback, speakerB, external (dim)                    | toggle          |                                  |
-| Global Mute / Solo | `function`: mute or solo (mute)                                              | toggle          |                                  |
-| Status             |                                                                              |                 | read the mixer again             |
-| Volume Step        | `output` (main), `direction` up or down (up)                                 | 0.5 dB, repeats | 1 dB after 1.5 s, 3 dB after 3 s |
+| Action             | Settings (default)                                                           | Tap              | Hold                             |
+| ------------------ | ---------------------------------------------------------------------------- | ---------------- | -------------------------------- |
+| Channel            | `bus` (input), `index` (first strip), `style`, `tap` (mute), `hold` (detail) | mute (or solo)   | Channel Detail (or solo, 48V)    |
+| Main / Output      | `output`: `main`, `phones1`-`phones4` or an output index (main)              | mute             |                                  |
+| Phones             | `n` 1-4 (1)                                                                  | mute             |                                  |
+| Snapshot           | `n` 1-8 (1)                                                                  | load             |                                  |
+| Monitor Switch     | `function`: dim, mono, talkback, speakerB, external (dim)                    | toggle           |                                  |
+| Global Mute / Solo | `function`: mute or solo (mute)                                              | toggle           |                                  |
+| Status             |                                                                              |                  | read the mixer again             |
+| Volume Step        | `output` (main), `direction` up or down (up)                                 | 0.5 dB, repeats  | 1 dB after 1.5 s, 3 dB after 3 s |
+| Level Preset       | `output` (main), `n` 1-8 (1)                                                 | set saved level  | save the current level           |
+| Exit Console       |                                                                              | previous profile |                                  |
 
 Talkback is on while the key is held; a double tap latches it until the next press. A Channel
 key's solo is the solo of its route into Main. Snapshots are only loaded: no capture has shown
 a Global OSC address for saving one.
+
+A Level Preset keeps its level in the global settings (`levels`, by output and number, e.g.
+`main/1`), so the same preset is shared by every key that names it, on any profile. It is lit
+while the output is at that level.
+
+Global OSC does not send snapshot names. `TotalMixSnapshotNames` reads them from the state file
+TotalMix writes when it quits (macOS: `~/Library/Application Support/RME TotalMix FX/last.*.xml`,
+the newest one), so a renamed snapshot shows after TotalMix has quit once. The file name holds
+the interface's serial number: it is read, never logged or copied. Where TotalMix keeps the
+file on Windows is not known yet; there the keys show the snapshot number. Names set in the
+settings (M5) will win.
 
 ## The Console layout
 
@@ -43,16 +57,19 @@ The bundled Console profile puts a Console Slot on each key of an XL; each slot 
 layout has at its coordinates on the page its device shows now. Page and bank keys change
 that instantly, without switching profiles; each device keeps its own page and banks.
 
-| Page    | Keys                                                                                                                                                                                          |
-| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Console | Snapshots 1-6, Status, Page; a bank of 8 input strips; Main, Phones 1-2, AN 3/4, Dim, Mono, Talkback, Bank; Main, Phones 1 and Phones 2 ±, Global Mute, Global Solo (docs/design/03-ux.md §4) |
-| Inputs  | A bank of 30 strips in meter style, Bank, Page                                                                                                                                                |
-| Outputs | A bank of 24 output strips; Main ±, Dim, Mono, Speaker B, External, Bank, Page                                                                                                                |
+| Page    | Keys                                                                                                                                 |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Console | Snapshots 1-4, Dim, Mono, Status, Page; 7 inputs, Bank; 7 playback and output strips, Bank; Main, Phones 1-2, Main preset, Exit (§4) |
+| Inputs  | 29 input strips in meter style, Console (top right), Bank, Page to Outputs                                                           |
+| Outputs | 23 output strips, Console (top right), Dim, Mono, Speaker B, External, Bank, Page to Inputs                                          |
 
-A bank key moves its bank by its size and wraps around at the end; a long press switches it to
-the next bus (inputs, playback, outputs). A page key goes to the next page; a long press goes
-back to the first. The layout is built in (`CONSOLE_LAYOUT`) until the Control Center can edit
-it (M5).
+A page can have several banks, one per channel row; its strip and bank keys name theirs. A bank
+moves by its size and wraps around at the end; a long press on its key switches it to the next
+source: inputs, playback, outputs, then playback and outputs together. The last source is what
+the Console's third row starts on: the playback strips, then the outputs that are not Main or a
+Phones output, since those have keys of their own. A page key goes to its page (`to`) or the
+next one; a long press goes back to the Console. The layout is built in (`CONSOLE_LAYOUT`)
+until the Control Center can edit it (M5).
 
 ## The Channel Detail overlay
 

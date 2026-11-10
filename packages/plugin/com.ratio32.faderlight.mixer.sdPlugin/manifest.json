@@ -179,6 +179,36 @@
       "UserTitleEnabled": false
     },
     {
+      "UUID": "com.ratio32.faderlight.mixer.preset",
+      "Name": "Level Preset",
+      "Tooltip": "A saved level for Main, a Phones output or another output. Tap sets it, hold saves the current level.",
+      "Icon": "imgs/actions/preset",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/keys/key",
+          "ShowTitle": false
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false
+    },
+    {
+      "UUID": "com.ratio32.faderlight.mixer.exit",
+      "Name": "Exit Console",
+      "Tooltip": "Leaves the Console profile for the profile this device showed before it.",
+      "Icon": "imgs/actions/exit",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/keys/key",
+          "ShowTitle": false
+        }
+      ],
+      "SupportedInMultiActions": false,
+      "UserTitleEnabled": false
+    },
+    {
       "UUID": "com.ratio32.faderlight.mixer.test-image",
       "Name": "Test Images",
       "Tooltip": "Development aid: shows the renderer test images. Tap for the next page, hold to switch between the SVG and the reference PNG.",

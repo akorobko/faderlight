@@ -142,7 +142,11 @@ describe('DeckRuntime: specific actions', () => {
     place('ph1', 'phones', { n: 1 });
     place('ph3', 'phones', { n: 3 });
     expect(host.view('ph1')).toMatchObject({ role: 'phones', title: 'PHONES 1', name: 'Phones 1' });
-    expect(host.view('ph3')).toMatchObject({ name: 'Not assigned', offline: true });
+    expect(host.view('ph3')).toMatchObject({
+      name: 'Not assigned',
+      unassigned: true,
+      offline: false,
+    });
   });
 
   it('a Volume Step key repeats while held and speeds up after 1.5 s', () => {

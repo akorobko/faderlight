@@ -15,9 +15,12 @@ Two profiles, as tabs above the deck:
 
 - **Console**: a Console Slot on every key, like the bundled profile: the Console, Inputs and
   Outputs pages, banks and the Channel Detail overlay.
-- **My page**: a few specific actions and the Console launcher on an otherwise empty page, as
-  a user would build one (docs/design/03-ux.md §4a). A long press on a channel key there opens
-  the overlay on the Console, and Back comes back.
+- **My page**: a few specific actions, a Level Preset and the Console launcher on an otherwise
+  empty page, as a user would build one (docs/design/03-ux.md §4a). A long press on a channel
+  key there opens the overlay on the Console, and Back comes back; so does Exit on the Console.
+
+Against the simulator the Snapshot keys show made-up names; with `--totalmix` they show the
+names in TotalMix's state file on this computer (`packages/deck`, "Specific actions").
 
 Press keys with the mouse or a finger: key down and key up go to the runtime separately, so
 long presses, double taps (Talkback) and held ± keys work as on the hardware.

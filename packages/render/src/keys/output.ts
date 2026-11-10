@@ -1,6 +1,7 @@
 // Output keys (docs/design/03-ux.md §2.2): Main out, a Phones output, or any output. A big
 // volume in dB, the output's name, a stereo meter, and for Main the monitor chips that are
-// on (DIM, MONO, SPK B, EXT, TB). Muted is teal like an input.
+// on (DIM, MONO, SPK B, EXT, TB). Muted is teal like an input. A role TotalMix has no output
+// for says "Not assigned".
 
 import { formatLevel, UNKNOWN } from '../format.ts';
 import { headphones } from '../icons.ts';
@@ -48,6 +49,8 @@ export interface OutputKey extends KeyState {
     { readonly left: MeterLevel; readonly right?: MeterLevel | undefined } | undefined;
   readonly muted?: boolean | undefined;
   readonly monitor?: MonitorChips | undefined;
+  /** TotalMix has no output in this role (Phones 2 not set up): says so, no hatching. */
+  readonly unassigned?: boolean | undefined;
 }
 
 const DEFAULT_TITLE: Readonly<Record<OutputRole, string>> = {
@@ -60,6 +63,7 @@ const TEXT_X = 7;
 const CHIP_H = 19;
 
 export function renderOutput(theme: Theme, k: OutputKey): string {
+  if (k.unassigned === true && k.offline !== true) return renderUnassigned(theme, k);
   const l = look(theme, k);
   const t = theme.type;
   // Outputs are usually pairs: without a reading yet, draw two empty bars.
@@ -82,28 +86,7 @@ export function renderOutput(theme: Theme, k: OutputKey): string {
         ]
       : [];
   out += chipsRightAligned(chips, right, 8, 3);
-  let titleX = TEXT_X;
-  if (k.role === 'phones') {
-    out += headphones(TEXT_X + 8, 17, 17, band.subtext);
-    titleX += 21;
-  }
-  const title = k.title ?? DEFAULT_TITLE[k.role];
-  const tf = fitText(title, {
-    face: 'semibold',
-    sizes: [t.small],
-    maxWidth: right - titleX - chipsWidth(chips, 3) - 4,
-    tracking: 0.5,
-    minScaleX: 0.72,
-  });
-  out += text(tf.text, {
-    face: 'semibold',
-    size: tf.size,
-    tracking: 0.5,
-    scaleX: tf.scaleX,
-    x: titleX,
-    y: 23,
-    fill: band.subtext,
-  });
+  out += titleRow(theme, k, band.subtext, right - chipsWidth(chips, 3) - 4);
 
   // Row 2: the output's name (or its label).
   const [name, label] = nameAndLabel(k);
@@ -196,4 +179,45 @@ export function renderOutput(theme: Theme, k: OutputKey): string {
     off: l.offline,
   });
   return out + stateFrames(theme, k);
+}
+
+/** The title, after a headphone glyph for Phones. */
+function titleRow(theme: Theme, k: OutputKey, fill: string, right: number): string {
+  let out = '';
+  let x = TEXT_X;
+  if (k.role === 'phones') {
+    out += headphones(TEXT_X + 8, 17, 17, fill);
+    x += 21;
+  }
+  const tf = fitText(k.title ?? DEFAULT_TITLE[k.role], {
+    face: 'semibold',
+    sizes: [theme.type.small],
+    maxWidth: right - x,
+    tracking: 0.5,
+    minScaleX: 0.72,
+  });
+  return (
+    out +
+    text(tf.text, {
+      face: 'semibold',
+      size: tf.size,
+      tracking: 0.5,
+      scaleX: tf.scaleX,
+      x,
+      y: 23,
+      fill,
+    })
+  );
+}
+
+/** A role TotalMix has no output for: the title and "Not assigned", nothing to control. */
+function renderUnassigned(theme: Theme, k: OutputKey): string {
+  const l = look(theme, {});
+  let out = background(theme, l) + titleRow(theme, k, l.subtext, CANVAS - TEXT_X);
+  let y = 76;
+  for (const line of ['Not', 'assigned']) {
+    out += text(line, { face: 'semibold', size: theme.type.medium, x: TEXT_X, y, fill: l.subtext });
+    y += 26;
+  }
+  return out;
 }

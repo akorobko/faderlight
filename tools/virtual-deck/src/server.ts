@@ -18,6 +18,7 @@ import {
   DeckRuntime,
   DEFAULT_SETTINGS,
   SILENT,
+  TotalMixSnapshotNames,
   type ActionKind,
   type DeckHost,
   type JsonObject,
@@ -62,8 +63,12 @@ const OWN_PAGE: Readonly<Record<string, KeyDef>> = {
   '5,1': { kind: 'step', settings: { output: 'main', direction: 'up' } },
   '6,1': { kind: 'monitor', settings: { function: 'talkback' } },
   '7,1': { kind: 'console' },
+  '2,2': { kind: 'preset', settings: { output: 'main', n: 2 } },
   '0,3': { kind: 'status' },
 };
+
+/** Snapshot names for the simulator, which (like TotalMix) does not send any. */
+const SIMULATOR_SNAPSHOTS = ['Tracking', 'Overdubs', 'Mixdown', 'Reference'];
 
 function keysOf(profile: ProfileName): Map<string, KeyDef> {
   const keys = new Map<string, KeyDef>();
@@ -174,6 +179,8 @@ export class VirtualDeck {
       switchToProfile: (_device, profile) => {
         this.show(profile === CONSOLE_PROFILE ? 'console' : this.previous);
       },
+      // Settings live as long as the server: a saved Level Preset is kept until it stops.
+      saveSettings: () => undefined,
     };
     this.runtime = new DeckRuntime({
       mixer: connection.client,
@@ -182,6 +189,10 @@ export class VirtualDeck {
       settings: DEFAULT_SETTINGS,
       log: this.log,
       consoleProfile: CONSOLE_PROFILE,
+      // A real TotalMix on this computer has them in its state file.
+      snapshotNames: o.totalmix
+        ? new TotalMixSnapshotNames()
+        : { name: (n) => SIMULATOR_SNAPSHOTS[n - 1] },
       render: (view, theme, size, id) => {
         this.drawn.set(id, view);
         return svgDataUrl(renderKey(view, theme, size));

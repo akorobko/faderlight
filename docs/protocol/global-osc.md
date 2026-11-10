@@ -147,7 +147,7 @@ outputs. Expect tens of thousands of messages. Prefer `/sendall 2`, or `/sendset
 | `/status/dsp`                                                                             | `0` throughout; meaning not tested (DSP load?).                                                                                              | open     |
 | `/status/device`                                                                          | `"<model> (<serial>)"`, for example `"Fireface UFX III (12345678)"`. The capture tool masks the serial; a client should show the model only. | seen     |
 | `/durec/state`                                                                            | Text, `"Not ready"` here (no storage medium).                                                                                                | seen     |
-| `/globalmute`, `/globalsolo`                                                              | `1` here; meaning (the master button armed?) not tested.                                                                                     | open     |
+| `/globalmute`, `/globalsolo`                                                              | `1` here: the master switches, lit while any mute (solo) is set (§9.1). Writes not tested.                                                   | open     |
 | EQ and filter `type`, `slope`, reverb `type`                                              | Small integers as float; the enum values are not mapped yet.                                                                                 | open     |
 
 ## 7. Address table
@@ -257,13 +257,27 @@ message by message, so a new capture that disagrees with the simulator fails CI.
 
 From the **[VERIFY]** markers in `docs/design/01-capabilities.md`:
 
-| Question                | Answer                                                                                               |
-| ----------------------- | ---------------------------------------------------------------------------------------------------- |
-| Exact argument types    | Float32 for every number, strings for names and texts (seen). Writes also accept int32 and T/F.      |
-| `/output/N/mute` exists | Yes.                                                                                                 |
-| Snapshot names          | Not sent by any request in the capture. Still open.                                                  |
-| Meter peak/RMS variants | None; one display level per channel, with peak hold.                                                 |
-| Preamp gain steps       | Mic inputs: 1 dB steps (seen 50-54 and 67). Line inputs: 6.5 seen, so finer steps; range not tested. |
+| Question                | Answer                                                                                                                             |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Exact argument types    | Float32 for every number, strings for names and texts (seen). Writes also accept int32 and T/F.                                    |
+| `/output/N/mute` exists | Yes.                                                                                                                               |
+| Snapshot names          | Not sent by any request, and RME's own Stream Deck plugin shows none either. TotalMix keeps them in its state file instead (§9.1). |
+| Meter peak/RMS variants | None; one display level per channel, with peak hold.                                                                               |
+| Preamp gain steps       | Mic inputs: 1 dB steps (seen 50-54 and 67). Line inputs: 6.5 seen, so finer steps; range not tested.                               |
+
+### 9.1 Outside Global OSC
+
+- **Snapshot names.** TotalMix FX writes its state to an XML file when it quits. On macOS it is
+  `~/Library/Application Support/RME TotalMix FX/last.<model><serial>.xml` (the file name holds
+  the interface's serial number: never commit one). The eight names are `<val>` elements in
+  `<General>`, with `e="SnapshotName 0"` to `"SnapshotName 7"` and the name in `v`. A rename
+  shows in the file only after TotalMix has quit. The Windows location is not known yet.
+- **Global Mute and Global Solo** (`/globalmute`, `/globalsolo`) are TotalMix's master
+  switches, per the interface manual: lit as soon as any mute (or solo) is set anywhere, and a
+  press switches all set mutes (solos) off, and on again with the next press. Both read 1 in
+  the capture and in the first live run, so a mute and a solo were probably set somewhere (a
+  hidden channel, another submix). Steps `write-globalmute` and `write-globalsolo` check the
+  writes.
 
 ## Open questions
 
@@ -275,8 +289,8 @@ Each one becomes a step in `tools/capture/scripts/baseline.ts` for the next capt
    mean off.
 3. `/output/{mainout}/mute` write (a Main mute). The `write-output-mute` step tests an output
    mute, and `write-gain` tests a gain write.
-4. Snapshot names: is there a request or address for them?
-5. `/globalmute` and `/globalsolo` meaning; groups.
+4. Snapshot names: is there a request or address for them? (Until then: §9.1.)
+5. `/globalmute` and `/globalsolo` writes (meaning: §9.1); groups.
 6. Enum values: EQ band types, low-cut slope, reverb and echo types, colours (step `ui-color`;
    the key renderer's channel colours are placeholders until then).
 7. Does "Re-send received" echo anything at all, and does "Send faders in linear scale" add

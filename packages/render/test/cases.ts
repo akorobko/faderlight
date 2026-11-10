@@ -295,6 +295,20 @@ export const CASES: readonly Case[] = [
     },
   },
   { name: 'output-offline', title: 'Offline', group: OUTPUTS, view: { ...main, offline: true } },
+  {
+    name: 'output-unassigned',
+    title: 'Phones, not assigned',
+    group: OUTPUTS,
+    view: {
+      kind: 'output',
+      role: 'phones',
+      title: 'PHONES 2',
+      label: '',
+      name: 'Not assigned',
+      volume: undefined,
+      unassigned: true,
+    },
+  },
 
   // --- toggles ---
   {

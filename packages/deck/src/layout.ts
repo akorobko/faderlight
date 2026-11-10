@@ -1,23 +1,32 @@
 // Layouts for the Console profile (docs/design/03-ux.md §4): the bundled profile puts a Console
 // Slot on every key of a Stream Deck XL, and each slot asks the layout what it is, by its
 // coordinates, on the page the deck shows now. Pages and banks change instantly, without
-// switching profiles. The default layout has three pages: Console, Inputs and Outputs.
+// switching profiles. The default layout has three pages: Console, Inputs and Outputs; a page
+// can have several banks, one per channel row.
 
 import type { Bus } from '@faderlight/model';
 import type { Coordinates } from './runtime.ts';
 import { EMPTY, type Direction, type KeySpec } from './specs.ts';
 
-/** A run of channel keys that moves together through the strips of a bus. */
+/**
+ * What a bank pages through: the strips of one bus, or the playback strips followed by the
+ * outputs that have no key of their own on the Console page (all but Main and the Phones
+ * outputs), so one row shows the software returns and the hardware outputs of a small setup.
+ */
+export type BankSource = Bus | 'playback+output';
+
+/** A run of channel keys that moves together through the strips of a source. */
 export interface BankSpec {
-  /** The bus it starts on; a long press on a bank key switches bus. */
-  readonly bus: Bus;
+  /** The source it starts on; a long press on its bank key switches to the next. */
+  readonly source: BankSource;
   /** How many strips it shows (its strip keys are numbered 0 to size - 1). */
   readonly size: number;
 }
 
 export interface Page {
   readonly name: string;
-  readonly bank?: BankSpec | undefined;
+  /** The page's banks; strip and bank keys name theirs by its place here (default 0). */
+  readonly banks?: readonly BankSpec[] | undefined;
   /** Row by row, `columns * rows` of them. */
   readonly keys: readonly KeySpec[];
 }
@@ -30,12 +39,18 @@ export interface Layout {
 
 /** Where a bank is now. */
 export interface BankPosition {
-  readonly bus: Bus;
+  readonly source: BankSource;
   /** Strip number (from 0) of its first key. */
   readonly offset: number;
 }
 
-export const BANK_BUSES: readonly Bus[] = ['input', 'playback', 'output'];
+/** The sources a long press on a bank key goes through, in order. */
+export const BANK_SOURCES: readonly BankSource[] = [
+  'input',
+  'playback',
+  'output',
+  'playback+output',
+];
 
 /** The spec of the key at some coordinates of a page; empty outside the grid. */
 export function keyAt(layout: Layout, page: number, at: Coordinates | undefined): KeySpec {
@@ -60,78 +75,88 @@ export function moveBank(
   return { ...at, offset: offset <= 0 ? last : offset - size };
 }
 
-/** The same bank on the next bus, from its start. */
-export function nextBankBus(at: BankPosition): BankPosition {
-  const i = BANK_BUSES.indexOf(at.bus);
-  return { bus: BANK_BUSES[(i + 1) % BANK_BUSES.length] ?? 'input', offset: 0 };
+/** The same bank on the next source, from its start. */
+export function nextBankSource(at: BankPosition): BankPosition {
+  const i = BANK_SOURCES.indexOf(at.source);
+  return { source: BANK_SOURCES[(i + 1) % BANK_SOURCES.length] ?? 'input', offset: 0 };
 }
 
-/** A bank's offset when the bus has fewer strips now (some were hidden in TotalMix). */
+/** A bank's offset when the source has fewer strips now (some were hidden in TotalMix). */
 export const clampBank = (at: BankPosition, size: number, total: number): BankPosition =>
   at.offset > lastOffset(size, total) ? { ...at, offset: lastOffset(size, total) } : at;
 
 // --- the default layout -------------------------------------------------------------------
+//
+// From the first run on a real XL: the top-right key is a page key on every page (on the
+// overview pages it reads "Console" and goes back), each channel row ends in the bank key that
+// moves it, and the bottom-right key leaves the Console for the profile the deck showed before.
 
-const strips = (from: number, count: number, style?: 'meter'): KeySpec[] =>
-  Array.from({ length: count }, (_, i) => ({ type: 'strip', n: from + i, style }) as const);
+const strips = (from: number, count: number, style?: 'meter', bank = 0): KeySpec[] =>
+  Array.from({ length: count }, (_, i) => ({ type: 'strip', n: from + i, style, bank }) as const);
 
 const MAIN = { role: 'main' } as const;
 const PH1 = { role: 'phones', n: 1 } as const;
 const PH2 = { role: 'phones', n: 2 } as const;
 
+const TO_CONSOLE: KeySpec = { type: 'page', to: 0 };
+
 const CONSOLE: Page = {
   name: 'Console',
-  bank: { bus: 'input', size: 8 },
+  banks: [
+    { source: 'input', size: 7 },
+    { source: 'playback+output', size: 7 },
+  ],
   keys: [
-    ...[1, 2, 3, 4, 5, 6].map((n) => ({ type: 'snapshot', n }) as const),
+    ...[1, 2, 3, 4].map((n) => ({ type: 'snapshot', n }) as const),
+    { type: 'toggle', function: 'dim' },
+    { type: 'toggle', function: 'mono' },
     { type: 'status' },
     { type: 'page', direction: 'next' },
 
-    ...strips(0, 8),
+    ...strips(0, 7),
+    { type: 'bank', direction: 'next', bank: 0 },
+
+    ...strips(0, 7, undefined, 1),
+    { type: 'bank', direction: 'next', bank: 1 },
 
     { type: 'output', output: MAIN },
     { type: 'output', output: PH1 },
     { type: 'output', output: PH2 },
-    { type: 'output', output: { role: 'output', index: 2 } },
-    { type: 'toggle', function: 'dim' },
-    { type: 'toggle', function: 'mono' },
-    { type: 'toggle', function: 'talkback' },
-    { type: 'bank', direction: 'next' },
-
-    { type: 'step', output: MAIN, direction: 'down' },
-    { type: 'step', output: MAIN, direction: 'up' },
-    { type: 'step', output: PH1, direction: 'down' },
-    { type: 'step', output: PH1, direction: 'up' },
-    { type: 'step', output: PH2, direction: 'down' },
-    { type: 'step', output: PH2, direction: 'up' },
-    { type: 'toggle', function: 'globalMute' },
-    { type: 'toggle', function: 'globalSolo' },
+    { type: 'preset', output: MAIN, n: 1 },
+    EMPTY,
+    EMPTY,
+    EMPTY,
+    { type: 'exit' },
   ],
 };
 
 const INPUTS: Page = {
   name: 'Inputs',
-  bank: { bus: 'input', size: 30 },
+  banks: [{ source: 'input', size: 29 }],
   keys: [
-    ...strips(0, 30, 'meter'),
+    ...strips(0, 7, 'meter'),
+    TO_CONSOLE,
+    ...strips(7, 22, 'meter'),
     { type: 'bank', direction: 'next' },
-    { type: 'page', direction: 'next' },
+    { type: 'page', to: 2 },
   ],
 };
 
 const OUTPUTS: Page = {
   name: 'Outputs',
-  bank: { bus: 'output', size: 24 },
+  banks: [{ source: 'output', size: 23 }],
   keys: [
-    ...strips(0, 24),
-    { type: 'step', output: MAIN, direction: 'down' },
-    { type: 'step', output: MAIN, direction: 'up' },
+    ...strips(0, 7),
+    TO_CONSOLE,
+    ...strips(7, 16),
     { type: 'toggle', function: 'dim' },
     { type: 'toggle', function: 'mono' },
     { type: 'toggle', function: 'speakerB' },
     { type: 'toggle', function: 'external' },
+    EMPTY,
+    EMPTY,
     { type: 'bank', direction: 'next' },
-    { type: 'page', direction: 'next' },
+    { type: 'page', to: 1 },
   ],
 };
 
