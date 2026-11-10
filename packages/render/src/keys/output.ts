@@ -2,7 +2,7 @@
 // like a channel key: the output's name big with a colour underline, the volume, the role as
 // the caption beside a speaker or headphone icon, a stereo meter, and for Main the monitor
 // chips that are on (DIM, MONO, B, EXT, TB). Muted is a teal pad like an input. A role
-// TotalMix has no output for says "Not assigned".
+// TotalMix shows no output for says "Not assigned" (the deck leaves a Phones key blank then).
 
 import { formatLevel, UNKNOWN } from '../format.ts';
 import { meterPair, meterPairWidth, type MeterLevel } from '../meter.ts';
@@ -64,7 +64,7 @@ export interface OutputKey extends KeyState {
     { readonly left: MeterLevel; readonly right?: MeterLevel | undefined } | undefined;
   readonly muted?: boolean | undefined;
   readonly monitor?: MonitorChips | undefined;
-  /** TotalMix has no output in this role (Phones 2 not set up): says so, no hatching. */
+  /** TotalMix shows no output in this role (Main hidden, say): says so, no hatching. */
   readonly unassigned?: boolean | undefined;
 }
 

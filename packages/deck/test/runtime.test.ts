@@ -138,15 +138,30 @@ describe('DeckRuntime: specific actions', () => {
     expect(host.view('main')).toMatchObject({ name: 'Phones 1', volume: -12 });
   });
 
-  it('a Phones key shows the output assigned to it, or says it is not assigned', () => {
+  it('a Phones key shows the output assigned to it, or nothing when TotalMix shows none', () => {
     place('ph1', 'phones', { n: 1 });
+    place('ph2', 'phones', { n: 2 });
     place('ph3', 'phones', { n: 3 });
     expect(host.view('ph1')).toMatchObject({ role: 'phones', title: 'PHONES 1', name: 'Phones 1' });
-    expect(host.view('ph3')).toMatchObject({
-      name: 'Not assigned',
-      unassigned: true,
-      offline: false,
-    });
+    expect(host.view('ph2')).toMatchObject({ name: 'Phones 2' });
+    // Phones 3 is not set up: a blank key, and a tap does nothing.
+    expect(host.view('ph3')).toBeUndefined();
+    tap('ph3');
+    expect(host.alerts).toEqual([]);
+    // Phones 2's output hidden in TotalMix: it is not on the wire any more, so blank too.
+    mixer.sim.setVisible('output', 10, false);
+    mixer.resync();
+    advance(1000);
+    expect(host.view('ph2')).toBeUndefined();
+  });
+
+  it('a Main key says "Not assigned" when TotalMix shows no Main output', () => {
+    place('main', 'output');
+    mixer.sim.setVisible('output', 0, false);
+    mixer.resync();
+    advance(1000);
+    expect(host.view('main')).toMatchObject({ name: 'Not assigned', unassigned: true });
+    expect(host.view('main')).not.toHaveProperty('offline', true);
   });
 
   it('a Volume Step key repeats while held and speeds up after 1.5 s', () => {
