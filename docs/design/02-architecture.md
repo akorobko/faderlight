@@ -11,7 +11,7 @@
 | OSC library | **Own minimal codec** (~250 LOC: messages, bundles, types `i f s b T F`) on `node:dgram` | Zero native deps, fully unit-testable, tiny; existing libs are old/unmaintained |
 | MIDI | Not in v1 | See 01 §3.3 |
 | Key rendering | **Pure functions → SVG string** → `data:image/svg+xml` via `setImage` | No canvas/native deps; deterministic; snapshot-testable |
-| Test rendering | `@resvg/resvg-js` (dev only) to rasterise SVG → PNG at 96/144 px | Golden images that agents can *look at* |
+| Test rendering | `@resvg/resvg-wasm` (dev only) to rasterise SVG → PNG at 96/144 px | Golden images that agents can *look at*; the WebAssembly build draws the same pixels on every platform |
 | PI (in Stream Deck) | Plain HTML + `sdpi-components` v4, tiny TS bundle | Fast, native look |
 | Settings app ("Control Center") | Local HTTP + WebSocket server inside the plugin (`127.0.0.1`, random port), UI = **Preact + Vite** SPA, opened with `streamDeck.system.openUrl` | Rich UI without PI limits; no Electron |
 | Build | npm workspaces, **Rollup** (CLI default) for plugin, Vite for UIs | Standard |

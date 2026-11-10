@@ -277,7 +277,8 @@ Each one becomes a step in `tools/capture/scripts/baseline.ts` for the next capt
    mute, and `write-gain` tests a gain write.
 4. Snapshot names: is there a request or address for them?
 5. `/globalmute` and `/globalsolo` meaning; groups.
-6. Enum values: EQ band types, low-cut slope, reverb and echo types, colours.
+6. Enum values: EQ band types, low-cut slope, reverb and echo types, colours (step `ui-color`;
+   the key renderer's channel colours are placeholders until then).
 7. Does "Re-send received" echo anything at all, and does "Send faders in linear scale" add
    `faderlin` addresses? (A screenshot of the Details dialog in 2.1 helps here.)
 8. Behaviour with hidden channels shown, and on Windows.

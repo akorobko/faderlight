@@ -10,8 +10,9 @@ Requires Node.js 24 (see `.nvmrc`).
 
 ```sh
 npm ci
-npm run check   # vendor guard, format, lint, typecheck, tests
-npm run sim     # fake TotalMix FX on ports 7002/9002 (packages/simulator/README.md)
+npm run check            # vendor guard, format, lint, typecheck, tests
+npm run sim              # fake TotalMix FX on ports 7002/9002 (packages/simulator/README.md)
+npm run render:goldens   # key images and renders/contact-sheet.png (packages/render/README.md)
 ```
 
 | Path                 | Contents                                       |

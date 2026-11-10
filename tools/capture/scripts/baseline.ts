@@ -216,6 +216,17 @@ export const baseline: Script = {
       text: ['Click Dim in the Control Room section, wait a second, then click it again.'],
     }),
     manual({
+      id: 'ui-color',
+      title: 'Change the colour of {inName}',
+      optional: true,
+      why: 'Which colour is each /input/n/color number? Keys draw the channel colour as a tab.',
+      text: [
+        'In the channel settings of {inName}, pick each channel colour in turn, from the first to the',
+        'last, about a second each, then set the colour back. Say in the PR which colours you picked.',
+        'If you cannot find a colour setting, type s and press Enter to skip.',
+      ],
+    }),
+    manual({
       id: 'ui-snapshot',
       title: 'Load a snapshot',
       optional: true,
