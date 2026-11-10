@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@elgato/streamdeck": "3.0.4",
+    "@faderlight/control-center": "0.0.0",
     "@faderlight/deck": "0.0.0",
     "@faderlight/model": "0.0.0",
     "@faderlight/render": "0.0.0",

@@ -34,6 +34,18 @@ function decodeXml(s: string): string {
   });
 }
 
+/**
+ * Where snapshot names came from: TotalMix's state file, no state file in its folder (TotalMix
+ * has not quit yet on this computer), or a system where the folder is not known.
+ */
+export type SnapshotNameSource = 'file' | 'no-file' | 'unsupported';
+
+export interface SnapshotNameRead {
+  readonly source: SnapshotNameSource;
+  /** Index 0 is snapshot 1. */
+  readonly names: readonly (string | undefined)[];
+}
+
 /** The folder TotalMix FX keeps its state in on this computer; undefined: not known. */
 export function totalMixFolder(platform = process.platform, home = homedir()): string | undefined {
   return platform === 'darwin'
@@ -62,12 +74,25 @@ export class TotalMixSnapshotNames implements SnapshotNames {
   }
 
   name(n: number): string | undefined {
+    this.check();
+    return this.names[n - 1];
+  }
+
+  /** All eight names (index 0: snapshot 1), and whether a state file was found to read. */
+  read(): SnapshotNameRead {
+    this.check();
+    return {
+      source: this.folder === undefined ? 'unsupported' : this.seen === '' ? 'no-file' : 'file',
+      names: Array.from({ length: 8 }, (_, i) => this.names[i]),
+    };
+  }
+
+  private check(): void {
     const now = this.now();
     if (now - this.checked >= this.checkMs) {
       this.checked = now;
       this.refresh();
     }
-    return this.names[n - 1];
   }
 
   private refresh(): void {

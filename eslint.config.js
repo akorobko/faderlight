@@ -12,6 +12,7 @@ export default defineConfig(
     'fixtures/',
     // Plugin build output (packages/plugin/scripts/build.ts).
     'packages/plugin/*.sdPlugin/bin/',
+    'packages/plugin/*.sdPlugin/control-center/',
   ]),
   eslint.configs.recommended,
   tseslint.configs.strictTypeChecked,
@@ -28,6 +29,11 @@ export default defineConfig(
   {
     files: ['**/*.{js,mjs,cjs}'],
     extends: [tseslint.configs.disableTypeChecked],
+  },
+  {
+    // Pages that run in a browser: the Control Center and the Property Inspector.
+    files: ['packages/*/ui/**/*.{ts,tsx}'],
+    languageOptions: { globals: globals.browser },
   },
   {
     // Only the plugin shell talks to the Stream Deck SDK (AGENTS.md, docs/design/02-architecture.md).

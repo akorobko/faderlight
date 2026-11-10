@@ -74,8 +74,17 @@ budget, overlay timeout and theme. They carry a version number: the plugin reads
 version through the migrations there, fills in missing fields, clamps bad values and writes
 the result back. Settings written by a newer build are used but never written back.
 
-Until the Property Inspector and the Control Center exist (M5), the defaults are what you get:
-TotalMix on `127.0.0.1`, sending to port 7002 and listening on 9002.
+The defaults: TotalMix on `127.0.0.1`, sending to port 7002 and listening on 9002. The
+Control Center changes them (the Connection page), and more settings follow there (M5).
+
+## Control Center
+
+A tap on the Status key opens the Control Center (`packages/control-center`) in the browser,
+on its Connection page: where TotalMix is, the Setup Assistant and the packet log. The plugin
+starts its server the first time it is opened and keeps it running until the plugin stops;
+each opening hands the browser a new one-time link (`src/control-center.ts`). The build writes
+the page into the plugin folder (`control-center/`), next to `bin/`. Settings saved there are
+checked, applied at once and stored in the global settings, like the plugin's own.
 
 ## Tests
 

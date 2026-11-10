@@ -84,6 +84,27 @@ describe('the built plugin', () => {
     await until(() => app.images('k2').length > images);
   });
 
+  it('opens the Control Center from a tap on the Status key', async () => {
+    const status = actionUuid('status');
+    app.appear('k4', status, { column: 6, row: 0 });
+    const opened = app.waitFor((m) => m.event === 'openUrl');
+    app.key('keyDown', 'k4', status);
+    app.key('keyUp', 'k4', status);
+    const url = String(((await opened).payload as Json).url);
+    expect(url).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/\?t=[\w-]+#connection$/);
+
+    // The link swaps its token for a session cookie, which gets the page.
+    const login = await fetch(url, { redirect: 'manual' });
+    expect(login.status).toBe(303);
+    const cookie = (login.headers.get('set-cookie') ?? '').split(';')[0] ?? '';
+    const origin = new URL(url).origin;
+    const page = await fetch(`${origin}/`, { headers: { cookie } });
+    expect(page.status).toBe(200);
+    expect(await page.text()).toContain('<script type="module" src="/app.js">');
+    const script = await fetch(`${origin}/app.js`, { headers: { cookie } });
+    expect(script.headers.get('content-type')).toMatch(/javascript/);
+  });
+
   it('shows the first Test Images page, and its PNG after a long press', async () => {
     const action = actionUuid('test-image');
     const first = DEBUG_PAGES[0]?.keys[0];

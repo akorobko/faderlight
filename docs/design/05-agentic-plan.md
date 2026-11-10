@@ -79,8 +79,8 @@ Legend: 🤖 agent-only · 👤 needs the maintainer (≤15 min) · deps in brac
 
 ### M5 — Settings (week 4–5)
 - **M5.1 🤖 Property Inspectors** (sdpi-components; live target picker; Open Control Center).
-- **M5.2 🤖 Control Center server** (HTTP+WS, token, JSON-RPC, live store stream).
-- **M5.3 🤖 Control Center UI**: Connection + Setup Assistant + packet log.
+- **M5.2 🤖 Control Center server** ✅ (HTTP+WS, token, JSON-RPC, live store stream).
+- **M5.3 🤖 Control Center UI** ✅: Connection + Setup Assistant + packet log.
 - **M5.4 🤖 Device & Channels, Behaviour, Appearance sections.**
 - **M5.5 🤖 Layout builder** (drag & drop, live key previews, templates, export/import).
 - **M5.6 👤 Hardware checkpoint #2** + UX feedback round.

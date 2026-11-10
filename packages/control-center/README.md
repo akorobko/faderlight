@@ -12,6 +12,30 @@ of the Stream Deck SDK: the plugin (and the virtual deck) start the server with 
 | `src/diagnostics.ts` | Packet log and connection report (`Diagnostics`, attached to a connection)  |
 | `src/setup.ts`       | The Setup Assistant's checks, from the connection report                    |
 | `src/summary.ts`     | What the pages show about the mixer, and the meter frames                   |
+| `ui/`                | The page: Preact components, the JSON-RPC client, styles                    |
+| `scripts/`           | `bundle.ts` (Rollup for browser code), `build-ui.ts` (the page's files)     |
+
+## The page
+
+A single-page app in Preact (`ui/`), bundled by Rollup into `app.js`, `app.css` and
+`index.html`: `npm run plugin:build` writes them into the plugin folder, and the virtual deck
+builds them in memory when it starts. `node packages/control-center/scripts/build-ui.ts --out
+<folder>` writes them anywhere. The page has no other files and loads nothing from elsewhere
+(the server's `Content-Security-Policy` allows only its own origin).
+
+| Section    | Shows                                                                                   |
+| ---------- | --------------------------------------------------------------------------------------- |
+| Connection | where TotalMix is (host, ports), the Setup Assistant, the packet log, the mixer's state |
+
+The section is the address's fragment (`#connection`), so the plugin can open one directly.
+Edits go into a draft: a bar at the bottom saves or discards them, and the page asks before it
+is closed with unsaved edits. When the plugin stops (or the Stream Deck app restarts) the page
+says so; a new link from the Stream Deck opens it again.
+
+The Setup Assistant checks TotalMix's OSC settings by what arrives, not by what the plugin
+sends: the port is free, TotalMix answers, the mixer has been read, meters arrive, and changes
+made in TotalMix arrive (Send changes and Send status in TotalMix's OSC settings). Each check
+that fails says what to change in TotalMix.
 
 ## Access
 
@@ -66,4 +90,6 @@ TotalMix sends in `/status/device`.
 
 `test/server.test.ts` runs the server with a test host and talks to it like a browser (links,
 cookies, `Host` and `Origin` headers, the WebSocket); `test/diagnostics.test.ts` runs the
-diagnostics against the simulator.
+diagnostics against the simulator. The page itself is tested in Chromium through the virtual
+deck (`tools/virtual-deck/e2e/control-center.spec.ts`, `npm run e2e`), which saves screenshots
+to `renders/control-center/`.

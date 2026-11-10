@@ -18,7 +18,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
-    "typecheck": "tsc",
+    "typecheck": "tsc && tsc -p packages/control-center/ui",
     "test": "vitest run",
     "test:watch": "vitest",
     "sim": "node packages/simulator/src/cli.ts",

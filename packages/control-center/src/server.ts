@@ -24,6 +24,7 @@ import {
   type JsonObject,
   type Logger,
   type ReadSettings,
+  type SnapshotNameRead,
 } from '@faderlight/deck';
 import { keyOf, type Key, type MixerStore } from '@faderlight/model';
 import type { Diagnostics } from './diagnostics.ts';
@@ -41,7 +42,7 @@ import {
   type StoreEntryJson,
   type Topic,
 } from './protocol.ts';
-import { setupChecks, type SnapshotNameSource } from './setup.ts';
+import { setupChecks } from './setup.ts';
 import { meterFrame, mixerSummary } from './summary.ts';
 
 /** What the Control Center needs from the plugin. */
@@ -58,10 +59,7 @@ export interface ControlCenterHost {
   /** Reads the whole mixer again. */
   resync(): void;
   /** Snapshot names from TotalMix's state file (index 0: snapshot 1), and where they came from. */
-  snapshotNames(): {
-    readonly source: SnapshotNameSource;
-    readonly names: readonly (string | undefined)[];
-  };
+  snapshotNames(): SnapshotNameRead;
 }
 
 export interface UiFile {

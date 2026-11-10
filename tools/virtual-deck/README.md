@@ -22,16 +22,23 @@ Two profiles, as tabs above the deck:
 Against the simulator the Snapshot keys show made-up names; with `--totalmix` they show the
 names in TotalMix's state file on this computer (`packages/deck`, "Specific actions").
 
+**Control Center** (the button above the deck, or a tap on the Status key) opens the
+Control Center (`packages/control-center`) for these keys, as the plugin does: the browser
+opens no window by itself after a key press, so the Status key offers a link instead. Settings
+saved there apply to the keys at once and last until the virtual deck stops; it keeps the
+TotalMix connection it was started with.
+
 Press keys with the mouse or a finger: key down and key up go to the runtime separately, so
 long presses, double taps (Talkback) and held ± keys work as on the hardware.
 
-| Path                  | Contents                                                        |
-| --------------------- | --------------------------------------------------------------- |
-| `src/server.ts`       | HTTP server, server-sent events, the two profiles               |
-| `src/page.ts`         | The page (HTML, CSS and the script that draws the deck)         |
-| `src/cli.ts`          | Command line                                                    |
-| `test/server.test.ts` | The HTTP API against the simulator (Vitest, part of `npm test`) |
-| `e2e/deck.spec.ts`    | Browser tests that press keys and save screenshots (Playwright) |
+| Path                         | Contents                                                        |
+| ---------------------------- | --------------------------------------------------------------- |
+| `src/server.ts`              | HTTP server, server-sent events, the two profiles               |
+| `src/page.ts`                | The page (HTML, CSS and the script that draws the deck)         |
+| `src/cli.ts`                 | Command line                                                    |
+| `test/server.test.ts`        | The HTTP API against the simulator (Vitest, part of `npm test`) |
+| `e2e/deck.spec.ts`           | Browser tests that press keys and save screenshots (Playwright) |
+| `e2e/control-center.spec.ts` | Browser tests of the Control Center, with screenshots           |
 
 ## End-to-end tests
 
@@ -41,5 +48,6 @@ npm run e2e
 ```
 
 The tests start the virtual deck on port 4179, press keys in Chromium and check what the keys
-show through `GET /api/views`. They save screenshots of each page to `renders/virtual-deck/`;
-attach those to PRs that change what the keys look like or do.
+show through `GET /api/views`. They save screenshots of each page to `renders/virtual-deck/`, and
+of the Control Center to `renders/control-center/`; attach those to PRs that change what the
+keys or the Control Center look like or do.

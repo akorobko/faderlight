@@ -125,6 +125,8 @@ export interface KeyContext {
   savePreset(key: string, db: number): void;
   /** A snapshot's name, if known (TotalMix does not send them). */
   snapshotName(n: number): string | undefined;
+  /** Opens the Control Center on a section; false when there is none. */
+  openControlCenter(section?: string): boolean;
 }
 
 export interface Controller<S extends KeySpec> {
@@ -593,7 +595,12 @@ const statusController: Controller<Extract<KeySpec, { type: 'status' }>> = {
   options: (_spec, ctx) => ({ longPressMs: ctx.settings.gestures.longPressMs }),
   view: (_spec, ctx) => statusView(ctx.mixer.store, ctx.settings.connection.listenPort),
   gesture: (_spec, g, ctx) => {
-    // Tap will open the Control Center (M5); hold reads the whole mixer again.
+    // A tap opens the Control Center on its Connection page; a long press reads the whole
+    // mixer again.
+    if (g.type === 'tap') {
+      if (!ctx.openControlCenter('connection')) ctx.alert();
+      return;
+    }
     if (g.type !== 'longPress') return;
     if (isOnline(ctx.mixer.store)) {
       ctx.mixer.resync();

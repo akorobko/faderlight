@@ -17,6 +17,12 @@ nav button {
 }
 nav button[aria-pressed="true"] { background: #2b4a7a; border-color: #4b7bd0; color: #fff; }
 #link { margin-left: 12px; color: #80868f; }
+#toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 10px 16px;
+  background: #172433; border: 1px solid #355a85; border-radius: 10px; box-shadow: 0 12px 30px #0009;
+}
+#toast[hidden] { display: none; }
+#toast a { color: #8fc1ff; }
 #deck {
   display: grid; grid-template-columns: repeat(8, var(--key)); gap: var(--gap);
   padding: 26px 30px; background: #1b1d21; border-radius: 26px;
@@ -120,6 +126,25 @@ events.addEventListener('alert', (e) => flash(JSON.parse(e.data).id, 'alert'));
 events.addEventListener('ok', (e) => flash(JSON.parse(e.data).id, 'ok'));
 events.onopen = () => { link.textContent = 'connected'; };
 events.onerror = () => { link.textContent = 'reconnecting…'; };
+
+// The window opens on the click; its one-time link follows.
+document.getElementById('cc').addEventListener('click', () => {
+  const w = window.open('', '_blank');
+  fetch('/api/control-center').then((r) => r.json()).then(({ url }) => {
+    if (w) w.location.href = url; else location.href = url;
+  });
+});
+
+// A tap on the Status key: the browser opens no window without a click, so offer the link.
+const toast = document.getElementById('toast');
+let toastTimer;
+events.addEventListener('open', (e) => {
+  toast.querySelector('a').href = JSON.parse(e.data).url;
+  toast.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.hidden = true; }, 15000);
+});
+toast.querySelector('a').addEventListener('click', () => { toast.hidden = true; });
 `;
 
 export function page(): string {
@@ -136,10 +161,12 @@ export function page(): string {
   <nav>
     <button data-profile="console" aria-pressed="false">Console</button>
     <button data-profile="own" aria-pressed="false">My page</button>
+    <button id="cc">Control Center</button>
     <span id="link">connecting…</span>
   </nav>
   <div id="deck" role="grid" aria-label="Stream Deck XL"></div>
 </main>
+<p id="toast" role="status" hidden><a target="_blank" rel="noopener">Open the Control Center</a></p>
 <script>${SCRIPT}</script>
 </body>
 </html>

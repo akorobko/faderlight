@@ -8,12 +8,12 @@ import {
   readGlobalSettings,
   type GlobalSettings,
   type JsonObject,
+  type SnapshotNameSource,
 } from '@faderlight/deck';
 import { MixerStore } from '@faderlight/model';
 import { Diagnostics } from '../src/diagnostics.ts';
 import type { RpcNotification, RpcResponse } from '../src/protocol.ts';
 import type { ControlCenterHost } from '../src/server.ts';
-import type { SnapshotNameSource } from '../src/setup.ts';
 
 export class TestHost implements ControlCenterHost {
   readonly version = '0.1.0';

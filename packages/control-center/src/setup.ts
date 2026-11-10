@@ -4,6 +4,7 @@
 // no meters means Send Level Data is off, and no change after moving a fader means Send changes
 // is off. The wording of TotalMix's settings follows tools/capture/README.md.
 
+import type { SnapshotNameSource } from '@faderlight/deck';
 import type { ConnectionReport } from './diagnostics.ts';
 
 export type CheckState = 'ok' | 'fail' | 'wait' | 'info';
@@ -17,9 +18,6 @@ export interface SetupCheck {
   /** What to do in TotalMix (or elsewhere) when the check fails or waits. */
   readonly hint?: readonly string[] | undefined;
 }
-
-/** Where snapshot names come from on this computer. */
-export type SnapshotNameSource = 'file' | 'no-file' | 'unsupported';
 
 /** Probing this long without an answer is a failure, not a wait. */
 export const NO_REPLY_AFTER_MS = 3000;
