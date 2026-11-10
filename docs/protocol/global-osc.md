@@ -81,15 +81,17 @@ outputs. Expect tens of thousands of messages. Prefer `/sendall 2`, or `/sendset
 
 ## 4. Writes
 
-| Topic                     | Behaviour                                                                                                                                                                                                                                 | Status |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| Argument types            | `/input/8/mute` accepted `f:1`, `i:1` and `T`, each one switching mute on.                                                                                                                                                                | seen   |
-| Set, not toggle           | `/input/{n}/mute` and `/controlroom/dim` set the value they are given. Writing 0 to a mute that is 0 leaves it at 0.                                                                                                                      | seen   |
-| No echo of numeric writes | After `/input/8/mute f:1`, `/output/0/volume f:-1` or `/controlroom/dim f:1`, TotalMix sent **no message for that address**, even with "Re-send received" and "Send changes" on. The new value was visible in the next `/sendchan` reply. | seen   |
-| Side effects are sent     | A write does produce feedback for what it changes elsewhere: the active snapshot becomes "modified" (`/snapshot/load/n f:3`), and Dim sends the dimmed Main volume (`/output/2/volume f:-40`, back to `-20` when Dim goes off).           | seen   |
-| Names                     | `/input/{n}/name s:"..."` renames the channel. Unlike numeric writes, the new name **is** echoed, 18 ms later.                                                                                                                            | seen   |
-| Output volume             | `/output/{n}/volume` in dB is applied exactly (`-1` was read back as `-1`).                                                                                                                                                               | seen   |
-| Matrix faders             | Not written yet: the test route was off (−300 dB), so the step skipped itself.                                                                                                                                                            | open   |
+| Topic                     | Behaviour                                                                                                                                                                                                                                 | Status   |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| Argument types            | `/input/8/mute` accepted `f:1`, `i:1` and `T`, each one switching mute on.                                                                                                                                                                | seen     |
+| Set, not toggle           | `/input/{n}/mute` and `/controlroom/dim` set the value they are given. Writing 0 to a mute that is 0 leaves it at 0.                                                                                                                      | seen     |
+| No echo of numeric writes | After `/input/8/mute f:1`, `/output/0/volume f:-1` or `/controlroom/dim f:1`, TotalMix sent **no message for that address**, even with "Re-send received" and "Send changes" on. The new value was visible in the next `/sendchan` reply. | seen     |
+| Side effects are sent     | A write does produce feedback for what it changes elsewhere: the active snapshot becomes "modified" (`/snapshot/load/n f:3`), and Dim sends the dimmed Main volume (`/output/2/volume f:-40`, back to `-20` when Dim goes off).           | seen     |
+| Names                     | `/input/{n}/name s:"..."` renames the channel. Unlike numeric writes, the new name **is** echoed, 18 ms later.                                                                                                                            | seen     |
+| Output volume             | `/output/{n}/volume` in dB is applied exactly (`-1` was read back as `-1`).                                                                                                                                                               | seen     |
+| Matrix faders             | Not written yet: the test route was off (−300 dB), so the step skipped itself.                                                                                                                                                            | open     |
+| Other settings            | The adaptor writes every setting to the address TotalMix reports it on, with the same types as above (float32; switches 0/1; −300 for off; strings for names). Only the rows marked seen were tested; the rest follow from them.          | inferred |
+| Snapshot load             | The adaptor sends `/snapshot/load/{k} f:1`. Not captured yet.                                                                                                                                                                             | open     |
 
 ## 5. Unsolicited feedback
 
@@ -233,6 +235,11 @@ and should replace it there:
    restart, which shows up as a new source port and a burst of meters.
 6. **Decode everything as bundles** with timetag 0; float32 for every number.
 
+`packages/totalmix` implements these (M1). The details are in `docs/design/02-architecture.md`
+(TotalMixAdaptor). A full sync is treated as complete after 150 ms without state messages
+(the longest gap inside a `/sendall` reply in the capture was 21 ms) plus a reply to a
+`/sendstate` sent behind it.
+
 ## 9. Resolved research questions
 
 From the **[VERIFY]** markers in `docs/design/01-capabilities.md`:
@@ -253,7 +260,8 @@ Each one becomes a step in `tools/capture/scripts/baseline.ts` for the next capt
    `/sendsettings` read back? (The Dim step needs a verify request.)
 2. Matrix fader write on a route that is on: units, echo, and whether `-65` and `-300` both
    mean off.
-3. `/output/{mainout}/mute` write (a Main mute).
+3. `/output/{mainout}/mute` write (a Main mute). The `write-output-mute` step tests an output
+   mute, and `write-gain` tests a gain write.
 4. Snapshot names: is there a request or address for them?
 5. `/globalmute` and `/globalsolo` meaning; groups.
 6. Enum values: EQ band types, low-cut slope, reverb and echo types, colours.
@@ -261,3 +269,7 @@ Each one becomes a step in `tools/capture/scripts/baseline.ts` for the next capt
    `faderlin` addresses? (A screenshot of the Details dialog in 2.1 helps here.)
 8. Behaviour with hidden channels shown, and on Windows.
 9. The exact TotalMix FX version and build.
+10. Snapshot load: does `/snapshot/load/{k} f:1` load snapshot k, and what does TotalMix send
+    back? (Needs a step that the person confirms, since a load discards unsaved changes.)
+11. Is the sample rate reported anywhere? Channel labels above AES depend on it (ADAT and MADI
+    have half the channels at 96 kHz), and `/status/*` does not include it.
