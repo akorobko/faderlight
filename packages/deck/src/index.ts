@@ -4,3 +4,4 @@
 export * from './settings.ts';
 export * from './log.ts';
 export * from './actions.ts';
+export * from './gestures.ts';
