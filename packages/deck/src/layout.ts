@@ -90,6 +90,7 @@ export const clampBank = (at: BankPosition, size: number, total: number): BankPo
 // From the first run on a real XL: the top-right key is a page key on every page (on the
 // overview pages it reads "Console" and goes back), each channel row ends in the bank key that
 // moves it, and the bottom-right key leaves the Console for the profile the deck showed before.
+// Dim and Mono sit with Main on the bottom row, so the top row has room for six snapshots.
 
 const strips = (from: number, count: number, style?: 'meter', bank = 0): KeySpec[] =>
   Array.from({ length: count }, (_, i) => ({ type: 'strip', n: from + i, style, bank }) as const);
@@ -107,9 +108,7 @@ const CONSOLE: Page = {
     { source: 'playback+output', size: 7 },
   ],
   keys: [
-    ...[1, 2, 3, 4].map((n) => ({ type: 'snapshot', n }) as const),
-    { type: 'toggle', function: 'dim' },
-    { type: 'toggle', function: 'mono' },
+    ...[1, 2, 3, 4, 5, 6].map((n) => ({ type: 'snapshot', n }) as const),
     { type: 'status' },
     { type: 'page', direction: 'next' },
 
@@ -123,8 +122,8 @@ const CONSOLE: Page = {
     { type: 'output', output: PH1 },
     { type: 'output', output: PH2 },
     { type: 'preset', output: MAIN, n: 1 },
-    EMPTY,
-    EMPTY,
+    { type: 'toggle', function: 'dim' },
+    { type: 'toggle', function: 'mono' },
     EMPTY,
     { type: 'exit' },
   ],

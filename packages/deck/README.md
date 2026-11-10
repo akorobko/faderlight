@@ -59,7 +59,7 @@ that instantly, without switching profiles; each device keeps its own page and b
 
 | Page    | Keys                                                                                                                                 |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Console | Snapshots 1-4, Dim, Mono, Status, Page; 7 inputs, Bank; 7 playback and output strips, Bank; Main, Phones 1-2, Main preset, Exit (§4) |
+| Console | Snapshots 1-6, Status, Page; 7 inputs, Bank; 7 playback and output strips, Bank; Main, Phones 1-2, Main preset, Dim, Mono, Exit (§4) |
 | Inputs  | 29 input strips in meter style, Console (top right), Bank, Page to Outputs                                                           |
 | Outputs | 23 output strips, Console (top right), Dim, Mono, Speaker B, External, Bank, Page to Inputs                                          |
 
