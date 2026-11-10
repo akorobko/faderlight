@@ -1,0 +1,53 @@
+name: Bug report
+description: Something on the deck or in TotalMix FX does not behave as expected.
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you saw, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the Console page
+        2. Long-press MIC 9
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: faderlight-version
+    attributes:
+      label: Faderlight version
+    validations:
+      required: true
+  - type: input
+    id: interface
+    attributes:
+      label: Audio interface and TotalMix FX version
+      placeholder: Fireface UFX III, TotalMix FX 2.10
+    validations:
+      required: true
+  - type: input
+    id: deck
+    attributes:
+      label: Deck model and Stream Deck app version
+      placeholder: Stream Deck XL, 7.1
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: macOS 26.1
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs, captures or photos
+      description: Plugin logs, a capture from tools/capture, or a photo of the deck. Do not attach RME or Elgato documents.

@@ -1,0 +1,10 @@
+{
+  "name": "@faderlight/osc",
+  "version": "0.0.0",
+  "private": true,
+  "description": "OSC 1.0 codec (messages, bundles) and UDP transport. No TotalMix knowledge.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

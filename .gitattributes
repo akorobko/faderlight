@@ -1,0 +1,6 @@
+# LF everywhere, including Windows checkouts (Prettier and shell scripts expect it).
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary

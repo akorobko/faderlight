@@ -1,0 +1,10 @@
+{
+  "name": "@faderlight/totalmix",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TotalMix FX Global OSC adaptor: address map, encode/decode, fader curve, connection state machine.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

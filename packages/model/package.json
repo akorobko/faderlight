@@ -1,0 +1,10 @@
+{
+  "name": "@faderlight/model",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Protocol-agnostic mixer model: store, entities, device profiles, meters.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

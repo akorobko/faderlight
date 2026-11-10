@@ -1,0 +1,6 @@
+# Prettier also skips everything in .gitignore.
+package-lock.json
+# Design pack prose and tables are kept as written.
+docs/design/
+# Captured traffic and other raw test data.
+fixtures/

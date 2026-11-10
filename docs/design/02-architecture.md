@@ -17,7 +17,7 @@
 | Build | npm workspaces, **Rollup** (CLI default) for plugin, Vite for UIs | Standard |
 | Tests | **Vitest** (unit/integration), Playwright (settings app + virtual deck screenshots) | Fast, agent-friendly |
 | Lint/format | ESLint (typescript-eslint) + Prettier, `tsc --noEmit` | CI gate |
-| CI | GitHub Actions: macOS + Windows + Ubuntu matrix (Ubuntu for everything but packaging) | Cross-platform guarantee |
+| CI | GitHub Actions: PR gate (`npm run check`) on a self-hosted Mac runner; Windows tests on a GitHub-hosted runner after each merge to main | Free PR checks on the primary platform; Windows still covered |
 | Packaging | `streamdeck pack` → `.streamDeckPlugin`, GitHub Releases; Marketplace later | |
 
 ## Repository layout (npm workspaces)
@@ -86,7 +86,7 @@
 - UDP + HTTP via Node built-ins → identical on macOS/Windows. No native modules.
 - Windows: firewall prompt on first bind; doc in setup guide. TotalMix on Windows needs explicit remote IP (see 01 §3.1).
 - Paths: use `streamDeck` provided paths; logs in plugin `logs/`.
-- Linux: Stream Deck app does not exist; CI still runs all non-packaging tests on Ubuntu. (Community hosts like OpenDeck can load SD plugins — nice-to-have.)
+- Linux: Stream Deck app does not exist; coding agents work in Linux sandboxes, so all non-packaging checks must keep passing on Linux. (Community hosts like OpenDeck can load SD plugins — nice-to-have.)
 
 ## Performance targets
 

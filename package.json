@@ -1,0 +1,34 @@
+{
+  "name": "faderlight",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Stream Deck plugin for controlling and monitoring RME interfaces through TotalMix FX. Not affiliated with RME or Elgato.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "packages/*",
+    "tools/*"
+  ],
+  "scripts": {
+    "check": "npm run check:vendor && npm run format:check && npm run lint && npm run typecheck && npm test",
+    "check:vendor": "node scripts/check-vendor.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "typecheck": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.19.2",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
+    "prettier": "^3.9.10",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.2",
+    "vitest": "^5.1.0"
+  }
+}
