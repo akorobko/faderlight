@@ -1,62 +1,15 @@
 import { channel, controlRoom, type Target } from '@faderlight/model';
-import type { KeyView } from '@faderlight/render';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   DEFAULT_SETTINGS,
   DeckRuntime,
   type ActionKind,
-  type DeckHost,
   type GlobalSettings,
   type JsonObject,
   type Logger,
 } from '../src/index.ts';
+import { renderJson, TestHost } from './host.ts';
 import { Loopback } from './loopback.ts';
-
-/** Records what the runtime shows; images are the views as JSON, so tests can read them. */
-class TestHost implements DeckHost {
-  readonly images = new Map<string, string[]>();
-  readonly alerts: string[] = [];
-  readonly oks: string[] = [];
-  readonly profiles: [string, string | undefined][] = [];
-
-  setImage(id: string, image: string): void {
-    const list = this.images.get(id) ?? [];
-    list.push(image);
-    this.images.set(id, list);
-  }
-
-  showAlert(id: string): void {
-    this.alerts.push(id);
-  }
-
-  showOk(id: string): void {
-    this.oks.push(id);
-  }
-
-  switchToProfile(device: string, profile?: string): void {
-    this.profiles.push([device, profile]);
-  }
-
-  /** The view the key shows now; undefined: blank (or nothing sent yet). */
-  view(id: string): (KeyView & Record<string, unknown>) | undefined {
-    return this.last(id)?.view;
-  }
-
-  theme(id: string): string | undefined {
-    return this.last(id)?.theme;
-  }
-
-  private last(id: string): { theme: string; view: KeyView & Record<string, unknown> } | undefined {
-    const image = this.images.get(id)?.at(-1);
-    return image?.startsWith('{') === true
-      ? (JSON.parse(image) as { theme: string; view: KeyView & Record<string, unknown> })
-      : undefined;
-  }
-
-  count(id: string): number {
-    return this.images.get(id)?.length ?? 0;
-  }
-}
 
 let mixer: Loopback;
 let host: TestHost;
@@ -79,7 +32,7 @@ function start(settings: GlobalSettings = DEFAULT_SETTINGS): void {
     clock: mixer.clock,
     settings,
     log,
-    render: (view, theme) => JSON.stringify({ theme: theme.name, view }),
+    render: renderJson,
   });
 }
 
@@ -311,8 +264,15 @@ describe('DeckRuntime: keys and frames', () => {
     expect(host.count('dim')).toBe(dimBefore);
   });
 
-  it('a key that is not a specific action is blank', () => {
-    place('slot', 'slot');
+  it('a Console Slot outside the layout is blank', () => {
+    deck.appear({
+      id: 'slot',
+      device: 'XL',
+      kind: 'slot',
+      coordinates: { column: 9, row: 0 },
+      settings: {},
+    });
+    advance(20);
     expect(host.count('slot')).toBe(1);
     expect(host.view('slot')).toBeUndefined();
     expect(host.images.get('slot')?.[0]).toMatch(/^data:image\/svg\+xml/);

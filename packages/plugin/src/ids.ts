@@ -14,3 +14,6 @@ export function kindOfAction(uuid: string): ActionKind | undefined {
   const kind = uuid.slice(prefix.length);
   return isActionKind(kind) ? kind : undefined;
 }
+
+/** The bundled Console profile, as the manifest names it (its path without the extension). */
+export const CONSOLE_PROFILE = 'profiles/Console';

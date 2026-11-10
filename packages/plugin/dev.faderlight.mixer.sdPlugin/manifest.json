@@ -193,5 +193,14 @@
       "SupportedInMultiActions": false,
       "UserTitleEnabled": false
     }
+  ],
+  "Profiles": [
+    {
+      "Name": "profiles/Console",
+      "DeviceType": 2,
+      "Readonly": false,
+      "DontAutoSwitchWhenInstalled": true,
+      "AutoInstall": true
+    }
   ]
 }

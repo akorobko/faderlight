@@ -19,4 +19,5 @@ renders/failures/
 # Plugin build output (packages/plugin/scripts/build.ts); manifest.json and imgs/ are committed.
 packages/plugin/*.sdPlugin/bin/
 packages/plugin/*.sdPlugin/fonts/
+packages/plugin/*.sdPlugin/profiles/
 packages/plugin/*.sdPlugin/logs/

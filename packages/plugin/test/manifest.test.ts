@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ACTIONS } from '@faderlight/deck';
 import { PLUGIN_DIR } from '../scripts/paths.ts';
-import { actionUuid, kindOfAction, PLUGIN_UUID } from '../src/ids.ts';
+import { actionUuid, CONSOLE_PROFILE, kindOfAction, PLUGIN_UUID } from '../src/ids.ts';
 
 interface ManifestAction {
   UUID: string;
@@ -27,6 +27,7 @@ interface Manifest {
   Icon: string;
   CategoryIcon: string;
   Actions: ManifestAction[];
+  Profiles: { Name: string; DeviceType: number }[];
 }
 
 const manifest = JSON.parse(readFileSync(join(PLUGIN_DIR, 'manifest.json'), 'utf8')) as Manifest;
@@ -43,6 +44,12 @@ describe('manifest.json', () => {
     expect(manifest.Nodejs.Version).toBe('24');
     expect(manifest.OS.map((o) => o.Platform).sort()).toEqual(['mac', 'windows']);
     expect(manifest.CodePath).toBe('bin/plugin.js');
+  });
+
+  it('bundles the Console profile for the Stream Deck XL', () => {
+    expect(manifest.Profiles).toEqual([expect.objectContaining({ Name: CONSOLE_PROFILE })]);
+    // DeviceType 2: Stream Deck XL.
+    expect(manifest.Profiles[0]?.DeviceType).toBe(2);
   });
 
   it('declares exactly the actions of the registry, in the same order', () => {

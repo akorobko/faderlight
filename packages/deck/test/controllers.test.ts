@@ -80,7 +80,16 @@ describe('controllers', () => {
     settings: DEFAULT_SETTINGS,
     held: false,
     memo: {},
-    nav: { openDetail: () => false },
+    nav: {
+      openDetail: () => false,
+      bank: () => undefined,
+      moveBank: () => undefined,
+      nextBankBus: () => undefined,
+      page: 0,
+      pages: [],
+      goToPage: () => undefined,
+      openConsole: () => false,
+    },
     alert: () => undefined,
     ok: () => undefined,
   });

@@ -1,6 +1,7 @@
 // Key specs: what a key is, independent of how it got onto the deck. A specific action dropped
 // onto any page gets its spec from its own settings (specFromAction); a Console slot gets its
 // spec from the layout (layout.ts). Both kinds of keys share the controllers (controllers.ts).
+// Specs are plain JSON, so a layout can be stored in the global settings.
 
 import type { Bus } from '@faderlight/model';
 import type { ChannelStyle, ToggleFunction } from '@faderlight/render';
@@ -31,6 +32,8 @@ export interface ChannelSpec {
   readonly hold?: ChannelHold | undefined;
 }
 
+export type Direction = 'prev' | 'next';
+
 export type KeySpec =
   | { readonly type: 'empty' }
   | ChannelSpec
@@ -38,7 +41,16 @@ export type KeySpec =
   | { readonly type: 'step'; readonly output: OutputRef; readonly direction: 'up' | 'down' }
   | { readonly type: 'snapshot'; readonly n: number }
   | { readonly type: 'toggle'; readonly function: ToggleFunction }
-  | { readonly type: 'status' };
+  | { readonly type: 'status' }
+  // Console layout keys (layout.ts):
+  /** The n-th strip (from 0) of the page's bank. */
+  | { readonly type: 'strip'; readonly n: number; readonly style?: ChannelStyle | undefined }
+  /** Moves the page's bank; a long press switches it to the next bus. */
+  | { readonly type: 'bank'; readonly direction: Direction }
+  /** Goes to the next (or previous) page; a long press to the first. */
+  | { readonly type: 'page'; readonly direction: Direction }
+  /** Switches the deck to the Console profile. */
+  | { readonly type: 'console' };
 
 export type SpecType = KeySpec['type'];
 
@@ -111,8 +123,9 @@ export function specFromAction(kind: ActionKind, settings: JsonObject): KeySpec 
         output: outputRefFrom(settings.output),
         direction: oneOf(settings.direction, ['up', 'down'] as const) ?? 'up',
       };
-    case 'slot':
     case 'console':
+      return { type: 'console' };
+    case 'slot':
     case 'test-image':
       // Not specs of their own: the runtime resolves these.
       return EMPTY;

@@ -12,6 +12,7 @@ the virtual deck (`tools/virtual-deck`) connects it to a browser.
 | `src/controllers.ts` | One controller per spec type: mixer state to view, gestures to commands |
 | `src/gestures.ts`    | Tap, long press, double tap and auto-repeat from key down and up        |
 | `src/scheduler.ts`   | FrameScheduler: image budget, per-key rate, static before meter frames  |
+| `src/layout.ts`      | The Console layout: pages, banks, what each Console Slot is             |
 | `src/runtime.ts`     | DeckRuntime: keys appear, get pressed and are drawn through a DeckHost  |
 
 ## Specific actions
@@ -33,6 +34,23 @@ values fall back to the defaults below, so a freshly dropped action does somethi
 Talkback is on while the key is held; a double tap latches it until the next press. A Channel
 key's solo is the solo of its route into Main. Snapshots are only loaded: no capture has shown
 a Global OSC address for saving one.
+
+## The Console layout
+
+The bundled Console profile puts a Console Slot on each key of an XL; each slot shows what the
+layout has at its coordinates on the page its device shows now. Page and bank keys change
+that instantly, without switching profiles; each device keeps its own page and banks.
+
+| Page    | Keys                                                                                                                                                                                          |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Console | Snapshots 1-6, Status, Page; a bank of 8 input strips; Main, Phones 1-2, AN 3/4, Dim, Mono, Talkback, Bank; Main, Phones 1 and Phones 2 ±, Global Mute, Global Solo (docs/design/03-ux.md §4) |
+| Inputs  | A bank of 30 strips in meter style, Bank, Page                                                                                                                                                |
+| Outputs | A bank of 24 output strips; Main ±, Dim, Mono, Speaker B, External, Bank, Page                                                                                                                |
+
+A bank key moves its bank by its size and wraps around at the end; a long press switches it to
+the next bus (inputs, playback, outputs). A page key goes to the next page; a long press goes
+back to the first. The layout is built in (`CONSOLE_LAYOUT`) until the Control Center can edit
+it (M5).
 
 ## Tests
 

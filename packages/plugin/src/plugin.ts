@@ -12,7 +12,7 @@ import {
   type Logger,
 } from '@faderlight/deck';
 import { systemClock } from '@faderlight/totalmix';
-import { kindOfAction } from './ids.ts';
+import { CONSOLE_PROFILE, kindOfAction } from './ids.ts';
 import { MixerConnection } from './mixer.ts';
 
 const log: Logger = streamDeck.logger;
@@ -46,7 +46,13 @@ const host: DeckHost = {
 };
 
 // The client stamps meters with the system clock: the runtime reads them on the same one.
-const deck = new DeckRuntime({ mixer, host, clock: systemClock, log });
+const deck = new DeckRuntime({
+  mixer,
+  host,
+  clock: systemClock,
+  log,
+  consoleProfile: CONSOLE_PROFILE,
+});
 
 function applySettings(stored: unknown): void {
   const read = readGlobalSettings(stored);

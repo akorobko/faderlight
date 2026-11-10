@@ -10,7 +10,8 @@ to the deck runtime (`packages/deck`) and key images back to the Stream Deck app
 | `src/plugin.ts`                  | Entry point, SDK wiring                                        |
 | `src/ids.ts`                     | Plugin and action UUIDs                                        |
 | `src/mixer.ts`                   | The TotalMix connection, restarted when its settings change    |
-| `scripts/build.ts`               | Builds `bin/` and `fonts/` into the plugin folder              |
+| `scripts/build.ts`               | Builds `bin/`, `fonts/` and `profiles/` into the plugin folder |
+| `scripts/profile.ts`             | Writes the bundled Console profile (`scripts/zip.ts` packs it) |
 | `scripts/icons.ts`               | Draws the icons in `imgs/` (our own artwork)                   |
 | `test/fake-app.ts`               | A fake Stream Deck app for tests                               |
 
@@ -31,8 +32,19 @@ npx streamdeck restart dev.faderlight.mixer                 # after each build
 ```
 
 The build bundles `src/plugin.ts` and everything it imports into `bin/plugin.js` with Rollup
-(TypeScript is transpiled file by file, without type checking: `npm run check` does that) and
-copies the renderer's fonts into `fonts/`. Both are gitignored.
+(TypeScript is transpiled file by file, without type checking: `npm run check` does that),
+copies the renderer's fonts into `fonts/` and writes the Console profile into `profiles/`. All
+three are gitignored.
+
+## The Console profile
+
+`profiles/Console.streamDeckProfile` is one Stream Deck XL page with a Console Slot on each of
+its 32 keys; the deck runtime decides what each slot shows (`packages/deck`, "The Console
+layout"). The Console launcher action and Back in the Channel Detail overlay switch to it and
+back. The profile format is not documented: `scripts/profile.ts` follows exported profiles. If
+the app does not install it, build the same profile by hand (a new XL profile with a Console
+Slot on every key), export it from the app as `Console.streamDeckProfile` and put it in
+`profiles/` of the plugin folder.
 
 The plugin writes its log to the plugin folder's `logs/` (gitignored). `Nodejs.Debug` is
 `enabled` in the manifest, so a debugger can attach to the running plugin.

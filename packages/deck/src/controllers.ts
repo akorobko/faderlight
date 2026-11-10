@@ -39,8 +39,9 @@ import {
 } from '@faderlight/render';
 import { FADER_MAX_DB, FADER_MIN_DB } from '@faderlight/totalmix';
 import { stepSize, VOLUME_ACCELERATION, type Gesture, type GestureOptions } from './gestures.ts';
+import type { BankPosition } from './layout.ts';
 import type { GlobalSettings } from './settings.ts';
-import type { ChannelSpec, KeySpec, OutputRef } from './specs.ts';
+import type { ChannelSpec, Direction, KeySpec, OutputRef } from './specs.ts';
 
 /** What controllers need from the mixer client (TotalMixClient has all of it). */
 export interface MixerControl {
@@ -52,10 +53,28 @@ export interface MixerControl {
   resync(): void;
 }
 
-/** Deck-wide navigation the controllers can ask for. */
+/** Where a bank is, and how far it can go. */
+export interface BankState extends BankPosition {
+  readonly size: number;
+  /** Strips the bus has now. */
+  readonly total: number;
+}
+
+/** Navigation on the key's device that the controllers can ask for. */
 export interface Navigator {
   /** Opens the Channel Detail overlay for a strip; false when it cannot be shown. */
   openDetail(bus: Bus, index: number): boolean;
+  /** The bank of the Console page shown; undefined when the page has none. */
+  bank(): BankState | undefined;
+  moveBank(direction: Direction): void;
+  /** Switches the bank to the next bus (inputs, playback, outputs). */
+  nextBankBus(): void;
+  /** The Console page shown, from 0. */
+  readonly page: number;
+  readonly pages: readonly string[];
+  goToPage(index: number): void;
+  /** Switches the device to the Console profile; false when there is none. */
+  openConsole(): boolean;
 }
 
 export interface KeyContext {
@@ -522,6 +541,80 @@ const statusController: Controller<Extract<KeySpec, { type: 'status' }>> = {
   },
 };
 
+// --- console navigation -------------------------------------------------------------------
+
+const BANK_ROW: Readonly<Record<Bus, string>> = {
+  input: 'INPUTS',
+  playback: 'PLAYBACK',
+  output: 'OUTPUTS',
+};
+
+const bankController: Controller<Extract<KeySpec, { type: 'bank' }>> = {
+  options: (_spec, ctx) => ({ longPressMs: ctx.settings.gestures.longPressMs }),
+  view: (spec, ctx) => {
+    const b = ctx.nav.bank();
+    const last = b ? Math.min(b.offset + b.size, b.total) : 0;
+    return {
+      kind: 'bank',
+      direction: spec.direction,
+      row: b ? BANK_ROW[b.bus] : '',
+      first: b && b.total > 0 ? b.offset + 1 : 0,
+      last,
+      total: b?.total ?? 0,
+      // The next press wraps around to the other end.
+      atEnd: !b || (spec.direction === 'next' ? last >= b.total : b.offset === 0),
+      offline: !b || !isOnline(ctx.mixer.store),
+    };
+  },
+  gesture: (spec, g, ctx) => {
+    if (!ctx.nav.bank()) {
+      if (g.type === 'tap' || g.type === 'longPress') ctx.alert();
+      return;
+    }
+    if (g.type === 'tap') ctx.nav.moveBank(spec.direction);
+    else if (g.type === 'longPress') ctx.nav.nextBankBus();
+  },
+};
+
+const pageController: Controller<Extract<KeySpec, { type: 'page' }>> = {
+  options: (_spec, ctx) => ({ longPressMs: ctx.settings.gestures.longPressMs }),
+  view: (spec, ctx) => {
+    const { page, pages } = ctx.nav;
+    const count = Math.max(1, pages.length);
+    const to = (page + (spec.direction === 'next' ? 1 : count - 1)) % count;
+    return {
+      kind: 'page',
+      direction: spec.direction,
+      name: upper(pages[to] ?? ''),
+      index: page + 1,
+      count,
+    };
+  },
+  gesture: (spec, g, ctx) => {
+    const count = ctx.nav.pages.length;
+    if (count === 0) return;
+    if (g.type === 'tap') {
+      ctx.nav.goToPage((ctx.nav.page + (spec.direction === 'next' ? 1 : count - 1)) % count);
+    } else if (g.type === 'longPress') {
+      ctx.nav.goToPage(0);
+    }
+  },
+};
+
+const consoleController: Controller<Extract<KeySpec, { type: 'console' }>> = {
+  options: () => ({}),
+  view: (_spec, ctx) => ({
+    kind: 'page',
+    direction: 'next',
+    name: 'CONSOLE',
+    index: ctx.nav.page + 1,
+    count: Math.max(1, ctx.nav.pages.length),
+  }),
+  gesture: (_spec, g, ctx) => {
+    if (g.type === 'tap' && !ctx.nav.openConsole()) ctx.alert();
+  },
+};
+
 const emptyController: Controller<Extract<KeySpec, { type: 'empty' }>> = {
   options: () => ({}),
   view: () => undefined,
@@ -538,6 +631,11 @@ export const CONTROLLERS: Controllers = {
   snapshot: snapshotController,
   toggle: toggleController,
   status: statusController,
+  bank: bankController,
+  page: pageController,
+  console: consoleController,
+  // A strip key is resolved into a channel key before it gets here (runtime.ts).
+  strip: emptyController as unknown as Controller<Extract<KeySpec, { type: 'strip' }>>,
 };
 
 /** The controller for a spec, typed for that spec. */
