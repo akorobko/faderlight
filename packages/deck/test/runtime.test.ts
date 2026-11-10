@@ -331,6 +331,46 @@ describe('DeckRuntime: keys and frames', () => {
     expect(errors).toHaveLength(1);
   });
 
+  it('Test Images keys page through their images and switch between SVG and PNG', () => {
+    const debug = new DeckRuntime({
+      mixer,
+      host,
+      clock: mixer.clock,
+      render: renderJson,
+      debugImages: {
+        pages: 2,
+        title: (page) => `page ${String(page)}`,
+        image: (page, position, mode) =>
+          position > 1 ? undefined : `${String(page)}/${String(position)}/${mode}`,
+      },
+    });
+    for (const column of [0, 1, 2]) {
+      debug.appear({
+        id: `t${String(column)}`,
+        device: 'XL',
+        kind: 'test-image',
+        coordinates: { column, row: 0 },
+        settings: {},
+      });
+    }
+    advance(100);
+    const last = (id: string) => host.images.get(id)?.at(-1);
+    expect([last('t0'), last('t1')]).toEqual(['0/0/svg', '0/1/svg']);
+    expect(last('t2')).toMatch(/^data:image\/svg/);
+    debug.down('t1');
+    advance(30);
+    debug.up('t1');
+    advance(200);
+    expect([last('t0'), last('t1')]).toEqual(['1/0/svg', '1/1/svg']);
+    debug.down('t0');
+    advance(DEFAULT_SETTINGS.gestures.longPressMs + 50);
+    debug.up('t0');
+    advance(200);
+    expect([last('t0'), last('t1')]).toEqual(['1/0/png', '1/1/png']);
+    expect(host.oks).toEqual(['t0']);
+    debug.dispose();
+  });
+
   it('stops drawing after dispose', () => {
     place('vocal', 'channel', { bus: 'input', index: 8 });
     deck.dispose();

@@ -10,8 +10,9 @@ to the deck runtime (`packages/deck`) and key images back to the Stream Deck app
 | `src/plugin.ts`                  | Entry point, SDK wiring                                        |
 | `src/ids.ts`                     | Plugin and action UUIDs                                        |
 | `src/mixer.ts`                   | The TotalMix connection, restarted when its settings change    |
-| `scripts/build.ts`               | Builds `bin/`, `fonts/` and `profiles/` into the plugin folder |
-| `scripts/profile.ts`             | Writes the bundled Console profile (`scripts/zip.ts` packs it) |
+| `scripts/build.ts`               | Builds `bin/`, `fonts/`, `profiles/` and `debug/`              |
+| `scripts/profile.ts`             | Writes the bundled profiles (`scripts/zip.ts` packs them)      |
+| `src/debug.ts`                   | The pages of the Test Images debug action                      |
 | `scripts/icons.ts`               | Draws the icons in `imgs/` (our own artwork)                   |
 | `test/fake-app.ts`               | A fake Stream Deck app for tests                               |
 
@@ -33,8 +34,11 @@ npx streamdeck restart dev.faderlight.mixer                 # after each build
 
 The build bundles `src/plugin.ts` and everything it imports into `bin/plugin.js` with Rollup
 (TypeScript is transpiled file by file, without type checking: `npm run check` does that),
-copies the renderer's fonts into `fonts/` and writes the Console profile into `profiles/`. All
-three are gitignored.
+copies the renderer's fonts into `fonts/`, writes the bundled profiles into `profiles/` and the
+Test Images PNGs into `debug/`. All four are gitignored.
+
+The plugin writes its log to the plugin folder's `logs/` (gitignored). `Nodejs.Debug` is
+`enabled` in the manifest, so a debugger can attach to the running plugin.
 
 ## The Console profile
 
@@ -46,8 +50,15 @@ the app does not install it, build the same profile by hand (a new XL profile wi
 Slot on every key), export it from the app as `Console.streamDeckProfile` and put it in
 `profiles/` of the plugin folder.
 
-The plugin writes its log to the plugin folder's `logs/` (gitignored). `Nodejs.Debug` is
-`enabled` in the manifest, so a debugger can attach to the running plugin.
+## Test Images (debug)
+
+For reviewing the renderer on a real XL (plan M3.4): the **Faderlight Render Test** profile has
+the Test Images action on every key and shows the pages of `renders/contact-sheet.png` key by
+key: the Console, Inputs and Channel Detail pages, then all golden cases, 32 to a page in the
+order of the sheet. Tap any key for the next page; hold one to switch between the SVG the
+plugin sends (drawn by the Stream Deck app) and the PNG the goldens renderer draws from the
+same SVG (drawn by resvg at build time, in `debug/`), to compare the two renderers. The log
+names the page shown.
 
 ## Settings
 

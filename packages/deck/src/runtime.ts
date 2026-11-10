@@ -88,6 +88,22 @@ export interface DeckRuntimeOptions {
   readonly layout?: Layout;
   /** The plugin's Console profile, for switchToProfile; undefined: there is none. */
   readonly consoleProfile?: string | undefined;
+  /** Images for the Test Images debug action; undefined: its keys stay blank. */
+  readonly debugImages?: DebugImages | undefined;
+}
+
+export type DebugMode = 'svg' | 'png';
+
+/**
+ * Test Images (a debug action): pages of ready-made key images, one per key position. A tap
+ * shows the next page on every Test Images key of the device, a long press switches between
+ * the SVG and the PNG of the same images.
+ */
+export interface DebugImages {
+  readonly pages: number;
+  title(page: number): string;
+  /** The image at a key position (row by row, from 0); undefined: blank. */
+  image(page: number, position: number, mode: DebugMode): string | undefined;
 }
 
 /** Draws a view as an image; `id` is the key it is for. */
@@ -136,6 +152,9 @@ class DeckDevice implements Navigator {
   readonly banks = new Map<number, BankPosition>();
   private readonly host: DeviceHost;
   private overlay: DetailState | undefined;
+  /** Test Images: the page and kind of image shown. */
+  debugPage = 0;
+  debugMode: DebugMode = 'svg';
   /** The overlay was opened from another profile: closing it goes back there. */
   private returnBack = false;
   private timer: TimerHandle | undefined;
@@ -258,6 +277,7 @@ export class DeckRuntime {
   private readonly layout: Layout;
   private readonly pageNames: readonly string[];
   private readonly consoleProfile: string | undefined;
+  private readonly debugImages: DebugImages | undefined;
   private settings: GlobalSettings;
   private scheduler: FrameScheduler;
   private readonly keys = new Map<string, DeckKey>();
@@ -277,6 +297,7 @@ export class DeckRuntime {
     this.layout = options.layout ?? CONSOLE_LAYOUT;
     this.pageNames = this.layout.pages.map((p) => p.name);
     this.consoleProfile = options.consoleProfile;
+    this.debugImages = options.debugImages;
     this.settings = options.settings ?? DEFAULT_SETTINGS;
     this.scheduler = this.makeScheduler();
     // Any change may show on any key (a name, Main moving to another output): draw them all
@@ -329,7 +350,9 @@ export class DeckRuntime {
   down(id: string): void {
     const key = this.keys.get(id);
     if (!key) return;
-    if (key.gestures.idle) {
+    if (key.placement.kind === 'test-image' && key.gestures.idle) {
+      key.gestures.configure({ longPressMs: this.settings.gestures.longPressMs });
+    } else if (key.gestures.idle) {
       // A new gesture: it belongs to what the key is now.
       const spec = this.specOf(key);
       key.pressed = spec;
@@ -500,6 +523,7 @@ export class DeckRuntime {
 
   private draw(key: DeckKey): string {
     const id = key.placement.id;
+    if (key.placement.kind === 'test-image') return this.debugImage(key);
     let view: KeyView | undefined;
     let animated = false;
     try {
@@ -524,7 +548,40 @@ export class DeckRuntime {
     return image;
   }
 
+  private debugImage(key: DeckKey): string {
+    const d = this.device(key.placement.device);
+    const at = key.placement.coordinates;
+    const position = at ? at.row * 8 + at.column : 0;
+    return this.debugImages?.image(d.debugPage, position, d.debugMode) ?? this.blank;
+  }
+
+  /** Test Images: a tap shows the next page, a long press the other kind of image. */
+  private onDebugGesture(key: DeckKey, gesture: Gesture): void {
+    const images = this.debugImages;
+    if (!images || (gesture.type !== 'tap' && gesture.type !== 'longPress')) return;
+    const device = key.placement.device;
+    const d = this.device(device);
+    if (gesture.type === 'tap') {
+      d.debugPage = (d.debugPage + 1) % Math.max(1, images.pages);
+    } else {
+      d.debugMode = d.debugMode === 'svg' ? 'png' : 'svg';
+      this.host.showOk(key.placement.id);
+    }
+    this.log.info(
+      `test images: page ${String(d.debugPage + 1)}/${String(images.pages)} (${images.title(d.debugPage)}), ${d.debugMode}`,
+    );
+    for (const k of this.keys.values()) {
+      if (k.placement.device === device && k.placement.kind === 'test-image') {
+        this.scheduler.invalidate(k.placement.id);
+      }
+    }
+  }
+
   private onGesture(key: DeckKey, gesture: Gesture): void {
+    if (key.placement.kind === 'test-image') {
+      this.onDebugGesture(key, gesture);
+      return;
+    }
     const spec = key.pressed ?? this.specOf(key);
     try {
       controllerFor(spec).gesture(spec, gesture, this.context(key));

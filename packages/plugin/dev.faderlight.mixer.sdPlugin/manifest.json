@@ -201,6 +201,13 @@
       "Readonly": false,
       "DontAutoSwitchWhenInstalled": true,
       "AutoInstall": true
+    },
+    {
+      "Name": "profiles/RenderTest",
+      "DeviceType": 2,
+      "Readonly": false,
+      "DontAutoSwitchWhenInstalled": true,
+      "AutoInstall": true
     }
   ]
 }

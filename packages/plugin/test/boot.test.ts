@@ -12,6 +12,7 @@ import { DEFAULT_SETTINGS, SETTINGS_VERSION } from '@faderlight/deck';
 import { renderKey, svgDataUrl } from '@faderlight/render';
 import { Simulator } from '@faderlight/simulator';
 import { buildPlugin } from '../scripts/build.ts';
+import { DEBUG_PAGES } from '../src/debug.ts';
 import { actionUuid, PLUGIN_UUID } from '../src/ids.ts';
 import { FakeStreamDeck, type Json } from './fake-app.ts';
 
@@ -81,6 +82,31 @@ describe('the built plugin', () => {
     await until(() => sim.mixer.channelValue('input', 8, 'mute') === 1);
     // Drawn again, muted.
     await until(() => app.images('k2').length > images);
+  });
+
+  it('shows the first Test Images page, and its PNG after a long press', async () => {
+    const action = actionUuid('test-image');
+    const first = DEBUG_PAGES[0]?.keys[0];
+    if (!first) throw new Error('no test images');
+    const svg = svgDataUrl(renderKey(first));
+    const shown = app.waitFor(
+      (m) => m.event === 'setImage' && m.context === 'k3' && (m.payload as Json).image === svg,
+    );
+    app.appear('k3', action, { column: 0, row: 0 });
+    await shown;
+    // The long press switches to PNG as soon as it is reached, before key up.
+    const png = app.waitFor(
+      (m) =>
+        m.event === 'setImage' &&
+        m.context === 'k3' &&
+        String((m.payload as Json).image).startsWith('data:image/png;base64,'),
+    );
+    app.key('keyDown', 'k3', action);
+    await new Promise((resolve) =>
+      setTimeout(resolve, DEFAULT_SETTINGS.gestures.longPressMs + 100),
+    );
+    app.key('keyUp', 'k3', action);
+    await png;
   });
 });
 

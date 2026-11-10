@@ -1,6 +1,7 @@
-// Writes the bundled Console profile: one page for a Stream Deck XL with a Console Slot on each
-// of its 32 keys. The slots get their meaning from the deck runtime's layout, by coordinates,
-// so the profile never needs to change when the layout does.
+// Writes the bundled profiles, each one page for a Stream Deck XL with the same action on all
+// 32 keys: Console (a Console Slot on each key; the slots get their meaning from the deck
+// runtime's layout, by coordinates, so the profile never changes when the layout does) and
+// Render Test (Test Images on each key, for reviewing the renderer on the XL).
 //
 // The .streamDeckProfile format is not documented. This follows exported profiles: a ZIP with
 // `<profile>.sdProfile/manifest.json` (device model, page list) and one
@@ -11,8 +12,8 @@
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { ACTIONS } from '@faderlight/deck';
-import { CONSOLE_PROFILE, PLUGIN_UUID, actionUuid } from '../src/ids.ts';
+import { ACTIONS, type ActionKind } from '@faderlight/deck';
+import { CONSOLE_PROFILE, PLUGIN_UUID, RENDER_TEST_PROFILE, actionUuid } from '../src/ids.ts';
 import { PLUGIN_DIR } from './paths.ts';
 import { zip, type ZipEntry } from './zip.ts';
 
@@ -30,11 +31,30 @@ export function stableUuid(name: string): string {
   return `${x.slice(0, 8)}-${x.slice(8, 12)}-${x.slice(12, 16)}-${x.slice(16, 20)}-${x.slice(20)}`;
 }
 
-function slot(column: number, row: number, version: string): Record<string, unknown> {
+export interface BundledProfile {
+  /** Path in the plugin folder without the extension, as the manifest names it. */
+  readonly file: string;
+  /** Name the app shows. */
+  readonly name: string;
+  /** The action on every key. */
+  readonly kind: ActionKind;
+}
+
+export const PROFILES: readonly BundledProfile[] = [
+  { file: CONSOLE_PROFILE, name: 'Faderlight Console', kind: 'slot' },
+  { file: RENDER_TEST_PROFILE, name: 'Faderlight Render Test', kind: 'test-image' },
+];
+
+function action(
+  p: BundledProfile,
+  column: number,
+  row: number,
+  version: string,
+): Record<string, unknown> {
   return {
-    ActionID: stableUuid(`console/slot/${String(column)},${String(row)}`),
+    ActionID: stableUuid(`${p.file}/key/${String(column)},${String(row)}`),
     LinkedTitle: true,
-    Name: ACTIONS.find((a) => a.kind === 'slot')?.name ?? 'Console Slot',
+    Name: ACTIONS.find((a) => a.kind === p.kind)?.name ?? p.kind,
     Plugin: { Name: 'Faderlight', UUID: PLUGIN_UUID, Version: version },
     Resources: null,
     Settings: {},
@@ -53,20 +73,20 @@ function slot(column: number, row: number, version: string): Record<string, unkn
         TitleColor: '#ffffff',
       },
     ],
-    UUID: actionUuid('slot'),
+    UUID: actionUuid(p.kind),
   };
 }
 
 const json = (value: unknown): Buffer => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
 
-/** The files inside the profile archive. */
-export function consoleProfileEntries(version: string): ZipEntry[] {
-  const profile = stableUuid('console/profile').toUpperCase();
-  const page = stableUuid('console/page/1');
+/** The files inside a profile archive. */
+export function profileEntries(p: BundledProfile, version: string): ZipEntry[] {
+  const profile = stableUuid(`${p.file}/profile`).toUpperCase();
+  const page = stableUuid(`${p.file}/page/1`);
   const actions: Record<string, unknown> = {};
   for (let row = 0; row < XL_ROWS; row++) {
     for (let column = 0; column < XL_COLUMNS; column++) {
-      actions[`${String(column)},${String(row)}`] = slot(column, row, version);
+      actions[`${String(column)},${String(row)}`] = action(p, column, row, version);
     }
   }
   const root = `${profile}.sdProfile`;
@@ -75,7 +95,7 @@ export function consoleProfileEntries(version: string): ZipEntry[] {
       name: `${root}/manifest.json`,
       data: json({
         Device: { Model: XL_MODEL, UUID: '' },
-        Name: 'Faderlight Console',
+        Name: p.name,
         Pages: { Current: page, Default: page, Pages: [page] },
         Version: '2.0',
       }),
@@ -87,13 +107,15 @@ export function consoleProfileEntries(version: string): ZipEntry[] {
   ];
 }
 
-/** Writes the profile into a plugin folder; returns its path. */
-export function writeConsoleProfile(pluginDir = PLUGIN_DIR): string {
+/** Writes the bundled profiles into a plugin folder; returns their paths. */
+export function writeProfiles(pluginDir = PLUGIN_DIR): string[] {
   const manifest = JSON.parse(readFileSync(join(PLUGIN_DIR, 'manifest.json'), 'utf8')) as {
     Version: string;
   };
-  const file = join(pluginDir, `${CONSOLE_PROFILE}.streamDeckProfile`);
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, zip(consoleProfileEntries(manifest.Version)));
-  return file;
+  return PROFILES.map((p) => {
+    const file = join(pluginDir, `${p.file}.streamDeckProfile`);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, zip(profileEntries(p, manifest.Version)));
+    return file;
+  });
 }

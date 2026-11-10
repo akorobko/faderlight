@@ -2,7 +2,8 @@
 //
 //   bin/plugin.js   src/plugin.ts and everything it imports, bundled with Rollup (one ES module)
 //   fonts/          the renderer's fonts (packages/render/fonts), read at runtime
-//   profiles/       the bundled Console profile (scripts/profile.ts)
+//   profiles/       the bundled profiles: Console and Render Test (scripts/profile.ts)
+//   debug/          PNGs of the Test Images pages (src/debug.ts), drawn with resvg
 //
 // The manifest and the icons are committed in the folder; everything above is generated and
 // gitignored. With --out <dir> the build goes to another folder (tests use a temporary one) and
@@ -17,8 +18,11 @@ import commonjsImport from '@rollup/plugin-commonjs';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import { rollup, type Plugin } from 'rollup';
 import ts from 'typescript';
+import { renderKey } from '@faderlight/render';
+import { initRaster, rasterize } from '../../render/test/raster.ts';
+import { DEBUG_PAGES, pngName } from '../src/debug.ts';
 import { FONTS_DIR, PACKAGE_DIR, PLUGIN_DIR } from './paths.ts';
-import { writeConsoleProfile } from './profile.ts';
+import { writeProfiles } from './profile.ts';
 
 // The CommonJS plugin's types describe a CommonJS module, so TypeScript sees the module object
 // where an ES import gets the function itself.
@@ -26,7 +30,7 @@ const commonjs = ((commonjsImport as unknown as { default?: unknown }).default ?
   commonjsImport) as unknown as typeof commonjsImport.default;
 
 /** Generated parts of the plugin folder (gitignored). */
-export const GENERATED = ['bin', 'fonts', 'profiles'] as const;
+export const GENERATED = ['bin', 'fonts', 'profiles', 'debug'] as const;
 
 /** Committed parts, copied when building into another folder. */
 const STATIC = ['manifest.json', 'imgs'] as const;
@@ -86,6 +90,19 @@ function copyFonts(outDir: string): void {
   }
 }
 
+/** The PNGs of the Test Images pages, at the XL's high-resolution key size. */
+async function writeDebugImages(outDir: string): Promise<void> {
+  const dir = join(outDir, 'debug');
+  mkdirSync(dir, { recursive: true });
+  await initRaster();
+  DEBUG_PAGES.forEach((page, p) => {
+    page.keys.forEach((view, i) => {
+      if (view)
+        writeFileSync(join(dir, pngName(p, i)), rasterize(renderKey(view, undefined, 144)).png);
+    });
+  });
+}
+
 export interface BuildOptions {
   /** Folder to build into (default: the plugin folder in the repo). */
   readonly outDir?: string;
@@ -101,7 +118,8 @@ export async function buildPlugin(options: BuildOptions = {}): Promise<string> {
   for (const item of GENERATED) rmSync(join(outDir, item), { recursive: true, force: true });
   await bundle(outDir);
   copyFonts(outDir);
-  writeConsoleProfile(outDir);
+  writeProfiles(outDir);
+  await writeDebugImages(outDir);
   return outDir;
 }
 

@@ -1,7 +1,7 @@
 // The bundled Console profile: a Console Slot on every key of an XL, the same bytes every build.
 
 import { describe, expect, it } from 'vitest';
-import { consoleProfileEntries, stableUuid, XL_MODEL } from '../scripts/profile.ts';
+import { PROFILES, profileEntries, stableUuid, XL_MODEL } from '../scripts/profile.ts';
 import { unzip, zip } from '../scripts/zip.ts';
 import { actionUuid, PLUGIN_UUID } from '../src/ids.ts';
 
@@ -12,8 +12,14 @@ interface PageManifest {
   }[];
 }
 
-describe('the Console profile', () => {
-  const entries = consoleProfileEntries('0.1.0.0');
+const consoleProfile = PROFILES.find((p) => p.kind === 'slot') ?? {
+  file: 'missing',
+  name: 'missing',
+  kind: 'slot',
+};
+
+describe('the bundled profiles', () => {
+  const entries = profileEntries(consoleProfile, '0.1.0.0');
   const files = new Map(
     entries.map((e) => [e.name, JSON.parse(Buffer.from(e.data).toString('utf8')) as unknown]),
   );
@@ -39,10 +45,22 @@ describe('the Console profile', () => {
 
   it('is the same archive on every build, and reads back', () => {
     const a = zip(entries);
-    expect(zip(consoleProfileEntries('0.1.0.0')).equals(a)).toBe(true);
+    expect(zip(profileEntries(consoleProfile, '0.1.0.0')).equals(a)).toBe(true);
     expect(unzip(a).map((e) => [e.name, Buffer.from(e.data).toString('utf8')])).toEqual(
       entries.map((e) => [e.name, Buffer.from(e.data).toString('utf8')]),
     );
+  });
+
+  it('has Test Images on every key of the Render Test profile, with its own UUIDs', () => {
+    const test = PROFILES.find((p) => p.kind === 'test-image');
+    expect(test).toBeDefined();
+    if (!test) return;
+    const other = profileEntries(test, '0.1.0.0');
+    const page = JSON.parse(Buffer.from(other[1]?.data ?? []).toString('utf8')) as PageManifest;
+    const actions = Object.values(page.Controllers[0]?.Actions ?? {});
+    expect(actions).toHaveLength(32);
+    for (const a of actions) expect(a.UUID).toBe(actionUuid('test-image'));
+    expect(other[0]?.name).not.toBe(entries[0]?.name);
   });
 
   it('derives UUIDs from names', () => {

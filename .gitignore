@@ -20,6 +20,7 @@ renders/failures/
 packages/plugin/*.sdPlugin/bin/
 packages/plugin/*.sdPlugin/fonts/
 packages/plugin/*.sdPlugin/profiles/
+packages/plugin/*.sdPlugin/debug/
 packages/plugin/*.sdPlugin/logs/
 
 # Playwright output of the virtual deck's end-to-end tests (screenshots go to renders/).

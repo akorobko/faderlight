@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ACTIONS } from '@faderlight/deck';
 import { PLUGIN_DIR } from '../scripts/paths.ts';
+import { PROFILES } from '../scripts/profile.ts';
 import { actionUuid, CONSOLE_PROFILE, kindOfAction, PLUGIN_UUID } from '../src/ids.ts';
 
 interface ManifestAction {
@@ -46,10 +47,11 @@ describe('manifest.json', () => {
     expect(manifest.CodePath).toBe('bin/plugin.js');
   });
 
-  it('bundles the Console profile for the Stream Deck XL', () => {
-    expect(manifest.Profiles).toEqual([expect.objectContaining({ Name: CONSOLE_PROFILE })]);
+  it('bundles the Console and Render Test profiles for the Stream Deck XL', () => {
+    expect(manifest.Profiles.map((p) => p.Name)).toEqual(PROFILES.map((p) => p.file));
+    expect(manifest.Profiles[0]?.Name).toBe(CONSOLE_PROFILE);
     // DeviceType 2: Stream Deck XL.
-    expect(manifest.Profiles[0]?.DeviceType).toBe(2);
+    for (const p of manifest.Profiles) expect(p.DeviceType).toBe(2);
   });
 
   it('declares exactly the actions of the registry, in the same order', () => {

@@ -2,6 +2,7 @@
 // code that talks to the Stream Deck SDK: it reads the global settings, keeps the TotalMix
 // connection, and passes key events to the deck runtime and key images back to the app.
 
+import { join } from 'node:path';
 import streamDeck from '@elgato/streamdeck';
 import {
   DeckRuntime,
@@ -12,6 +13,7 @@ import {
   type Logger,
 } from '@faderlight/deck';
 import { systemClock } from '@faderlight/totalmix';
+import { debugImages } from './debug.ts';
 import { CONSOLE_PROFILE, kindOfAction } from './ids.ts';
 import { MixerConnection } from './mixer.ts';
 
@@ -52,6 +54,8 @@ const deck = new DeckRuntime({
   clock: systemClock,
   log,
   consoleProfile: CONSOLE_PROFILE,
+  // The app starts the plugin in its folder; the build put the Test Images PNGs in debug/.
+  debugImages: debugImages(join(process.cwd(), 'debug')),
 });
 
 function applySettings(stored: unknown): void {

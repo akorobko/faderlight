@@ -17,3 +17,6 @@ export function kindOfAction(uuid: string): ActionKind | undefined {
 
 /** The bundled Console profile, as the manifest names it (its path without the extension). */
 export const CONSOLE_PROFILE = 'profiles/Console';
+
+/** The bundled profile with Test Images on every key (a debug aid, plan M3.4). */
+export const RENDER_TEST_PROFILE = 'profiles/RenderTest';
