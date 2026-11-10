@@ -54,7 +54,8 @@ export class TotalMixSnapshotNames implements SnapshotNames {
   private checked = -Infinity;
   private seen = '';
 
-  constructor(folder = totalMixFolder(), checkMs = 5000, now: () => number = Date.now) {
+  /** `folder`: where to look (`totalMixFolder()` on this computer); undefined: nowhere. */
+  constructor(folder: string | undefined, checkMs = 5000, now: () => number = Date.now) {
     this.folder = folder;
     this.checkMs = checkMs;
     this.now = now;

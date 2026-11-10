@@ -18,6 +18,7 @@ import {
   DeckRuntime,
   DEFAULT_SETTINGS,
   SILENT,
+  totalMixFolder,
   TotalMixSnapshotNames,
   type ActionKind,
   type DeckHost,
@@ -191,7 +192,7 @@ export class VirtualDeck {
       consoleProfile: CONSOLE_PROFILE,
       // A real TotalMix on this computer has them in its state file.
       snapshotNames: o.totalmix
-        ? new TotalMixSnapshotNames()
+        ? new TotalMixSnapshotNames(totalMixFolder())
         : { name: (n) => SIMULATOR_SNAPSHOTS[n - 1] },
       render: (view, theme, size, id) => {
         this.drawn.set(id, view);

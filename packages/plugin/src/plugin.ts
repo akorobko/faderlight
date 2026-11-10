@@ -8,6 +8,7 @@ import {
   DeckRuntime,
   readGlobalSettings,
   toJson,
+  totalMixFolder,
   TotalMixSnapshotNames,
   type DeckHost,
   type JsonObject,
@@ -61,7 +62,7 @@ const deck = new DeckRuntime({
   // The app starts the plugin in its folder; the build put the Test Images PNGs in debug/.
   debugImages: debugImages(join(process.cwd(), 'debug')),
   // TotalMix's state file has the snapshot names, when TotalMix runs on this computer.
-  snapshotNames: new TotalMixSnapshotNames(),
+  snapshotNames: new TotalMixSnapshotNames(totalMixFolder()),
 });
 
 function applySettings(stored: unknown): void {
