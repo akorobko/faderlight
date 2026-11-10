@@ -234,7 +234,7 @@ export function channelView(spec: ChannelSpec, ctx: KeyContext): KeyView | undef
       spec.index === undefined
         ? upper(spec.bus)
         : upper(deviceProfile(store).label(spec.bus, spec.index));
-    return { kind: 'channel', style: spec.style, label, offline: true };
+    return { kind: 'channel', style: spec.style, label, source: sourceOf(spec.bus), offline: true };
   }
   const value = (f: ChannelField) => channelValue(store, strip.bus, strip.index, f);
   const sw = (f: ChannelField) => {
@@ -262,6 +262,7 @@ export function channelView(spec: ChannelSpec, ctx: KeyContext): KeyView | undef
     style: spec.style,
     label: upper(strip.label),
     name: strip.name,
+    source: sourceOf(strip.bus),
     color: typeof color === 'number' ? color : undefined,
     value: primary,
     meter: meterOf(store, strip, ctx.now),
@@ -283,6 +284,11 @@ export function channelView(spec: ChannelSpec, ctx: KeyContext): KeyView | undef
     ]),
     offline: !isOnline(store),
   } satisfies ChannelKey;
+}
+
+/** The type icon for a channel key's bus. */
+function sourceOf(bus: Bus): 'input' | 'playback' {
+  return bus === 'playback' ? 'playback' : 'input';
 }
 
 const channelController: Controller<ChannelSpec> = {

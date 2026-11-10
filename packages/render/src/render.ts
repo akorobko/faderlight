@@ -1,10 +1,9 @@
 // The renderer entry point: a key's view model, a theme and an output size in, SVG out.
 //
-// Every key is drawn on a 144 x 144 content canvas inside a margin (BLEED) that only
-// backgrounds, colour bands and frames reach, and the whole key is scaled to `size` (96 on a
-// Stream Deck XL, 144 for its high-resolution images, 72 on smaller decks). The margin keeps
-// text and meters off the edge of the display, which the keycap bends. Pure: same input, same
-// string.
+// Every key is drawn on a 144 x 144 content canvas inside a margin (BLEED) that keeps the
+// plain background, and the whole key is scaled to `size` (96 on a Stream Deck XL, 144 for its
+// high-resolution images, 72 on smaller decks). The margin keeps text, meters and colour off
+// the edge of the display, which the keycap bends. Pure: same input, same string.
 
 import { renderChannel, type ChannelKey } from './keys/channel.ts';
 import { renderControl, type ControlKey } from './keys/control.ts';

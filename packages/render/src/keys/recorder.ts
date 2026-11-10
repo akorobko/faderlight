@@ -46,12 +46,12 @@ export function renderRecorder(theme: Theme, k: RecorderKey): string {
   }
 
   const recording = k.state === 'recording';
-  const { look: l, frame: litFrame } = functionLook(theme, {
+  const l = functionLook(theme, {
     ...k,
     lit: recording,
     color: theme.accent.record,
   });
-  const c = chrome(theme, l, litFrame, k);
+  const c = chrome(theme, l, '', k);
   let out = c.under + head(l.subtext);
 
   const offline = k.offline === true;

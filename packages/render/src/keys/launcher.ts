@@ -14,7 +14,7 @@ export interface LauncherKey extends KeyState {
 }
 
 export function renderLauncher(theme: Theme, k: LauncherKey): string {
-  const { look: l } = functionLook(theme, k);
+  const l = functionLook(theme, k);
   const c = chrome(theme, l, '', k);
   const off = l.offline;
   const mark = logo(CENTER, 38, 54, {

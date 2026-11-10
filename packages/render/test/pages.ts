@@ -21,6 +21,7 @@ const mic = (
   kind: 'channel',
   label: `MIC ${String(n)}`,
   name,
+  source: 'input',
   color,
   value: { kind: 'gain', db: gain, caption: 'Gain' },
   meter: { left: meter(level) },
@@ -38,6 +39,7 @@ const line = (
   kind: 'channel',
   label: `AN ${String(n)}`,
   name,
+  source: 'input',
   color,
   value: { kind: 'gain', db: 0, caption: 'Gain' },
   meter: { left: meter(level) },
@@ -50,6 +52,7 @@ const playback = (n: number, name: string, db: number, level: number): ChannelKe
   kind: 'channel',
   label: `PB ${String(n)}/${String(n + 1)}`,
   name,
+  source: 'playback',
   value: { kind: 'level', db, caption: 'Fader' },
   meter: { left: meter(level), right: meter(level - 1) },
   badges: { stereo: true },
@@ -77,7 +80,7 @@ const console: (KeyView | undefined)[] = [
   { kind: 'status', link: 'live', device: 'Fireface UFX III', beat: true },
   { kind: 'page', name: 'Inputs', index: 1, count: 3 },
 
-  mic(9, 'Vocal', 1, 42, -16, {
+  mic(9, 'Vocal', 3, 42, -16, {
     badges: { phantom: true, phase: false, instrument: false, autoSet: false },
   }),
   mic(10, 'Kick In', 6, 28, -3, {
@@ -85,13 +88,13 @@ const console: (KeyView | undefined)[] = [
     badges: { phantom: false, phase: true, instrument: false, autoSet: false },
   }),
   mic(11, 'Snare', 6, 31, -9, { muted: true }),
-  mic(12, 'Guitar DI', 4, 18, -20, {
+  mic(12, 'Guitar DI', 5, 18, -20, {
     soloed: true,
     badges: { phantom: false, phase: false, instrument: true, autoSet: false },
   }),
-  line(1, 'Synth L', 7, -24),
-  line(2, 'Synth R', 7, -25),
-  line(3, 'Drum Mach', 2, -100),
+  line(1, 'Synth L', 5, -24),
+  line(2, 'Synth R', 5, -25),
+  line(3, 'Drum Mach', 1, -100),
   { kind: 'bank', direction: 'next', row: 'Inputs', first: 1, last: 7, total: 12 },
 
   playback(1, 'DAW', -6, -14),
@@ -197,7 +200,7 @@ const meters: KeyView[] = NAMES.slice(0, 29).map((name, i): KeyView => {
     style: 'meter',
     label: i < 28 ? `IN ${String(i + 1)}` : `ADAT ${String(i - 27)}`,
     name,
-    color: 1 + (Math.floor(i / 4) % 8),
+    color: [3, 5, 6, 1][Math.floor(i / 4) % 4],
     meter: { left: meter(level, level + 6, i === 0) },
     muted: i === 26 || i === 27,
     soloed: i === 20,
@@ -214,7 +217,7 @@ const inputs: KeyView[] = [
 ];
 
 // The Channel Detail overlay on Vocal (docs/design/03-ux.md §3.1), with Phones 1 selected.
-const vocal = mic(9, 'Vocal', 1, 42, -16, {
+const vocal = mic(9, 'Vocal', 3, 42, -16, {
   badges: { phantom: true, phase: false, instrument: false, autoSet: false },
 });
 const send = (title: string, name: string, db: string, lit = false): KeyView => ({
@@ -238,7 +241,7 @@ const detail: (KeyView | undefined)[] = [
   { kind: 'control', title: 'Channel', word: 'SOLO', switch: false, color: 'solo' },
   { kind: 'control', title: 'Fader', arrow: 'down', word: `${MINUS}6.0` },
   { kind: 'control', title: 'Fader', arrow: 'up', word: `${MINUS}6.0` },
-  { ...vocal, style: 'meter' },
+  { ...vocal, style: 'meter', name: undefined }, // the physical label
   { kind: 'control', title: 'Low cut', word: '80 Hz', switch: true },
   { kind: 'control', title: 'EQ', word: 'EQ', switch: true },
   { kind: 'control', title: 'Dynamics', word: 'DYN', switch: false },

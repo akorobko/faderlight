@@ -2,7 +2,7 @@
 // every renderer (the Stream Deck app, browsers, resvg) draws the same way.
 
 import { describe, expect, it } from 'vitest';
-import { DARK, renderKey, svgDataUrl, type KeyView } from '../src/index.ts';
+import { DARK, KEY, PAD, renderKey, svgDataUrl, type KeyView } from '../src/index.ts';
 import { CASES } from './cases.ts';
 import { CONSOLE_PAGES } from './pages.ts';
 
@@ -87,9 +87,10 @@ describe('SVG subset', () => {
     );
   });
 
-  it('keeps text and meters inside the 144 canvas, off the keycap edge', () => {
-    // Only backgrounds, bands, hatching and frames (stroked outlines) reach into the margin;
-    // every filled path, which is all text and the solid icons, stays on the canvas.
+  it('keeps text and icons inside the 144 canvas, off the keycap edge', () => {
+    // Only the background, the pad, hatching, the pending frame (stroked) and the meter bars
+    // (rects, 1 px) reach into the margin; every filled path, which is all text and the solid
+    // icons, stays on the canvas.
     for (const { name, view } of views) {
       const svg = renderKey(view);
       for (const m of svg.matchAll(/<path d="([^"]*)" fill="(?!none)/g)) {
@@ -98,6 +99,21 @@ describe('SVG subset', () => {
           expect(n, `${name}: path coordinate ${String(n)}`).toBeGreaterThanOrEqual(0);
           expect(n, `${name}: path coordinate ${String(n)}`).toBeLessThanOrEqual(144);
         }
+      }
+    }
+  });
+
+  it('keeps colour off the key edge: only the plain background reaches it', () => {
+    // A band or a frame at the edge bends under the keycap. Every rect but the background
+    // (the pad, meter bars, chips) stays inside the pad.
+    const rect = /<rect x="(-?[\d.]+)" y="(-?[\d.]+)" width="([\d.]+)" height="([\d.]+)"/g;
+    for (const { name, view } of views) {
+      for (const m of renderKey(view).matchAll(rect)) {
+        const [x = 0, y = 0, w = 0, h = 0] = m.slice(1, 5).map(Number);
+        if (x === KEY.x && y === KEY.y && w === KEY.w && h === KEY.h) continue;
+        const at = `${name}: rect at ${String(x)}, ${String(y)}`;
+        expect(Math.min(x, y), at).toBeGreaterThanOrEqual(PAD.x);
+        expect(Math.max(x + w, y + h), at).toBeLessThanOrEqual(PAD.x + PAD.w);
       }
     }
   });

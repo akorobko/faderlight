@@ -44,8 +44,8 @@ function colorOf(theme: Theme, f: ToggleFunction): string {
 
 export function renderToggle(theme: Theme, k: ToggleKey): string {
   const color = colorOf(theme, k.function);
-  const { look: l, frame } = functionLook(theme, { ...k, lit: k.on === true, color });
-  const c = chrome(theme, l, frame, k);
+  const l = functionLook(theme, { ...k, lit: k.on === true, color });
+  const c = chrome(theme, l, '', k);
   const label = LABELS[k.function];
   const bottom = k.offline === true ? 'OFFLINE' : (k.caption ?? (k.on === undefined ? '––' : ''));
   return (

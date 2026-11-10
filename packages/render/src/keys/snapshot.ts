@@ -43,8 +43,8 @@ export function renderSnapshot(theme: Theme, k: SnapshotKey): string {
     );
   }
   const active = k.state === 'active' || k.state === 'modified';
-  const { look: l, frame: litFrame } = functionLook(theme, { ...k, lit: active });
-  const c = chrome(theme, l, litFrame, k);
+  const l = functionLook(theme, { ...k, lit: active });
+  const c = chrome(theme, l, '', k);
   let out = c.under;
   const edited: ChipStyle = {
     fill: theme.accent.dim,

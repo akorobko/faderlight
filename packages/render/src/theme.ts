@@ -40,8 +40,10 @@ export interface StateTokens {
 export interface Theme {
   readonly name: string;
   readonly normal: StateTokens;
-  /** Muted channel: background turns teal, text desaturates. */
+  /** Muted channel: a teal pad, text desaturates. */
   readonly muted: StateTokens;
+  /** Soloed channel: an orange-brown pad. */
+  readonly soloed: StateTokens;
   /** Mixer not reachable: everything grey. */
   readonly offline: StateTokens & { readonly hatch: Hex };
   /** Lit function key (an active toggle, the loaded snapshot). */
@@ -73,18 +75,17 @@ export interface Theme {
     readonly large: number;
     readonly display: number;
   };
-  /** Solo frame width, pending frame width and dash, all in px. */
+  /** Pending frame width and dash, in px. */
   readonly frame: {
-    readonly solo: number;
     readonly pending: number;
     readonly dash: readonly number[];
   };
   /**
-   * Channel colour tabs by mixer colour number. The mixer sends small integers
-   * (docs/protocol/global-osc.md §6, open question 6) whose colours are not mapped yet, so
-   * these are placeholders in hue order; index 0 means no colour.
+   * Channel colours by the mixer's colour number (docs/protocol/global-osc.md §6). 1 is
+   * TotalMix's "no colour", so it has none. 3, 5 and 6 are TotalMix's own label colours; the
+   * numbers not mapped yet have placeholders.
    */
-  readonly channelColors: readonly Hex[];
+  readonly channelColors: Readonly<Partial<Record<number, Hex>>>;
 }
 
 const DARK_BG: Hex = '#16181c';
@@ -94,6 +95,7 @@ export const DARK: Theme = {
   name: 'dark',
   normal: { background: DARK_BG, text: '#f2f4f7', subtext: '#8f97a3' },
   muted: { background: MUTE_BG, text: '#a7d3d5', subtext: '#68a2a5' },
+  soloed: { background: '#3e2c18', text: '#fff4e6', subtext: '#ffc98a' },
   offline: { background: '#111215', text: '#737a84', subtext: '#646a74', hatch: '#1a1c20' },
   lit: { background: '#22405f', text: '#ffffff', subtext: '#c9ddf5', frame: '#4ea1ff' },
   line: '#3a3f47',
@@ -130,32 +132,31 @@ export const DARK: Theme = {
     signalDb: -50,
   },
   type: { small: 15, medium: 22, large: 36, display: 52 },
-  frame: { solo: 5, pending: 3, dash: [9, 6] },
-  channelColors: [
-    '#8f97a3',
-    '#e5484d',
-    '#ff9a1f',
-    '#f5d90a',
-    '#3ddc84',
-    '#2ccfd3',
-    '#4ea1ff',
-    '#b07cff',
-    '#ff6fae',
-  ],
+  frame: { pending: 3, dash: [9, 6] },
+  channelColors: {
+    2: '#e5484d', // placeholder
+    3: '#ff6e0a', // orange
+    4: '#f5d90a', // placeholder
+    5: '#3c8cff', // blue
+    6: '#00f027', // green
+    7: '#b07cff', // placeholder
+    8: '#ff6fae', // placeholder
+  },
 };
 
-/** Black background, white text, stronger accents and thicker frames. */
+/** Black background, white text, stronger accents and a thicker pending frame. */
 export const HIGH_CONTRAST: Theme = {
   ...DARK,
   name: 'high-contrast',
   normal: { background: '#000000', text: '#ffffff', subtext: '#d0d4da' },
   muted: { background: '#00474b', text: '#ffffff', subtext: '#b9ecee' },
+  soloed: { background: '#5a3a10', text: '#ffffff', subtext: '#ffe0b8' },
   offline: { background: '#000000', text: '#80868f', subtext: '#6b7079', hatch: '#202226' },
   lit: { background: '#0b3d75', text: '#ffffff', subtext: '#ffffff', frame: '#8cc4ff' },
   line: '#8a919b',
   accent: { ...DARK.accent, mute: '#4ff2f5', solo: '#ffad42', pending: '#ffffff' },
   meter: { ...DARK.meter, unlit: 0.9 },
-  frame: { solo: 7, pending: 4, dash: [10, 6] },
+  frame: { pending: 4, dash: [10, 6] },
 };
 
 export const THEMES: Readonly<Record<string, Theme>> = {
