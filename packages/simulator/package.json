@@ -1,0 +1,10 @@
+{
+  "name": "@faderlight/simulator",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Fake TotalMix FX speaking Global OSC over UDP, for hardware-free development.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

@@ -9,6 +9,9 @@ Harness-neutral instructions for any coding agent working in this repo.
 - Every protocol change: update docs/protocol/global-osc.md + add decode/encode tests from a fixture.
 - Every renderer change: regenerate goldens (`npm run render:goldens`) and attach renders/contact-sheet.png to the PR.
 - UI changes: attach Playwright screenshots of virtual deck / Control Center.
-- `npm run check` (lint, typecheck, test) must pass before pushing.
+- Node 24 (`.nvmrc`). Workspaces live in packages/* and tools/*; each is `@faderlight/<dir>`, private, `"type": "module"`. Library packages export TypeScript source (`"exports": { ".": "./src/index.ts" }`): no build step, Node runs the source directly.
+- Write erasable TypeScript only (no enums, namespaces or parameter properties) and import relative files with their `.ts` extension; `tsc` enforces both.
+- Tests are `*.test.ts` files in a workspace's src/ or test/ folder; the root Vitest config picks them up.
+- `npm run check` (vendor guard, Prettier, ESLint, tsc, Vitest) must pass before pushing; `npm run format` fixes formatting.
 - Hardware facts unknown? Write a question in the PR and add a step to tools/capture/scripts/ — do not guess.
 - Never commit RME/Elgato documents, tables, binaries or artwork; keep them in gitignored docs/vendor/ (run `scripts/fetch-vendor.sh`).

@@ -43,7 +43,7 @@ Goal: a coding agent (in a cloud sandbox, no hardware) can implement and verify 
 Legend: 🤖 agent-only · 👤 needs Alexey (≤15 min) · deps in brackets.
 
 ### M0 — Foundations (week 1)
-- **M0.1 🤖 Repo scaffold**: npm workspaces, TS strict, ESLint/Prettier, Vitest, GitHub Actions matrix (ubuntu/macos/windows), `AGENTS.md`, issue/PR templates. *AC: `npm test` green on all OSes.*
+- **M0.1 🤖 Repo scaffold** ✅: npm workspaces, TS strict, ESLint/Prettier, Vitest, GitHub Actions matrix (ubuntu/macos/windows), `AGENTS.md`, issue/PR templates. *AC: `npm test` green on all OSes.*
 - **M0.2 🤖 Vendor docs** ✅ partly done: agent downloads RME files (rme-audio.de is allowed in the cloud environment) into the **gitignored** `docs/vendor/` (`scripts/fetch-vendor.sh`). RME material is copyrighted and is never committed; we commit our own spec derived from it. Fetched so far: classic OSC table `OscTableTotalMix_240722`, UFX III manual, RME's own Stream Deck proof-of-concept plugin (Global OSC, alpha). Still missing: the official **Global OSC protocol table** for TotalMix FX 2.10 (the alpha-era `globalosc_protocol_alpha8.zip` link is gone) → get the current file from RME / forum, else derive from captures.
 - **M0.3 🤖+👤 Capture tool** [M0.1] → Alexey runs a 5-minute scripted capture with UFX III. *AC: JSONL fixture committed.*
 - **M0.4 🤖 Protocol spec**: `docs/protocol/global-osc.md` — authoritative address table reconciled from vendor table + captures; resolve all **[VERIFY]** items from 01. [M0.2, M0.3]

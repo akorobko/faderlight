@@ -1,0 +1,10 @@
+{
+  "name": "@faderlight/render",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Pure key renderers: (view model, theme, size) to SVG string.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
