@@ -25,8 +25,13 @@ export interface PacketEntry {
   readonly at: number;
   readonly dir: PacketDirection;
   readonly address: string;
-  /** The arguments as text, e.g. `f:1` or `s:"Vocal"`. */
+  /** The arguments as text, e.g. `f:1` or `s:"Vocal"`, with any serial number masked. */
   readonly args: string;
+  /**
+   * The arguments with the serial number, where `args` masks one (/status/device). The page
+   * shows it only when asked to, so a screenshot of the log never has one by accident.
+   */
+  readonly unmasked?: string | undefined;
   /** A level meter message (/level/...). */
   readonly meter: boolean;
   /** Something worth pointing out, e.g. "unknown address". */
@@ -122,12 +127,15 @@ const isStatus = (address: string): boolean =>
 
 /**
  * The arguments as text. TotalMix puts the interface's serial number into /status/device
- * ("Fireface UFX III (1234567)"): the log masks it, so a screenshot of it never shows one.
+ * ("Fireface UFX III (1234567)"): `args` masks it, and `unmasked` keeps it for a page that
+ * asks for serial numbers (to tell two interfaces of the same model apart).
  */
-const argsOf = (m: OscMessage): string => {
+const argsOf = (m: OscMessage): { args: string; unmasked?: string } => {
   const text = formatMessage(m);
   const args = text.length > m.address.length ? text.slice(m.address.length + 1) : '';
-  return m.address === '/status/device' ? maskSerial(args) : args;
+  if (m.address !== '/status/device') return { args };
+  const masked = maskSerial(args);
+  return masked === args ? { args } : { args: masked, unmasked: args };
 };
 
 /** "Fireface UFX III (1234567)" → "Fireface UFX III (XXXXXXX)". */
@@ -184,7 +192,7 @@ export class Diagnostics {
       const at = this.now();
       this.lastTxAt = at;
       for (const m of messagesOf(packet)) {
-        this.log.add({ at, dir: 'out', address: m.address, args: argsOf(m), meter: false });
+        this.log.add({ at, dir: 'out', address: m.address, ...argsOf(m), meter: false });
       }
     };
     const onSocketError = (e: Error): void => {
@@ -250,7 +258,7 @@ export class Diagnostics {
         this.unsolicited++;
         this.lastUnsolicitedAt = at;
       }
-      this.log.add({ at, dir: 'in', address: m.address, args: argsOf(m), meter });
+      this.log.add({ at, dir: 'in', address: m.address, ...argsOf(m), meter });
     }
   }
 
