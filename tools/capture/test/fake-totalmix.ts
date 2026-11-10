@@ -29,6 +29,8 @@ export interface FakeOptions {
   /** Ignore int32 arguments in writes (to exercise "not changed" results). */
   readonly floatOnly?: boolean;
   readonly channels?: number;
+  /** What /status/device reports (default "Fake UFX"). */
+  readonly device?: string;
 }
 
 const BUNDLE_SIZE = 32;
@@ -51,7 +53,7 @@ export class FakeTotalMix {
     const set = (a: string, ...args: OscArg[]): void => {
       this.state.set(a, args);
     };
-    set('/status/device', ['s', 'Fake UFX']);
+    set('/status/device', ['s', options.device ?? 'Fake UFX']);
     set('/status/connection', ['f', 1]);
     set('/status/dsp', ['f', 12]);
     for (let c = 0; c < n; c++) {

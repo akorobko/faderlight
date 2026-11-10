@@ -169,7 +169,7 @@ export class Runner {
     const classic = [...this.rec.values.keys()].find((a) => /^\/\d+\//.test(a));
     if (classic !== undefined) {
       this.io.warn(
-        `TotalMix answers in classic OSC (for example ${classic}). Set Compatibility (Mode) to Global OSC.`,
+        `TotalMix answers in classic OSC (for example ${classic}). Set Compatibility (Mode) to Global OSC (needs TotalMix FX 2.1 or newer).`,
       );
       this.rec.note('warn', 'classic OSC addresses received', { example: classic });
       if (!(await this.io.confirm('Continue anyway?', false))) throw new QuitRequested();
