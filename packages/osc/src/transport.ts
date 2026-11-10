@@ -72,6 +72,8 @@ export interface UdpTransportEvents {
   /** The sender's address or port changed; `previous` is undefined for the first datagram. */
   source: [current: Endpoint, previous: Endpoint | undefined];
   decodeError: [error: OscDecodeError, from: Endpoint];
+  /** A packet went out (for diagnostics: the packet log of the Control Center). */
+  sent: [packet: OscPacket, at: number];
   /** Bind, socket and send errors. Bind and socket errors are followed by a retry. */
   socketError: [error: Error];
 }
@@ -165,6 +167,7 @@ export class UdpTransport extends EventEmitter<UdpTransportEvents> {
       if (err) this.emit('socketError', err);
     });
     this.stats.txDatagrams++;
+    this.emit('sent', packet, this.now());
     return true;
   }
 

@@ -17,6 +17,8 @@ export class TestHost implements DeckHost {
   readonly oks: string[] = [];
   readonly profiles: [string, string | undefined][] = [];
   readonly saved: JsonObject[] = [];
+  /** Sections the Control Center was opened on. */
+  readonly opened: (string | undefined)[] = [];
 
   setImage(id: string, image: string): void {
     const list = this.images.get(id) ?? [];
@@ -38,6 +40,10 @@ export class TestHost implements DeckHost {
 
   saveSettings(settings: JsonObject): void {
     this.saved.push(settings);
+  }
+
+  openControlCenter(section?: string): void {
+    this.opened.push(section);
   }
 
   /** The view the key shows now; undefined: blank (or nothing sent yet). */

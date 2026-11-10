@@ -117,12 +117,16 @@ describe('UdpTransport', () => {
   it('sends to host:sendPort once open, and refuses before', async () => {
     const tm = await remote();
     const t = transport({ sendPort: tm.port });
+    const sent: unknown[] = [];
+    t.on('sent', (packet) => sent.push(packet));
     expect(t.send(message('/sendstate', float(1)))).toBe(false);
     await opened(t);
     expect(t.send(message('/sendstate', float(1)))).toBe(true);
     for (let i = 0; i < 50 && tm.received.length === 0; i++) await sleep(10);
     expect(tm.received.map((b) => decodePacket(b))).toEqual([message('/sendstate', float(1))]);
     expect(t.stats.txDatagrams).toBe(1);
+    // Only what went out is reported.
+    expect(sent).toEqual([message('/sendstate', float(1))]);
   });
 
   it('reports the first source and every change of source port (a TotalMix restart)', async () => {

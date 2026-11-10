@@ -79,6 +79,20 @@ describe('snapshot names from TotalMix', () => {
     expect(new TotalMixSnapshotNames(undefined).name(1)).toBeUndefined();
   });
 
+  it('says where the names came from, for the Setup Assistant', () => {
+    const dir = folder();
+    expect(new TotalMixSnapshotNames(undefined).read()).toEqual({
+      source: 'unsupported',
+      names: Array(8).fill(undefined),
+    });
+    expect(new TotalMixSnapshotNames(dir).read().source).toBe('no-file');
+    writeFileSync(join(dir, 'last.ModelA000.xml'), stateFile(['Work']));
+    const read = new TotalMixSnapshotNames(dir).read();
+    expect(read.source).toBe('file');
+    expect(read.names.slice(0, 2)).toEqual(['Work', undefined]);
+    expect(read.names).toHaveLength(8);
+  });
+
   it('shows the names on the Snapshot keys', () => {
     const mixer = new Loopback().connect();
     const host = new TestHost();

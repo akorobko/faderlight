@@ -1,13 +1,16 @@
 // The plugin's one connection to TotalMix. The store outlives the connection: when the user
 // changes the host or ports, the old client stops, the store is cleared (it may be another
-// interface now) and a new client fills it.
+// interface now) and a new client fills it. The Control Center's diagnostics follow whichever
+// connection is current.
 
+import { Diagnostics } from '@faderlight/control-center';
 import type { ConnectionSettings, Logger } from '@faderlight/deck';
 import { MixerStore, type Target, type Value } from '@faderlight/model';
 import { connectTotalMix, type TotalMixConnection } from '@faderlight/totalmix';
 
 export class MixerConnection {
   readonly store = new MixerStore();
+  readonly diagnostics = new Diagnostics();
   private readonly log: Logger;
   private connection: TotalMixConnection | undefined;
   private settings: ConnectionSettings | undefined;
@@ -31,6 +34,7 @@ export class MixerConnection {
     this.connection = undefined;
     void (async () => {
       if (previous) {
+        this.diagnostics.detach();
         await previous.stop();
         this.store.clear();
       }
@@ -40,6 +44,7 @@ export class MixerConnection {
         `connecting to TotalMix at ${settings.host}:${String(settings.sendPort)}, listening on ${String(settings.listenPort)}`,
       );
       const conn = connectTotalMix({ ...settings, store: this.store });
+      this.diagnostics.attach(conn, settings);
       conn.client.on('state', (state, from) => {
         this.log.info(`TotalMix link: ${from} -> ${state}`);
       });

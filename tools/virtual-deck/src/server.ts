@@ -5,25 +5,39 @@
 // images through server-sent events and sends key presses back.
 //
 //   GET  /             the page
-//   GET  /events       server-sent events: `state` (everything), `image`, `profile`, `alert`, `ok`
+//   GET  /events       server-sent events: `state` (everything), `image`, `profile`, `alert`, `ok`,
+//                      `open` (a link to the Control Center)
 //   POST /api/key      {"id": "...", "action": "down" | "up"}
 //   POST /api/profile  {"profile": "console" | "own"}
 //   GET  /api/state    the profile shown, its keys and their images
 //   GET  /api/views    what each key shows now, as view models (for tests)
+//   GET  /api/control-center?section=…  {"url": a one-time link to the Control Center}
+//
+// It also runs a Control Center (packages/control-center) for its keys, as the plugin does:
+// a tap on the Status key sends an `open` event with a link, and settings saved there apply to
+// the keys at once (they live as long as the server).
 
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import {
+  ControlCenterServer,
+  Diagnostics,
+  type ControlCenterHost,
+} from '@faderlight/control-center';
+import {
   blankImage,
   DeckRuntime,
   DEFAULT_SETTINGS,
+  readGlobalSettings,
   SILENT,
   totalMixFolder,
   TotalMixSnapshotNames,
   type ActionKind,
   type DeckHost,
+  type GlobalSettings,
   type JsonObject,
   type Logger,
+  type SnapshotNameRead,
 } from '@faderlight/deck';
 import { MixerStore } from '@faderlight/model';
 import { renderKey, svgDataUrl, type KeyView } from '@faderlight/render';
@@ -35,6 +49,7 @@ import {
   type MeterSetName,
 } from '@faderlight/simulator';
 import { connectTotalMix, systemClock, type TotalMixConnection } from '@faderlight/totalmix';
+import { buildUi } from '../../../packages/control-center/scripts/build-ui.ts';
 import { page } from './page.ts';
 
 export const DEVICE = 'virtual-xl';
@@ -106,6 +121,7 @@ export interface VirtualDeckOptions {
 
 export class VirtualDeck {
   readonly store = new MixerStore();
+  readonly diagnostics = new Diagnostics();
   private readonly options: VirtualDeckOptions;
   private readonly log: Logger;
   private readonly server: Server;
@@ -121,6 +137,11 @@ export class VirtualDeck {
   private runtime: DeckRuntime | undefined;
   private profile: ProfileName;
   private previous: ProfileName;
+  private settings: GlobalSettings = DEFAULT_SETTINGS;
+  private snapshotNames: { name(n: number): string | undefined; read?(): SnapshotNameRead } = {
+    name: () => undefined,
+  };
+  private controlCenter: ControlCenterServer | undefined;
 
   constructor(options: VirtualDeckOptions = {}) {
     this.options = options;
@@ -146,6 +167,12 @@ export class VirtualDeck {
     return this.profile;
   }
 
+  /** A one-time link to the Control Center (after start()). */
+  controlCenterLink(section?: string): string {
+    if (!this.controlCenter) throw new Error('the virtual deck is not running');
+    return this.controlCenter.link(section);
+  }
+
   async start(): Promise<void> {
     const o = this.options;
     let target = o.totalmix;
@@ -163,6 +190,9 @@ export class VirtualDeck {
     }
     const connection = connectTotalMix({ ...target, store: this.store });
     this.connection = connection;
+    this.diagnostics.attach(connection, target);
+    // The Control Center shows the connection the deck really has.
+    this.settings = { ...DEFAULT_SETTINGS, connection: target };
     const host: DeckHost = {
       setImage: (id, image) => {
         this.images.set(id, image);
@@ -181,31 +211,74 @@ export class VirtualDeck {
         this.show(profile === CONSOLE_PROFILE ? 'console' : this.previous);
       },
       // Settings live as long as the server: a saved Level Preset is kept until it stops.
-      saveSettings: () => undefined,
+      saveSettings: (settings) => {
+        this.settings = readGlobalSettings(settings).settings;
+        this.controlCenter?.settingsChanged();
+      },
+      openControlCenter: (section) => {
+        this.broadcast('open', { url: this.controlCenterLink(section) });
+      },
     };
+    // A real TotalMix on this computer has them in its state file.
+    this.snapshotNames = o.totalmix
+      ? new TotalMixSnapshotNames(totalMixFolder())
+      : {
+          name: (n) => SIMULATOR_SNAPSHOTS[n - 1],
+          read: () => ({
+            source: 'file',
+            names: Array.from({ length: 8 }, (_, i) => SIMULATOR_SNAPSHOTS[i]),
+          }),
+        };
     this.runtime = new DeckRuntime({
       mixer: connection.client,
       host,
       clock: systemClock,
-      settings: DEFAULT_SETTINGS,
+      settings: this.settings,
       log: this.log,
       consoleProfile: CONSOLE_PROFILE,
-      // A real TotalMix on this computer has them in its state file.
-      snapshotNames: o.totalmix
-        ? new TotalMixSnapshotNames(totalMixFolder())
-        : { name: (n) => SIMULATOR_SNAPSHOTS[n - 1] },
+      snapshotNames: this.snapshotNames,
       render: (view, theme, size, id) => {
         this.drawn.set(id, view);
         return svgDataUrl(renderKey(view, theme, size));
       },
     });
     this.appearAll();
+    this.controlCenter = new ControlCenterServer({
+      host: this.controlCenterHost(),
+      files: await buildUi(),
+      log: this.log,
+    });
+    await this.controlCenter.start();
     await new Promise<void>((resolve) => {
       this.server.listen(o.port ?? 8080, o.host ?? '127.0.0.1', resolve);
     });
   }
 
+  private controlCenterHost(): ControlCenterHost {
+    return {
+      version: '0.0.0 (virtual deck)',
+      store: this.store,
+      diagnostics: this.diagnostics,
+      now: () => systemClock.now(),
+      settings: () => this.settings,
+      saveSettings: (stored) => {
+        const read = readGlobalSettings(stored);
+        // The keys follow at once; the deck keeps the connection it was started with.
+        this.settings = read.settings;
+        this.runtime?.configure(read.settings);
+        return read;
+      },
+      resync: () => {
+        this.connection?.client.resync();
+      },
+      snapshotNames: () =>
+        this.snapshotNames.read?.() ?? { source: 'unsupported', names: Array(8).fill(undefined) },
+    };
+  }
+
   async stop(): Promise<void> {
+    await this.controlCenter?.stop();
+    this.diagnostics.detach();
     this.runtime?.dispose();
     for (const res of this.clients) res.end();
     this.clients.clear();
@@ -290,6 +363,10 @@ export class VirtualDeck {
     }
     if (req.method === 'GET' && url.pathname === '/api/views') {
       json(res, 200, Object.fromEntries(this.views));
+      return;
+    }
+    if (req.method === 'GET' && url.pathname === '/api/control-center') {
+      json(res, 200, { url: this.controlCenterLink(url.searchParams.get('section') ?? undefined) });
       return;
     }
     if (req.method === 'POST' && url.pathname === '/api/key') {

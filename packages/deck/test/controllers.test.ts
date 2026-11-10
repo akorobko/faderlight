@@ -99,6 +99,7 @@ describe('controllers', () => {
     ok: () => undefined,
     savePreset: () => undefined,
     snapshotName: () => undefined,
+    openControlCenter: () => false,
   });
 
   it('Dim shows how much it takes off, Global Solo how many channels are soloed', () => {

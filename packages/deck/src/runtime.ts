@@ -63,6 +63,11 @@ export interface DeckHost {
   switchToProfile(device: string, profile?: string): void;
   /** Stores new global settings (a Level Preset was saved). */
   saveSettings(settings: JsonObject): void;
+  /**
+   * Opens the Control Center in the browser, on one of its sections (connection, channels,
+   * layout, behaviour, appearance, backup); undefined: the host has none.
+   */
+  openControlCenter?(section?: string): void;
 }
 
 /** Snapshot names from somewhere other than the mixer, which does not send them. */
@@ -569,6 +574,11 @@ export class DeckRuntime {
         this.savePreset(preset, db);
       },
       snapshotName: (n) => this.snapshotNames?.name(n),
+      openControlCenter: (section) => {
+        if (!this.host.openControlCenter) return false;
+        this.host.openControlCenter(section);
+        return true;
+      },
     };
   }
 

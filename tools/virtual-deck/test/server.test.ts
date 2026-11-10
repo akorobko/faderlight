@@ -59,6 +59,33 @@ describe('the virtual deck server', () => {
     await post('/api/profile', { profile: 'console' });
   });
 
+  it('hands out Control Center links, and sends one when the Status key is tapped', async () => {
+    const { url } = (await get('/api/control-center?section=connection')) as { url: string };
+    expect(url).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/\?t=[\w-]+#connection$/);
+    const opened = await fetch(url, { redirect: 'manual' });
+    expect(opened.status).toBe(303);
+    expect(opened.headers.get('set-cookie')).toMatch(/HttpOnly; SameSite=Strict/);
+
+    const events = new AbortController();
+    const stream = await fetch(new URL('/events', deck.url), { signal: events.signal });
+    const reader = stream.body?.pipeThrough(new TextDecoderStream()).getReader();
+    if (!reader) throw new Error('no event stream');
+    await post('/api/key', { id: 'console:6,0', action: 'down' });
+    await post('/api/key', { id: 'console:6,0', action: 'up' });
+    let text = '';
+    let open: RegExpExecArray | null = null;
+    while (!open) {
+      const { done, value } = await reader.read();
+      if (done) throw new Error('the event stream ended');
+      text += value;
+      open = /event: open\ndata: (.*)\n\n/.exec(text);
+    }
+    events.abort();
+    expect(JSON.parse(open[1] ?? '')).toEqual({
+      url: expect.stringMatching(/^http:\/\/127\.0\.0\.1:\d+\/\?t=[\w-]+#connection$/) as string,
+    });
+  });
+
   it('refuses requests it does not understand', async () => {
     expect((await post('/api/key', { id: 'x', action: 'hold' })).status).toBe(400);
     expect((await post('/api/profile', { profile: 'other' })).status).toBe(400);

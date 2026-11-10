@@ -136,7 +136,7 @@
     {
       "UUID": "com.ratio32.faderlight.mixer.status",
       "Name": "Status",
-      "Tooltip": "Connection to the mixer and the interface model. Hold to read the whole mixer again.",
+      "Tooltip": "Connection to the mixer and the interface model. Tap opens the Control Center, hold reads the whole mixer again.",
       "Icon": "imgs/actions/status",
       "Controllers": ["Keypad"],
       "States": [

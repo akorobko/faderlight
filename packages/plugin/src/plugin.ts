@@ -4,17 +4,22 @@
 
 import { join } from 'node:path';
 import streamDeck from '@elgato/streamdeck';
+import type { ControlCenterHost } from '@faderlight/control-center';
 import {
   DeckRuntime,
+  DEFAULT_SETTINGS,
   readGlobalSettings,
   toJson,
   totalMixFolder,
   TotalMixSnapshotNames,
   type DeckHost,
+  type GlobalSettings,
   type JsonObject,
   type Logger,
+  type ReadSettings,
 } from '@faderlight/deck';
 import { systemClock } from '@faderlight/totalmix';
+import { ControlCenter } from './control-center.ts';
 import { debugImages } from './debug.ts';
 import { CONSOLE_PROFILE, kindOfAction } from './ids.ts';
 import { MixerConnection } from './mixer.ts';
@@ -23,6 +28,10 @@ const log: Logger = streamDeck.logger;
 streamDeck.logger.setLevel('info');
 
 const mixer = new MixerConnection(log);
+// TotalMix's state file has the snapshot names, when TotalMix runs on this computer.
+const snapshotNames = new TotalMixSnapshotNames(totalMixFolder());
+/** The global settings in use. */
+let current: GlobalSettings = DEFAULT_SETTINGS;
 
 /** Reports a request to the app that failed (the key went away meanwhile, usually). */
 const report =
@@ -48,9 +57,39 @@ const host: DeckHost = {
     streamDeck.profiles.switchToProfile(device, profile).catch(report('switchToProfile'));
   },
   saveSettings: (settings) => {
+    current = readGlobalSettings(settings).settings;
+    controlCenter.settingsChanged();
     streamDeck.settings.setGlobalSettings(settings).catch(report('setGlobalSettings'));
   },
+  openControlCenter: (section) => {
+    void controlCenter.open(section);
+  },
 };
+
+const controlCenterHost: ControlCenterHost = {
+  get version() {
+    return streamDeck.info.plugin.version;
+  },
+  store: mixer.store,
+  diagnostics: mixer.diagnostics,
+  now: () => systemClock.now(),
+  settings: () => current,
+  saveSettings: (stored): ReadSettings => {
+    const read = readGlobalSettings(stored);
+    for (const problem of read.problems) log.warn(`settings from the Control Center: ${problem}`);
+    apply(read.settings);
+    streamDeck.settings.setGlobalSettings(toJson(read.settings)).catch(report('setGlobalSettings'));
+    return read;
+  },
+  resync: () => {
+    mixer.resync();
+  },
+  snapshotNames: () => snapshotNames.read(),
+};
+
+const controlCenter = new ControlCenter(controlCenterHost, log, (url) =>
+  streamDeck.system.openUrl(url),
+);
 
 // The client stamps meters with the system clock: the runtime reads them on the same one.
 const deck = new DeckRuntime({
@@ -61,17 +100,24 @@ const deck = new DeckRuntime({
   consoleProfile: CONSOLE_PROFILE,
   // The app starts the plugin in its folder; the build put the Test Images PNGs in debug/.
   debugImages: debugImages(join(process.cwd(), 'debug')),
-  // TotalMix's state file has the snapshot names, when TotalMix runs on this computer.
-  snapshotNames: new TotalMixSnapshotNames(totalMixFolder()),
+  snapshotNames,
 });
 
+/** Settings in use from now on: the connection, the keys and the Control Center follow. */
+function apply(settings: GlobalSettings): void {
+  current = settings;
+  mixer.configure(settings.connection);
+  deck.configure(settings);
+  controlCenter.settingsChanged();
+}
+
+/** Global settings from the Stream Deck app (at start, or changed there). */
 function applySettings(stored: unknown): void {
   const read = readGlobalSettings(stored);
   for (const problem of read.problems) log.warn(`settings: ${problem}`);
   if (read.newer) log.warn('settings were written by a newer version; not saving over them');
   if (read.changed) void streamDeck.settings.setGlobalSettings(toJson(read.settings));
-  mixer.configure(read.settings.connection);
-  deck.configure(read.settings);
+  apply(read.settings);
 }
 
 // --- keys --------------------------------------------------------------------------------

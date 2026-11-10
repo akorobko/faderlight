@@ -31,7 +31,7 @@ values fall back to the defaults below, so a freshly dropped action does somethi
 | Snapshot           | `n` 1-8 (1)                                                                  | load             |                                  |
 | Monitor Switch     | `function`: dim, mono, talkback, speakerB, external (dim)                    | toggle           |                                  |
 | Global Mute / Solo | `function`: mute or solo (mute)                                              | toggle           |                                  |
-| Status             |                                                                              |                  | read the mixer again             |
+| Status             |                                                                              | Control Center   | read the mixer again             |
 | Volume Step        | `output` (main), `direction` up or down (up)                                 | 0.5 dB, repeats  | 1 dB after 1.5 s, 3 dB after 3 s |
 | Level Preset       | `output` (main), `n` 1-8 (1)                                                 | set saved level  | save the current level           |
 | Exit Console       |                                                                              | previous profile |                                  |
@@ -39,6 +39,9 @@ values fall back to the defaults below, so a freshly dropped action does somethi
 Talkback is on while the key is held; a double tap latches it until the next press. A Channel
 key's solo is the solo of its route into Main. Snapshots are only loaded: no capture has shown
 a Global OSC address for saving one.
+
+A tap on Status asks the host to open the Control Center on its Connection page
+(`DeckHost.openControlCenter`); a host without one (a test) gets the alert.
 
 A Level Preset keeps its level in the global settings (`levels`, by output and number, e.g.
 `main/1`), so the same preset is shared by every key that names it, on any profile. It is lit

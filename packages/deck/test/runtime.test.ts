@@ -249,6 +249,14 @@ describe('DeckRuntime: specific actions', () => {
     expect(host.alerts).toEqual(['status']);
   });
 
+  it('a tap on the Status key opens the Control Center on its Connection page', () => {
+    place('status', 'status');
+    press('status', 40);
+    advance(DEFAULT_SETTINGS.gestures.doubleTapMs + 10);
+    expect(host.opened).toEqual(['connection']);
+    expect(host.alerts).toEqual([]);
+  });
+
   it('keys still show their last values, greyed, when TotalMix stops answering', () => {
     place('vocal', 'channel', { bus: 'input', index: 8 });
     mixer.answering = false;
