@@ -378,6 +378,12 @@ export const CASES: readonly Case[] = [
     view: { kind: 'snapshot', n: 2, name: 'Tracking', state: 'modified' },
   },
   {
+    name: 'snapshot-two-lines',
+    title: 'Long name',
+    group: FUNCTIONS,
+    view: { kind: 'snapshot', n: 4, name: 'Vocal Booth Mix', state: 'inactive' },
+  },
+  {
     name: 'snapshot-no-name',
     title: 'No name',
     group: FUNCTIONS,
@@ -462,6 +468,18 @@ export const CASES: readonly Case[] = [
     title: 'Page',
     group: FUNCTIONS,
     view: { kind: 'page', name: 'Inputs', index: 1, count: 4 },
+  },
+  {
+    name: 'launcher',
+    title: 'Console launcher',
+    group: FUNCTIONS,
+    view: { kind: 'launcher', device: 'Fireface UFX III' },
+  },
+  {
+    name: 'launcher-no-device',
+    title: 'Launcher, mixer not seen yet',
+    group: FUNCTIONS,
+    view: { kind: 'launcher' },
   },
 
   // --- Channel Detail overlay ---

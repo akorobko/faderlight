@@ -10,6 +10,7 @@ export * from './keys/nav.ts';
 export * from './keys/step.ts';
 export * from './keys/recorder.ts';
 export * from './keys/control.ts';
+export * from './keys/launcher.ts';
 export * from './parts.ts';
 export * from './meter.ts';
 export * from './icons.ts';

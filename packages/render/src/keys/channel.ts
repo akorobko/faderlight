@@ -5,7 +5,7 @@
 // States: muted (teal key, M chip, dimmed meter), soloed (orange frame, S chip), pending
 // (dashed frame), offline (grey, hatched, no values).
 
-import { isHex } from '../color.ts';
+import { contrast, isHex, mix } from '../color.ts';
 import { formatGain, formatLevel, formatPeak, UNKNOWN } from '../format.ts';
 import { meterBar, meterPair, meterPairWidth, type MeterLevel } from '../meter.ts';
 import {
@@ -15,6 +15,7 @@ import {
   chipsRightAligned,
   chipsWidth,
   dimmed,
+  KEY,
   look,
   stateFrames,
   type ChipStyle,
@@ -23,7 +24,7 @@ import {
   type Placed,
 } from '../parts.ts';
 import { dot } from '../icons.ts';
-import { path, roundedRect } from '../svg.ts';
+import { rect } from '../svg.ts';
 import { fittedText, fitText, measure, text } from '../text.ts';
 import type { Theme } from '../theme.ts';
 
@@ -73,9 +74,7 @@ export interface ChannelKey extends KeyState {
 
 // --- shared ------------------------------------------------------------------------------
 
-const TAB_TOP = 12;
-const TAB_HEIGHT = 38;
-const TEXT_X = 13;
+const TEXT_X = 7;
 const CHIP_H = 19;
 
 export function channelColor(theme: Theme, c: ChannelColor | undefined): string | undefined {
@@ -92,18 +91,38 @@ export function nameAndLabel(k: { label: string; name?: string | undefined }): [
   return [name, k.label];
 }
 
-/** The channel colour as a tab on the left edge, next to label and name. */
-export function colorTab(
+/** A colour band and the text colours that read on it. */
+export interface Band {
+  readonly svg: string;
+  /** Colours for the label and name drawn on the band. */
+  readonly text: string;
+  readonly subtext: string;
+}
+
+const DARK_INK = '#101114';
+const LIGHT_INK = '#ffffff';
+
+/**
+ * The channel colour as a band across the top of the key, from the key's edge down to
+ * `bottom`, behind the label and name. A band reads from any angle, where a thin tab at the
+ * edge disappears under the keycap. The ink is dark or white, whichever contrasts more. No
+ * colour, or offline: no band, and the key's own text colours.
+ */
+export function colorBand(
   theme: Theme,
   k: { readonly color?: ChannelColor | undefined; readonly muted?: boolean | undefined },
   l: Look,
-): string {
+  bottom: number,
+): Band {
   const c = channelColor(theme, k.color);
-  if (c === undefined) return '';
-  const fill = l.offline
-    ? theme.offline.subtext
-    : dimmed(c, l.background, k.muted === true ? 0.45 : 0);
-  return path(roundedRect({ x: 0, y: TAB_TOP, w: 6, h: TAB_HEIGHT }, [0, 3, 3, 0]), { fill });
+  if (c === undefined || l.offline) return { svg: '', text: l.text, subtext: l.subtext };
+  const fill = dimmed(c, l.background, k.muted === true ? 0.45 : 0);
+  const ink = contrast(fill, DARK_INK) >= contrast(fill, LIGHT_INK) ? DARK_INK : LIGHT_INK;
+  return {
+    svg: rect({ x: KEY.x, y: KEY.y, w: KEY.w, h: bottom - KEY.y }, { fill }),
+    text: ink,
+    subtext: mix(ink, fill, 0.28),
+  };
 }
 
 function stateChips(theme: Theme, k: ChannelKey, l: Look): Placed[] {
@@ -177,7 +196,8 @@ function full(theme: Theme, k: ChannelKey, l: Look): string {
   const width = right - TEXT_X;
   const [name, label] = nameAndLabel(k);
   const t = theme.type;
-  let out = background(theme, l) + colorTab(theme, k, l);
+  const band = colorBand(theme, k, l, label === '' ? 37 : 57);
+  let out = background(theme, l) + band.svg;
 
   // Row 1: label, state chips on the right.
   const chips = stateChips(theme, k, l);
@@ -197,7 +217,7 @@ function full(theme: Theme, k: ChannelKey, l: Look): string {
       scaleX: fit.scaleX,
       x: TEXT_X,
       y: 23,
-      fill: l.subtext,
+      fill: band.subtext,
     });
   }
 
@@ -210,7 +230,7 @@ function full(theme: Theme, k: ChannelKey, l: Look): string {
     maxWidth: nameMax,
     x: TEXT_X,
     y: nameY,
-    fill: l.text,
+    fill: band.text,
     minScaleX: 0.78,
   }).svg;
 
@@ -285,7 +305,8 @@ function meterStyle(theme: Theme, k: ChannelKey, l: Look): string {
   const [name, label] = nameAndLabel(k);
   const t = theme.type;
   const right = CANVAS - 9;
-  let out = background(theme, l) + colorTab(theme, k, l);
+  const band = colorBand(theme, k, l, label === '' ? 36 : 53);
+  let out = background(theme, l) + band.svg;
   const chips = stateChips(theme, k, l);
   const chipsW = chipsWidth(chips, 3);
   out += chipsRightAligned(chips, right, 8, 3);
@@ -304,7 +325,7 @@ function meterStyle(theme: Theme, k: ChannelKey, l: Look): string {
       scaleX: fit.scaleX,
       x: TEXT_X,
       y: 23,
-      fill: l.subtext,
+      fill: band.subtext,
     });
   }
   const nameY = label === '' ? 28 : 47;
@@ -314,7 +335,7 @@ function meterStyle(theme: Theme, k: ChannelKey, l: Look): string {
     maxWidth: label === '' ? width - chipsW - 4 : width,
     x: TEXT_X,
     y: nameY,
-    fill: l.text,
+    fill: band.text,
     minScaleX: 0.78,
   }).svg;
 
@@ -362,7 +383,8 @@ function meterStyle(theme: Theme, k: ChannelKey, l: Look): string {
 function minimal(theme: Theme, k: ChannelKey, l: Look): string {
   const [name, label] = nameAndLabel(k);
   const t = theme.type;
-  let out = background(theme, l) + colorTab(theme, k, l);
+  const band = colorBand(theme, k, l, label === '' ? 12 : 42);
+  let out = background(theme, l) + band.svg;
   const cx = CANVAS / 2;
   const width = CANVAS - 2 * 14;
   if (label !== '') {
@@ -374,7 +396,7 @@ function minimal(theme: Theme, k: ChannelKey, l: Look): string {
       x: cx,
       y: 32,
       anchor: 'middle',
-      fill: l.subtext,
+      fill: band.text,
     }).svg;
   }
   out += fittedText(name, {

@@ -19,7 +19,7 @@ import {
 } from '../parts.ts';
 import { fittedText, fitText, measure, text } from '../text.ts';
 import type { Theme } from '../theme.ts';
-import { colorTab, nameAndLabel, type ChannelColor } from './channel.ts';
+import { colorBand, nameAndLabel, type ChannelColor } from './channel.ts';
 
 export type OutputRole = 'main' | 'phones' | 'output';
 
@@ -56,7 +56,7 @@ const DEFAULT_TITLE: Readonly<Record<OutputRole, string>> = {
   output: 'OUTPUT',
 };
 
-const TEXT_X = 13;
+const TEXT_X = 7;
 const CHIP_H = 19;
 
 export function renderOutput(theme: Theme, k: OutputKey): string {
@@ -68,7 +68,8 @@ export function renderOutput(theme: Theme, k: OutputKey): string {
   const meterX = CANVAS - 7 - mw;
   const right = meterX - 6;
   const width = right - TEXT_X;
-  let out = background(theme, l) + colorTab(theme, k, l);
+  const band = colorBand(theme, k, l, 57);
+  let out = background(theme, l) + band.svg;
 
   // Row 1: title (with a headphone glyph for Phones), M chip on the right.
   const chips: Placed[] =
@@ -83,7 +84,7 @@ export function renderOutput(theme: Theme, k: OutputKey): string {
   out += chipsRightAligned(chips, right, 8, 3);
   let titleX = TEXT_X;
   if (k.role === 'phones') {
-    out += headphones(TEXT_X + 8, 17, 17, l.subtext);
+    out += headphones(TEXT_X + 8, 17, 17, band.subtext);
     titleX += 21;
   }
   const title = k.title ?? DEFAULT_TITLE[k.role];
@@ -101,7 +102,7 @@ export function renderOutput(theme: Theme, k: OutputKey): string {
     scaleX: tf.scaleX,
     x: titleX,
     y: 23,
-    fill: l.subtext,
+    fill: band.subtext,
   });
 
   // Row 2: the output's name (or its label).
@@ -113,7 +114,7 @@ export function renderOutput(theme: Theme, k: OutputKey): string {
     minScaleX: 0.78,
     x: TEXT_X,
     y: 49,
-    fill: l.text,
+    fill: band.text,
   }).svg;
 
   // Volume.

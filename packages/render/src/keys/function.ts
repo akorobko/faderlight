@@ -9,7 +9,7 @@ import { fittedText } from '../text.ts';
 import type { Theme } from '../theme.ts';
 
 export const CENTER = CANVAS / 2;
-export const WIDTH = CANVAS - 2 * 12;
+export const WIDTH = CANVAS - 2 * 7;
 
 /** Colours of a key lit in `color`: a dark tint of it, white text, a frame in it. */
 export function litLook(theme: Theme, color: string): Look & { readonly frame: string } {

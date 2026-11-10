@@ -623,13 +623,7 @@ const pageController: Controller<Extract<KeySpec, { type: 'page' }>> = {
 
 const consoleController: Controller<Extract<KeySpec, { type: 'console' }>> = {
   options: () => ({}),
-  view: (_spec, ctx) => ({
-    kind: 'page',
-    direction: 'next',
-    name: 'CONSOLE',
-    index: ctx.nav.page + 1,
-    count: Math.max(1, ctx.nav.pages.length),
-  }),
+  view: (_spec, ctx) => ({ kind: 'launcher', device: deviceModel(ctx.mixer.store) }),
   gesture: (_spec, g, ctx) => {
     if (g.type === 'tap' && !ctx.nav.openConsole()) ctx.alert();
   },

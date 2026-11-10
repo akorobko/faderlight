@@ -1,17 +1,18 @@
-// Snapshot key (docs/design/03-ux.md §2.3): the snapshot's number big, its name below. The
-// loaded snapshot is lit; "EDITED" when the mixer reports it changed since loading. While a
-// save waits for its confirming second tap the key turns red and says so.
+// Snapshot key (docs/design/03-ux.md §2.3): the snapshot's name big, on up to two lines, with
+// "SNAPSHOT n" above it; without a name, the number big. The loaded snapshot is lit; "EDITED"
+// when the mixer reports it changed since loading. While a save waits for its confirming
+// second tap the key turns red and says so.
 
 import { CANVAS, chip, chipWidth, frame, type ChipStyle, type KeyState } from '../parts.ts';
-import { fitText, text } from '../text.ts';
+import { balancedLines, fitText, text } from '../text.ts';
 import type { Theme } from '../theme.ts';
-import { caption, CENTER, chrome, functionLook, litLook, word } from './function.ts';
+import { caption, CENTER, chrome, functionLook, litLook, WIDTH, word } from './function.ts';
 
 export interface SnapshotKey extends KeyState {
   readonly kind: 'snapshot';
   /** 1-8. */
   readonly n: number;
-  /** Name, if known (the mixer does not send snapshot names yet). */
+  /** Name, if known: the mixer does not send it, so it comes from TotalMix's files or settings. */
   readonly name?: string | undefined;
   /** As the mixer reports it; undefined = not known yet. */
   readonly state: 'inactive' | 'active' | 'modified' | undefined;
@@ -53,11 +54,13 @@ export function renderSnapshot(theme: Theme, k: SnapshotKey): string {
   };
   const modified = k.state === 'modified' && k.offline !== true;
   const chipW = modified ? chipWidth('EDITED', edited) : 0;
-  if (modified) out += chip('EDITED', CANVAS - 10 - chipW, 10, edited);
-  const t = fitText('SNAPSHOT', {
+  if (modified) out += chip('EDITED', CANVAS - 7 - chipW, 9, edited);
+  // With a name: the name is what you look for, big, and the number goes to the title.
+  const named = name !== '' && k.offline !== true;
+  const t = fitText(named ? `SNAPSHOT ${n}` : 'SNAPSHOT', {
     face: 'semibold',
     sizes: [theme.type.small],
-    maxWidth: CANVAS - 24 - chipW - 6,
+    maxWidth: CANVAS - 14 - chipW - 6,
     tracking: 0.6,
   });
   out += text(t.text, {
@@ -65,17 +68,20 @@ export function renderSnapshot(theme: Theme, k: SnapshotKey): string {
     size: t.size,
     tracking: 0.6,
     scaleX: t.scaleX,
-    x: 14,
+    x: 7,
     y: 24,
     fill: l.subtext,
   });
-  out += word(theme, n, l, name === '' ? 100 : 90, [theme.type.display]);
-  out += caption(
-    theme,
-    k.offline === true ? 'OFFLINE' : name,
-    l,
-    126,
-    k.offline === true ? undefined : l.text,
-  );
+  if (named) {
+    // One line as big as it fits; two smaller lines when a name with spaces does not.
+    const big = theme.type.medium + 6;
+    const lines = balancedLines(name, { face: 'bold', sizes: [big], maxWidth: WIDTH });
+    if (lines.length < 2) out += word(theme, name, l, 92, [theme.type.large, big]);
+    else
+      out += word(theme, lines[0] ?? '', l, 76, [big]) + word(theme, lines[1] ?? '', l, 108, [big]);
+    return out + c.over;
+  }
+  out += word(theme, n, l, 100, [theme.type.display]);
+  if (k.offline === true) out += caption(theme, 'OFFLINE', l, 126);
   return out + c.over;
 }

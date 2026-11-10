@@ -81,10 +81,25 @@ describe('SVG subset', () => {
 
   const channel: KeyView = { kind: 'channel', label: 'MIC 9', name: 'Vocal' };
 
-  it('scales to the requested size on the 144 canvas', () => {
+  it('scales to the requested size: the 144 canvas plus its margin on every side', () => {
     expect(renderKey(channel, DARK, 72)).toMatch(
-      /^<svg xmlns="http:\/\/www.w3.org\/2000\/svg" width="72" height="72" viewBox="0 0 144 144">/,
+      /^<svg xmlns="http:\/\/www.w3.org\/2000\/svg" width="72" height="72" viewBox="-14 -14 172 172">/,
     );
+  });
+
+  it('keeps text and meters inside the 144 canvas, off the keycap edge', () => {
+    // Only backgrounds, bands, hatching and frames (stroked outlines) reach into the margin;
+    // every filled path, which is all text and the solid icons, stays on the canvas.
+    for (const { name, view } of views) {
+      const svg = renderKey(view);
+      for (const m of svg.matchAll(/<path d="([^"]*)" fill="(?!none)/g)) {
+        const nums = (m[1] ?? '').match(/-?\d+(\.\d+)?/g)?.map(Number) ?? [];
+        for (const n of nums) {
+          expect(n, `${name}: path coordinate ${String(n)}`).toBeGreaterThanOrEqual(0);
+          expect(n, `${name}: path coordinate ${String(n)}`).toBeLessThanOrEqual(144);
+        }
+      }
+    }
   });
 
   it('is pure: the same view renders the same string', () => {

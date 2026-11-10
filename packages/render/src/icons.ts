@@ -1,4 +1,4 @@
-// Glyphs the font does not have, drawn as paths: arrows, transport symbols, headphones.
+// Glyphs the font does not have, drawn as paths: arrows, transport symbols, headphones, the logo.
 // Each takes a centre and a size (the height of the symbol) on the key canvas.
 
 import { circle, num, path, polygon, rect, roundRect } from './svg.ts';
@@ -96,4 +96,36 @@ export function headphones(cx: number, cy: number, size: number, color: string):
 /** A filled status dot. */
 export function dot(cx: number, cy: number, r: number, fill: string): string {
   return circle(cx, cy, r, { fill });
+}
+
+export interface LogoColors {
+  readonly track: string;
+  readonly cap: string;
+  readonly accent: string;
+  readonly meter: string;
+  readonly green: string;
+  readonly yellow: string;
+}
+
+/**
+ * The Faderlight mark, the plugin icon's drawing without its tile: three faders and a meter.
+ * Drawn on a 194 x 152 grid, scaled to `size` px high and centred on (cx, cy).
+ */
+export function logo(cx: number, cy: number, size: number, c: LogoColors): string {
+  const s = size / 152;
+  const x0 = cx - 97 * s;
+  const y0 = cy - 76 * s;
+  const r = (x: number, y: number, w: number, h: number, rx: number, fill: string) =>
+    rect({ x: x0 + x * s, y: y0 + y * s, w: w * s, h: h * s }, { fill }, rx * s);
+  let out = '';
+  for (const [i, x] of [26, 82, 138].entries()) {
+    out += r(x - 5, 0, 10, 152, 5, c.track);
+    out += r(x - 26, [66, 26, 88][i] ?? 66, 52, 26, 8, i === 1 ? c.accent : c.cap);
+  }
+  return (
+    out +
+    r(178, 0, 16, 152, 4, c.meter) +
+    r(178, 72, 16, 80, 4, c.green) +
+    r(178, 48, 16, 22, 4, c.yellow)
+  );
 }

@@ -29,22 +29,25 @@ View models carry what a key shows, already decided: names, dB values, switch st
 
 ## Keys
 
-All keys are drawn on a 144 x 144 canvas and scaled to `size` (96 on a Stream Deck XL). Every
-key can be `offline` (grey, hatched, values shown as `––`) and most can be `pending` (dashed
-frame: sent, not confirmed).
+All keys are drawn on a 144 x 144 canvas inside a 14 px margin, and the whole 172 x 172 key is
+scaled to `size` (96 on a Stream Deck XL). Only backgrounds, colour bands, hatching and frames
+reach into the margin: an XL's keycaps bend the edge of the display, so text and meters stay
+off it (a test checks every filled path). Every key can be `offline` (grey, hatched, values
+shown as `––`) and most can be `pending` (dashed frame: sent, not confirmed).
 
-| `kind`     | Shows                                                                                   | States                                         |
-| ---------- | --------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `channel`  | `style` full: colour tab, label, name, gain or level, badges, meter. meter, minimal too | muted, soloed, pending, offline                |
-| `output`   | Main, Phones or an output: volume, name, stereo meter; Main adds the monitor chips on   | muted, pending, offline                        |
-| `toggle`   | Dim, Mono, Talkback, Speaker B, External input, Global Mute, Global Solo                | on, off, unknown, pending, offline             |
-| `snapshot` | number, name                                                                            | loaded, edited since loading, save armed       |
-| `status`   | link state, device model, sample rate, clock, DSP load (each when known)                | idle, probing, syncing, live (beat), stale     |
-| `bank`     | row, range "9–16", total                                                                | at the end                                     |
-| `page`     | page number, the next page's name                                                       |                                                |
-| `step`     | ▲ or ▼, target, current level                                                           | held (repeating), at the limit                 |
-| `recorder` | the interface's recorder: transport state, elapsed time                                 | not ready, stopped, recording, playing, armed  |
-| `control`  | one parameter in the Channel Detail overlay: a switch, a ± or ◀ ▶ key, or a plain key   | on, off, unknown, held, at the limit, selected |
+| `kind`     | Shows                                                                                    | States                                         |
+| ---------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `channel`  | `style` full: colour band, label, name, gain or level, badges, meter. meter, minimal too | muted, soloed, pending, offline                |
+| `output`   | Main, Phones or an output: volume, name, stereo meter; Main adds the monitor chips on    | muted, pending, offline                        |
+| `toggle`   | Dim, Mono, Talkback, Speaker B, External input, Global Mute, Global Solo                 | on, off, unknown, pending, offline             |
+| `snapshot` | name big with the number above it, or the number big                                     | loaded, edited since loading, save armed       |
+| `status`   | link state, device model, sample rate, clock, DSP load (each when known)                 | idle, probing, syncing, live (beat), stale     |
+| `bank`     | row, range "9–16", total                                                                 | at the end                                     |
+| `page`     | page number, the next page's name                                                        |                                                |
+| `launcher` | the Faderlight mark and the interface's name, "Console" until the mixer answered         | offline                                        |
+| `step`     | ▲ or ▼, target, current level                                                            | held (repeating), at the limit                 |
+| `recorder` | the interface's recorder: transport state, elapsed time                                  | not ready, stopped, recording, playing, armed  |
+| `control`  | one parameter in the Channel Detail overlay: a switch, a ± or ◀ ▶ key, or a plain key    | on, off, unknown, held, at the limit, selected |
 
 The look follows `docs/design/03-ux.md`: mute cyan/teal, solo orange, 48V and record red, dim
 amber; every state also has a shape (M and S chips, solid and dashed frames, filled and
@@ -105,6 +108,7 @@ A key renders in about 35 µs once the fonts are loaded (about 6 ms, once), and 
   work but have not been seen on a device yet; the visual review on a real XL (M3.4) checks
   them.
 - **Not reported by the mixer:** sample rate, clock lock, DSP load (`/status/dsp` is always 0
-  so far) and snapshot names. The keys show them only when a view model has them.
+  so far) and snapshot names. The keys show them only when a view model has them; the deck
+  reads snapshot names from TotalMix's own state file (`packages/deck`).
 - **Recorder states.** Only `/durec/state` "Not ready" has been captured; how the other states
   are spelled decides the controller's mapping to `RecorderState`.

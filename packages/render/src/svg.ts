@@ -31,11 +31,15 @@ export function el(name: string, a: Attrs, children?: string): string {
     : `<${name}${attrs(a)}>${children}</${name}>`;
 }
 
-/** A whole key: `content` is drawn on a 144 x 144 canvas and scaled to `size` pixels. */
-export function document(content: string, size: number, canvas = 144): string {
+/**
+ * A whole key: `content` is drawn on a `canvas` x `canvas` canvas, with `bleed` more on every
+ * side for backgrounds and frames, and the whole of it scaled to `size` pixels.
+ */
+export function document(content: string, size: number, canvas = 144, bleed = 0): string {
+  const box = `${num(-bleed)} ${num(-bleed)} ${num(canvas + 2 * bleed)} ${num(canvas + 2 * bleed)}`;
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${num(size)}" height="${num(size)}" ` +
-    `viewBox="0 0 ${num(canvas)} ${num(canvas)}">${content}</svg>`
+    `viewBox="${box}">${content}</svg>`
   );
 }
 

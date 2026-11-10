@@ -3,11 +3,22 @@
 
 import { mix } from './color.ts';
 import type { FaceName } from './fonts.ts';
-import { line, path, rect, roundRect, type Box } from './svg.ts';
+import { line, num, path, rect, roundRect, type Box } from './svg.ts';
 import { capHeight, measure, text } from './text.ts';
 import type { StateTokens, Theme } from './theme.ts';
 
 export const CANVAS = 144;
+
+/**
+ * Margin around the content canvas that only backgrounds, colour bands and frames reach. The
+ * Stream Deck's keycaps bend the outer part of each display, so text, values and meters stay
+ * on the 144 x 144 content canvas and the key shows it inside this margin
+ * (`renderKey` draws a viewBox of `KEY` on the full key).
+ */
+export const BLEED = 14;
+
+/** The whole key, margin included, in content canvas coordinates. */
+export const KEY: Box = { x: -BLEED, y: -BLEED, w: CANVAS + 2 * BLEED, h: CANVAS + 2 * BLEED };
 
 /** Flags every key can carry. */
 export interface KeyState {
@@ -28,29 +39,33 @@ export function look(theme: Theme, s: KeyState & { readonly muted?: boolean | un
   return { ...theme.normal, offline: false };
 }
 
-/** Background for the whole key, with diagonal hatching when offline. */
+/** Background for the whole key (margin included), with diagonal hatching when offline. */
 export function background(theme: Theme, l: Look | StateTokens, fill?: string): string {
-  let out = rect({ x: 0, y: 0, w: CANVAS, h: CANVAS }, { fill: fill ?? l.background });
+  let out = rect(KEY, { fill: fill ?? l.background });
   if ('offline' in l && l.offline) out += hatch(theme.offline.hatch);
   return out;
 }
 
 /** Diagonal stripes over the whole key. */
 export function hatch(color: string, spacing = 20, width = 6): string {
+  const size = KEY.w;
   let d = '';
-  for (let c = spacing / 2; c < 2 * CANVAS; c += spacing) {
-    const x1 = Math.max(0, c - CANVAS);
-    const x2 = Math.min(c, CANVAS);
-    d += `M${String(x1)} ${String(c - x1)}L${String(x2)} ${String(c - x2)}`;
+  for (let c = spacing / 2; c < 2 * size; c += spacing) {
+    const x1 = Math.max(0, c - size);
+    const x2 = Math.min(c, size);
+    d += `M${num(KEY.x + x1)} ${num(KEY.y + c - x1)}L${num(KEY.x + x2)} ${num(KEY.y + c - x2)}`;
   }
   return path(d, { stroke: color, strokeWidth: width });
 }
 
-/** Inset frame along the key edge: solid (solo, lit) or dashed (pending). */
+/**
+ * Frame along the key's edge: solid (solo, lit) or dashed (pending). It sits in the margin,
+ * where the keycap bends it but a band of colour still reads, and leaves the content free.
+ */
 export function frame(color: string, width: number, dash?: readonly number[]): string {
   const inset = width / 2 + 1;
-  const box = { x: inset, y: inset, w: CANVAS - 2 * inset, h: CANVAS - 2 * inset };
-  return path(roundRect(box, 14 - inset), { stroke: color, strokeWidth: width, dash });
+  const box = { x: KEY.x + inset, y: KEY.y + inset, w: KEY.w - 2 * inset, h: KEY.h - 2 * inset };
+  return path(roundRect(box, 16 - inset), { stroke: color, strokeWidth: width, dash });
 }
 
 /**

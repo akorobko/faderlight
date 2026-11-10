@@ -122,7 +122,7 @@ describe('the Console layout', () => {
     const { deck, host, advance } = consoleDeck();
     deck.appear({ id: 'launch', device: 'XL', kind: 'console', settings: {} });
     advance(100);
-    expect(host.view('launch')).toMatchObject({ kind: 'page', name: 'CONSOLE' });
+    expect(host.view('launch')).toMatchObject({ kind: 'launcher', device: 'Fireface UFX III' });
     deck.down('launch');
     deck.up('launch');
     expect(host.profiles).toEqual([['XL', 'profiles/Console']]);
