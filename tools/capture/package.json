@@ -1,0 +1,7 @@
+{
+  "name": "@faderlight/capture",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Records TotalMix FX Global OSC traffic to JSON Lines fixtures. Run on the computer with the interface: node tools/capture/src/cli.ts",
+  "type": "module"
+}
