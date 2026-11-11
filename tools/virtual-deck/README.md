@@ -37,17 +37,18 @@ key at once and last until the virtual deck stops.
 Press keys with the mouse or a finger: key down and key up go to the runtime separately, so
 long presses, double taps (Talkback) and held ± keys work as on the hardware.
 
-| Path                         | Contents                                                        |
-| ---------------------------- | --------------------------------------------------------------- |
-| `src/server.ts`              | HTTP server, server-sent events, the two profiles               |
-| `src/page.ts`                | The page (HTML, CSS and the script that draws the deck)         |
-| `src/cli.ts`                 | Command line                                                    |
-| `test/server.test.ts`        | The HTTP API against the simulator (Vitest, part of `npm test`) |
-| `e2e/deck.spec.ts`           | Browser tests that press keys and save screenshots (Playwright) |
-| `e2e/control-center.spec.ts` | Browser tests of the Control Center, with screenshots           |
-| `e2e/inspector.spec.ts`      | Browser tests of the Property Inspector, with screenshots       |
-| `e2e/settings.spec.ts`       | Browser tests of the Control Center's settings pages            |
-| `e2e/layout.spec.ts`         | Browser tests of the layout builder and Backup                  |
+| Path                         | Contents                                                           |
+| ---------------------------- | ------------------------------------------------------------------ |
+| `src/server.ts`              | HTTP server, server-sent events, the two profiles                  |
+| `src/page.ts`                | The page (HTML, CSS and the script that draws the deck)            |
+| `src/cli.ts`                 | Command line                                                       |
+| `test/server.test.ts`        | The HTTP API against the simulator (Vitest, part of `npm test`)    |
+| `e2e/deck.spec.ts`           | Browser tests that press keys and save screenshots (Playwright)    |
+| `e2e/control-center.spec.ts` | Browser tests of the Control Center, with screenshots              |
+| `e2e/inspector.spec.ts`      | Browser tests of the Property Inspector, with screenshots          |
+| `e2e/settings.spec.ts`       | Browser tests of the Control Center's settings pages               |
+| `e2e/layout.spec.ts`         | Browser tests of the layout builder and Backup                     |
+| `screenshots/`               | The pictures of the README and the website (`npm run screenshots`) |
 
 ## End-to-end tests
 
@@ -60,3 +61,18 @@ The tests start the virtual deck on port 4179, press keys in Chromium and check 
 show through `GET /api/views`. They save screenshots of each page to `renders/virtual-deck/`, of
 the Control Center to `renders/control-center/` and of the Property Inspector to
 `renders/property-inspector/`; attach those to PRs that change what they look like or do.
+
+`POST /api/totalmix` with `{"address": "/input/8/mute", "value": 1}` makes a change as if it
+was made in TotalMix's own window (the simulator's `set` command); the keys and the Control
+Center follow it.
+
+## Screenshots for the README and the website
+
+```sh
+npm run screenshots
+```
+
+Runs `screenshots/screenshots.spec.ts` against the simulator's band layout, which fills both
+channel rows of the Console, and writes `docs/images/`: the Console, Channel Detail and Inputs
+pages, the Setup Assistant and the layout builder. Run it after a change to how keys or the
+Control Center look, and commit the pictures that changed. It is not part of `npm run e2e`.

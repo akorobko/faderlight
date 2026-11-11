@@ -53,6 +53,16 @@ describe('the virtual deck server', () => {
     await until(async () => (await view('console:1,1'))?.muted === true);
   });
 
+  it('takes a change made in TotalMix, and the key follows it', async () => {
+    // Guitar (Mic 10), the third key of the inputs row.
+    const r = await post('/api/totalmix', { address: '/input/9/mute', value: 1 });
+    expect(await r.json()).toEqual({ changed: true });
+    await until(async () => (await view('console:2,1'))?.muted === true);
+    await post('/api/totalmix', { address: '/input/9/mute', value: 0 });
+    await until(async () => (await view('console:2,1'))?.muted === false);
+    expect((await post('/api/totalmix', { address: 7 })).status).toBe(400);
+  });
+
   it('switches profiles', async () => {
     await post('/api/profile', { profile: 'own' });
     expect(deck.shownProfile).toBe('own');

@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { message, TRUE, int } from '@faderlight/osc';
-import { fullMixer, parseAddress, SimMixer, studioMixer } from '../src/index.ts';
+import {
+  bandMixer,
+  fullMixer,
+  meterSignals,
+  parseAddress,
+  SimMixer,
+  studioMixer,
+} from '../src/index.ts';
 import { flat, req, set, texts } from './helpers.ts';
 
 /** UFX III with Mic 9/10 as a stereo strip, Mic 11 mono, AN 1/2 out as Main, all else hidden. */
@@ -337,6 +344,20 @@ describe('layouts', () => {
       '/playback/2/mute f:1',
       '/mix/in/8/8/fader f:0',
     ]);
+  });
+
+  it('the band layout fills both channel rows of the Console and mutes the synth', () => {
+    const m = bandMixer();
+    expect(m.strips('input')).toEqual([0, 2, 4, 8, 9, 10, 11, 14, 16]);
+    expect(m.strips('playback')).toEqual([0, 2, 4, 6]);
+    expect(m.strips('output')).toEqual([0, 2, 8, 10, 12, 14]);
+    expect(m.get('/input/2/mute')).toBe(1);
+    expect(m.get('/input/9/instrument')).toBe(1);
+    expect(m.get('/snapshot/load/1')).toBe(2);
+    const signals = meterSignals('band', m);
+    expect(signals.get('in/10')).toMatchObject({ type: 'drums' });
+    expect(signals.get('in/8')).toMatchObject({ type: 'noise', db: -18 });
+    expect(signals.get('pb/2')).toMatchObject({ type: 'noise', db: -40 });
   });
 
   it('a higher sample rate removes ADAT and MADI channels', () => {

@@ -27,7 +27,8 @@
     "plugin:pack": "node packages/plugin/scripts/pack.ts",
     "plugin:icons": "node packages/plugin/scripts/icons.ts",
     "deck": "node tools/virtual-deck/src/cli.ts",
-    "e2e": "playwright test -c tools/virtual-deck/playwright.config.ts"
+    "e2e": "playwright test -c tools/virtual-deck/playwright.config.ts",
+    "screenshots": "playwright test -c tools/virtual-deck/playwright.screenshots.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -21,6 +21,7 @@
 // app: the page shows the plugin's Property Inspector in a frame and connects it to this
 // server, which answers like the plugin; settings changed there last until the server stops.
 
+import { readFileSync } from 'node:fs';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { WebSocketServer, type WebSocket } from 'ws';
@@ -92,6 +93,13 @@ const OWN_PAGE: Readonly<Record<string, KeyDef>> = {
 };
 
 /** Snapshot names for the simulator, which (like TotalMix) does not send any. */
+/** The plugin's version, which the Control Center shows. */
+const PLUGIN_VERSION = (
+  JSON.parse(
+    readFileSync(new URL('../../../packages/plugin/package.json', import.meta.url), 'utf8'),
+  ) as { version: string }
+).version;
+
 const SIMULATOR_SNAPSHOTS = ['Tracking', 'Overdubs', 'Mixdown', 'Reference', 'Live', 'Podcast'];
 
 function keysOf(profile: ProfileName): Map<string, KeyDef> {
@@ -305,7 +313,7 @@ export class VirtualDeck {
 
   private controlCenterHost(): ControlCenterHost {
     return {
-      version: '0.0.0 (virtual deck)',
+      version: `${PLUGIN_VERSION} (virtual deck)`,
       store: this.store,
       diagnostics: this.diagnostics,
       now: () => systemClock.now(),
@@ -467,6 +475,23 @@ export class VirtualDeck {
       if (body.action === 'down') this.runtime?.down(body.id);
       else this.runtime?.up(body.id);
       json(res, 200, { ok: true });
+      return;
+    }
+    if (req.method === 'POST' && url.pathname === '/api/totalmix') {
+      // A change made in TotalMix's own window, as the simulator's `set` command makes one.
+      const body = (await readJson(req)) as { address?: unknown; value?: unknown };
+      if (
+        typeof body.address !== 'string' ||
+        (typeof body.value !== 'number' && typeof body.value !== 'string')
+      ) {
+        json(res, 400, { error: 'expected {"address", "value": number | string}' });
+        return;
+      }
+      if (!this.sim) {
+        json(res, 409, { error: 'only the built-in simulator takes changes' });
+        return;
+      }
+      json(res, 200, { changed: this.sim.change(body.address, body.value) });
       return;
     }
     if (req.method === 'POST' && url.pathname === '/api/profile') {
