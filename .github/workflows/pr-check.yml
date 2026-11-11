@@ -28,7 +28,7 @@ jobs:
     runs-on: ${{ github.event.repository.private && fromJSON('["self-hosted", "macOS", "ARM64"]') || 'macos-latest' }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # Pins Node from .nvmrc instead of whatever Node the Mac has installed. No npm cache step:
       # ~/.npm already persists between runs on the self-hosted runner.
