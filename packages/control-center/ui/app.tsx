@@ -58,6 +58,9 @@ const LINK_WORD: Readonly<Record<string, string>> = {
   idle: 'Not connected',
 };
 
+/** Faderlight's website: the setup guide, help and the releases. Links open a new tab. */
+export const WEBSITE = 'https://ratio32.com/faderlight/';
+
 export function App(props: { readonly rpc: Rpc }): JSX.Element {
   const { rpc } = props;
   const settings = useMemo(() => new SettingsModel(rpc), [rpc]);
@@ -114,7 +117,15 @@ export function App(props: { readonly rpc: Rpc }): JSX.Element {
             </li>
           ))}
         </ul>
-        <div class="nav-foot">{version && `Plugin ${version}`}</div>
+        <div class="nav-foot">
+          <a href={`${WEBSITE}#start`} target="_blank" rel="noopener">
+            Setup guide
+          </a>
+          <a href={WEBSITE} target="_blank" rel="noopener">
+            Faderlight website
+          </a>
+          {version && <span>Plugin {version}</span>}
+        </div>
       </nav>
       <main class="main">
         <header class="topbar">

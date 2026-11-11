@@ -147,8 +147,24 @@ code {
 .nav-foot {
   margin-top: auto;
   padding: 0 10px;
+  display: grid;
+  gap: 6px;
   color: var(--muted);
   font-size: 12px;
+}
+
+.nav .nav-foot a {
+  display: inline;
+  padding: 0;
+  border-radius: 0;
+  color: var(--muted);
+  justify-self: start;
+}
+
+.nav .nav-foot a:hover {
+  background: none;
+  color: var(--text);
+  text-decoration: underline;
 }
 
 /* --- main column ------------------------------------------------------------------------ */
