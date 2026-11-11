@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_SETTINGS, readGlobalSettings, SETTINGS_VERSION, toJson } from '../src/index.ts';
+import {
+  DEFAULT_SETTINGS,
+  MAX_KEY_FPS,
+  readGlobalSettings,
+  SETTINGS_VERSION,
+  toJson,
+} from '../src/index.ts';
 
 describe('readGlobalSettings', () => {
   it('gives the defaults for a first start and asks to write them', () => {
@@ -35,15 +41,26 @@ describe('readGlobalSettings', () => {
     expect(r.changed).toBe(true);
   });
 
+  it('keeps every key at 10 images per second at most, as Elgato asks', () => {
+    expect(DEFAULT_SETTINGS.frames.maxKeyFps).toBe(MAX_KEY_FPS);
+    expect(DEFAULT_SETTINGS.frames.meterFps).toBe(MAX_KEY_FPS);
+    const r = readGlobalSettings({ version: 1, frames: { maxKeyFps: 15, meterFps: 12 } });
+    expect(r.settings.frames).toMatchObject({ maxKeyFps: 10, meterFps: 10 });
+    expect(r.problems).toEqual([
+      'frames.maxKeyFps: 15 is above 10',
+      'frames.meterFps: 12 is above 10',
+    ]);
+  });
+
   it('clamps out-of-range numbers and reports them', () => {
     const r = readGlobalSettings({
       version: 1,
       gestures: { longPressMs: 5, doubleTapMs: 9000 },
-      frames: { meterFps: 12.4 },
+      frames: { meterFps: 8.4 },
     });
     expect(r.settings.gestures.longPressMs).toBe(200);
     expect(r.settings.gestures.doubleTapMs).toBe(600);
-    expect(r.settings.frames.meterFps).toBe(12);
+    expect(r.settings.frames.meterFps).toBe(8);
     expect(r.problems).toEqual([
       'gestures.longPressMs: 5 is below 200',
       'gestures.doubleTapMs: 9000 is above 600',

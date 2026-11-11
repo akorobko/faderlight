@@ -18,6 +18,9 @@ import {
 import { withEntry } from '../edits.ts';
 import { useLive, useTopic } from '../live.ts';
 
+/** MAX_KEY_FPS of @faderlight/deck (Elgato's limit); the UI imports only types from there. */
+const KEY_FPS_LIMIT = 10;
+
 const THEMES: readonly Choice<ThemeName>[] = [
   { value: 'dark', label: 'Dark' },
   { value: 'high-contrast', label: 'High contrast' },
@@ -101,7 +104,7 @@ export function AppearancePage(props: PageProps): JSX.Element {
               <NumberInput
                 value={draft.frames.meterFps}
                 min={0}
-                max={30}
+                max={KEY_FPS_LIMIT}
                 unit="per second"
                 label="Meters"
                 onChange={(meterFps) => {
@@ -113,7 +116,7 @@ export function AppearancePage(props: PageProps): JSX.Element {
               <NumberInput
                 value={draft.frames.maxKeyFps}
                 min={1}
-                max={30}
+                max={KEY_FPS_LIMIT}
                 unit="per second"
                 label="One key at most"
                 onChange={(maxKeyFps) => {

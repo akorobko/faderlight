@@ -12,6 +12,8 @@ to the deck runtime (`packages/deck`) and key images back to the Stream Deck app
 | `src/mixer.ts`                           | The TotalMix connection, restarted when its settings change              |
 | `pi/`                                    | The Property Inspector page (`scripts/build-pi.ts` builds it)            |
 | `scripts/build.ts`                       | Builds `bin/`, `control-center/`, `pi/`, `fonts/`, `profiles/`, `debug/` |
+| `scripts/pack.ts`                        | Packs the release `.streamDeckPlugin` file into `dist/`                  |
+| `scripts/release.ts`                     | What a release leaves out, its version and its release notes             |
 | `scripts/profile.ts`                     | Writes the bundled profiles (`scripts/zip.ts` packs them)                |
 | `src/debug.ts`                           | The pages of the Test Images debug action                                |
 | `scripts/icons.ts`                       | Draws the icons in `imgs/` (our own artwork)                             |
@@ -42,6 +44,33 @@ Test Images PNGs into `debug/`. All four are gitignored.
 
 The plugin writes its log to the plugin folder's `logs/` (gitignored). `Nodejs.Debug` is
 `enabled` in the manifest, so a debugger can attach to the running plugin.
+
+## Release package
+
+```sh
+npm run plugin:pack    # dist/Faderlight-<version>.streamDeckPlugin
+```
+
+The one file users download, for macOS and Windows: a double-click hands it to the Stream Deck
+app, which installs the plugin and its Console profile. `scripts/pack.ts` builds a release
+copy of the plugin folder into `dist/release/` and packs it with `streamdeck pack`, which
+validates it first. The release copy leaves out the debug aids of the development build
+(`scripts/release.ts`): the Test Images action, the Render Test profile, the PNGs in `debug/`
+and the debugger port (`Nodejs.Debug`), which would let any program on the computer run code
+inside the plugin. It carries the version of this package's `package.json`; a test keeps the
+committed manifest's `Version` in step with it.
+
+## Releasing
+
+1. Set the new version in `package.json` here and in the manifest's `Version` (with a fourth
+   `.0`: `0.2.0` is `0.2.0.0`), and add a `## 0.2.0` section to `CHANGELOG.md` at the
+   repository root. Merge that to main.
+2. Tag the merge and push the tag: `git tag v0.2.0 && git push origin v0.2.0`.
+3. The Release workflow (`.github/workflows/release.yml`) runs `npm run check` and
+   `npm run plugin:pack -- --expect v0.2.0` on the Mac runner. It stops if the tag, the
+   package version and the changelog disagree, and otherwise opens a draft GitHub release with
+   the `.streamDeckPlugin` file and the changelog section as its notes.
+4. Read the draft, install its file once on a real deck, and publish it.
 
 ## The Console profile
 

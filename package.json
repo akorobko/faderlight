@@ -24,6 +24,7 @@
     "sim": "node packages/simulator/src/cli.ts",
     "render:goldens": "node packages/render/test/render-goldens.ts",
     "plugin:build": "node packages/plugin/scripts/build.ts",
+    "plugin:pack": "node packages/plugin/scripts/pack.ts",
     "plugin:icons": "node packages/plugin/scripts/icons.ts",
     "deck": "node tools/virtual-deck/src/cli.ts",
     "e2e": "playwright test -c tools/virtual-deck/playwright.config.ts"

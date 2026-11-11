@@ -37,13 +37,14 @@ describe('FrameScheduler', () => {
     s.add('k', () => image);
     clock.advance(0);
     expect(sent).toEqual([[0, 'k', 'a']]);
+    // Each wait is longer than the gap between two images of one key (100 ms at 10 per second).
     s.invalidate('k');
-    clock.advance(100);
+    clock.advance(150);
     expect(sent).toHaveLength(1);
     expect(s.stats.unchanged).toBe(1);
     image = 'b';
     s.invalidate('k');
-    clock.advance(100);
+    clock.advance(150);
     expect(sent.map((x) => x[2])).toEqual(['a', 'b']);
   });
 

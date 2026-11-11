@@ -35,12 +35,19 @@ export interface GestureSettings {
   readonly repeatIntervalMs: number;
 }
 
+/**
+ * Images per second one key may get at most. Elgato's plugin guidelines keep programmatic key
+ * updates to 10 per second (https://docs.elgato.com/guidelines/stream-deck/plugins), so no
+ * setting goes above it.
+ */
+export const MAX_KEY_FPS = 10;
+
 export interface FrameSettings {
   /** Key images sent per second, all keys together (default 120). */
   readonly budgetPerSecond: number;
-  /** Images per second for one key at most (default 15). */
+  /** Images per second for one key at most (default and limit MAX_KEY_FPS). */
   readonly maxKeyFps: number;
-  /** Meter refresh rate (default 12; 0 draws meters only when something else changes). */
+  /** Meter refresh rate (default 10; 0 draws meters only when something else changes). */
   readonly meterFps: number;
 }
 
@@ -112,7 +119,7 @@ export const DEFAULT_SETTINGS: GlobalSettings = {
   version: SETTINGS_VERSION,
   connection: { host: '127.0.0.1', sendPort: 7002, listenPort: 9002 },
   gestures: { longPressMs: 450, doubleTapMs: 250, repeatDelayMs: 400, repeatIntervalMs: 100 },
-  frames: { budgetPerSecond: 120, maxKeyFps: 15, meterFps: 12 },
+  frames: { budgetPerSecond: 120, maxKeyFps: MAX_KEY_FPS, meterFps: MAX_KEY_FPS },
   detail: { timeoutSec: 20 },
   theme: 'dark',
   levels: {},
@@ -216,8 +223,8 @@ export function readGlobalSettings(stored: unknown): ReadSettings {
         10,
         500,
       ),
-      maxKeyFps: read.int('frames.maxKeyFps', DEFAULT_SETTINGS.frames.maxKeyFps, 1, 30),
-      meterFps: read.int('frames.meterFps', DEFAULT_SETTINGS.frames.meterFps, 0, 30),
+      maxKeyFps: read.int('frames.maxKeyFps', DEFAULT_SETTINGS.frames.maxKeyFps, 1, MAX_KEY_FPS),
+      meterFps: read.int('frames.meterFps', DEFAULT_SETTINGS.frames.meterFps, 0, MAX_KEY_FPS),
     },
     detail: {
       timeoutSec: read.int('detail.timeoutSec', DEFAULT_SETTINGS.detail.timeoutSec, 0, 600),

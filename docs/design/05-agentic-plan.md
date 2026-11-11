@@ -86,8 +86,8 @@ Legend: 🤖 agent-only · 👤 needs the maintainer (≤15 min) · deps in brac
 - **M5.6 👤 Hardware checkpoint #2** + UX feedback round.
 
 ### M6 — Release (week 6)
-- **M6.1 🤖 Packaging** (`streamdeck pack`), icons (original artwork), release workflow, README, setup guide with TotalMix screenshots (👤 screenshots).
-- **M6.2 🤖 Docs site** (GitHub Pages).
+- **M6.1 🤖 Packaging** (`streamdeck pack`, now `npm run plugin:pack`), icons (original artwork), release workflow (tag → draft GitHub release), README, setup guide with TotalMix screenshots (👤 screenshots).
+- **M6.2 🤖 Docs site**: on the publisher's site at ratio32.com/faderlight instead of GitHub Pages (decided 2026-11-11); the site is kept outside this repository.
 - **M6.3 👤 Marketplace submission** (optional).
 
 ### Later
@@ -115,6 +115,6 @@ Agent rules live in [`/AGENTS.md`](../../AGENTS.md) (harness-neutral; read nativ
 |---|---|
 | Global OSC details differ from research | M0.2–M0.4 before protocol code; captures as tests |
 | Meter traffic too heavy on UFX III (94 ch) | Only subscribe/render visible channels; level data rate setting; scheduler budget |
-| Stream Deck image throughput on XL | FrameScheduler, hash skip, 12 fps default |
+| Stream Deck image throughput on XL | FrameScheduler, hash skip, 10 fps per key (Elgato's limit) |
 | Official Global OSC table not published for 2.10 | RME's alpha PoC plugin + Companion module + our captures; ask RME forum |
 | Overlap with existing free plugin | Differentiation list (01 §4); reassess after M4.8 |
