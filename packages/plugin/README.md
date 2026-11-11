@@ -71,7 +71,7 @@ committed manifest's `Version` in step with it.
    repository root. Merge that to main.
 2. Tag the merge and push the tag: `git tag v0.2.0 && git push origin v0.2.0`.
 3. The Release workflow (`.github/workflows/release.yml`) runs `npm run check` and
-   `npm run plugin:pack -- --expect v0.2.0` on the Mac runner. It stops if the tag, the
+   `npm run plugin:pack -- --expect v0.2.0` on GitHub's Linux runner. It stops if the tag, the
    package version and the changelog disagree, and otherwise opens a draft GitHub release with
    the `.streamDeckPlugin` file and the changelog section as its notes.
 4. Read the draft, install its file once on a real deck, and publish it.

@@ -17,7 +17,7 @@
 | Build | npm workspaces, **Rollup** for the plugin and its pages (`packages/control-center/scripts/bundle.ts`) | Standard; one bundler, no dev server needed |
 | Tests | **Vitest** (unit/integration), Playwright (settings app + virtual deck screenshots) | Fast, agent-friendly |
 | Lint/format | ESLint (typescript-eslint) + Prettier, `tsc --noEmit` | CI gate |
-| CI | GitHub Actions: PR gate (`npm run check`) on a self-hosted Mac runner while the repository is private, on GitHub's macOS runner once it is public; Windows tests on a GitHub-hosted runner after each merge to main | Free PR checks on the primary platform; fork PRs never run on the Mac; Windows still covered |
+| CI | GitHub Actions on GitHub's Linux runner: the PR gate (`npm run check`, browser tests) and releases. No macOS or Windows runners: they bill 10x and 2x on a private repository, and the TypeScript code, its tests and the one plugin file don't depend on the OS | Cheapest runner while private, free once public; no machine of the maintainer's in the loop |
 | Packaging | `streamdeck pack` → `.streamDeckPlugin`, GitHub Releases; Marketplace later | |
 
 ## Repository layout (npm workspaces)

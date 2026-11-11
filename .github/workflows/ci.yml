@@ -1,0 +1,46 @@
+# The pull-request gate, on GitHub's Linux runner. The code is TypeScript on Node with no
+# native modules, so its tests don't depend on the OS, and the one plugin file covers macOS and
+# Windows. GitHub's macOS and Windows runners bill ten and two times the Linux rate on a private
+# repository, so nothing here uses them. On a public repository the Linux runner is free.
+#
+# Drafts are for reading, so nothing runs for one. Marking a PR ready asks for the gate, and every
+# push after that re-runs it. `checkout` on a `pull_request` event takes the merge of the branch
+# into its base, so this checks the merged result.
+
+name: CI
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+
+permissions:
+  contents: read
+
+# A newer push supersedes the older run of the same PR.
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      # Node from .nvmrc, with npm's download cache kept between runs.
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # Vendor guard, Prettier, ESLint, tsc and Vitest; see AGENTS.md.
+      - run: npm run check
+
+      # The virtual deck in Chromium (tools/virtual-deck/e2e). --with-deps also installs the
+      # system libraries Chromium needs on Linux.
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e

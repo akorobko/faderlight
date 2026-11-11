@@ -11,7 +11,7 @@
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { join, posix } from 'node:path';
 import type { SnapshotNames } from './runtime.ts';
 
 /** The eight snapshot names in a TotalMix state file, by snapshot (index 0 is snapshot 1). */
@@ -49,7 +49,7 @@ export interface SnapshotNameRead {
 /** The folder TotalMix FX keeps its state in on this computer; undefined: not known. */
 export function totalMixFolder(platform = process.platform, home = homedir()): string | undefined {
   return platform === 'darwin'
-    ? join(home, 'Library', 'Application Support', 'RME TotalMix FX')
+    ? posix.join(home, 'Library', 'Application Support', 'RME TotalMix FX')
     : undefined;
 }
 
