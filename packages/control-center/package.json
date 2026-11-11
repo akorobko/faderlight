@@ -14,12 +14,12 @@
     "@faderlight/render": "0.0.0",
     "@faderlight/totalmix": "0.0.0",
     "preact": "10.29.8",
-    "ws": "8.22.0"
+    "ws": "8.22.1"
   },
   "devDependencies": {
     "@faderlight/simulator": "0.0.0",
     "@rollup/plugin-node-resolve": "16.0.3",
     "@types/ws": "8.18.2",
-    "rollup": "4.67.3"
+    "rollup": "4.68.0"
   }
 }
