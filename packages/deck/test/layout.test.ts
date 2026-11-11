@@ -1,5 +1,5 @@
 import { controlRoom } from '@faderlight/model';
-import { fullMixer, studioMixer } from '@faderlight/simulator';
+import { bandMixer, fullMixer, studioMixer } from '@faderlight/simulator';
 import { describe, expect, it } from 'vitest';
 import {
   CONSOLE_LAYOUT,
@@ -118,6 +118,24 @@ describe('the Console layout', () => {
     expect(row(1)[7]).toMatchObject({ row: 'PLAYBACK', total: 2, atEnd: true });
     hold(7, 1);
     expect(row(1)[7]).toMatchObject({ row: 'OUTPUTS' });
+  });
+
+  it("fills both channel rows with the simulator's band layout", () => {
+    const { row } = consoleDeck(new Loopback(new FakeClock(), bandMixer()).connect());
+    const names = (r: number) =>
+      row(r)
+        .slice(0, 7)
+        .map((v) => (v as { name?: string }).name);
+    expect(names(1)).toEqual(['Keys', 'Synth', 'Bass', 'Vocal', 'Guitar', 'Kick', 'Snare']);
+    expect(names(2)).toEqual([
+      'DAW',
+      'Click',
+      'Reference',
+      'Browser',
+      'Speakers B',
+      'Cue 3',
+      'Stream',
+    ]);
   });
 
   it('the playback and output row leaves out Main and the Phones outputs', () => {

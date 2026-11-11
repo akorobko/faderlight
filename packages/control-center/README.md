@@ -32,6 +32,9 @@ builds them in memory when it starts. `node packages/control-center/scripts/buil
 | Layout            | the Console's pages as a grid of live key images: drag keys on, swap them, set each key, name and order pages, banks, templates, export and import |
 | Backup            | all settings to a file and back (checked by the plugin), and reset to the defaults                                                                 |
 
+The navigation also links to the setup guide and the website (ratio32.com/faderlight, in a new
+tab), above the plugin's version.
+
 The section is the address's fragment (`#connection`, `#channels`, `#layout`, `#behaviour`,
 `#appearance`, `#backup`), so the plugin can open one directly. An empty box uses what TotalMix has: a
 name, colour or snapshot name emptied again takes the entry out of the settings

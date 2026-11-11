@@ -68,6 +68,19 @@ test('the Setup Assistant finds TotalMix answering and the mixer read', async ({
   await shot(page, 'connection');
 });
 
+test('the navigation links to the setup guide and the website, in a new tab', async ({ page }) => {
+  await open(page);
+  const nav = page.getByRole('navigation', { name: 'Sections' });
+  await expect(nav.getByRole('link', { name: 'Setup guide' })).toHaveAttribute(
+    'href',
+    'https://ratio32.com/faderlight/#start',
+  );
+  const site = nav.getByRole('link', { name: 'Faderlight website' });
+  await expect(site).toHaveAttribute('href', 'https://ratio32.com/faderlight/');
+  await expect(site).toHaveAttribute('target', '_blank');
+  await expect(nav).toContainText(/Plugin \d+\.\d+\.\d+/);
+});
+
 test('the packet log shows what TotalMix sends, filtered', async ({ page }) => {
   await open(page, 'connection');
   const rows = page.locator('#packets tbody tr');
