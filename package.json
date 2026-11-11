@@ -2,6 +2,7 @@
   "name": "faderlight",
   "version": "0.0.0",
   "private": true,
+  "license": "MIT",
   "description": "Stream Deck plugin for controlling and monitoring RME interfaces through TotalMix FX. Not affiliated with RME or Elgato.",
   "author": "ratio32.com (https://ratio32.com)",
   "type": "module",

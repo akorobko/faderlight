@@ -63,6 +63,11 @@ Faderlight, run it without an interface and send a change is in
 [CONTRIBUTING.md](CONTRIBUTING.md). Please report security problems privately, as
 [SECURITY.md](SECURITY.md) describes.
 
+## Licence
+
+The code is under the [MIT License](LICENSE). The bundled Fira Sans Condensed font is under the
+[SIL Open Font License](packages/render/fonts/OFL.txt).
+
 ## Trademarks
 
 Faderlight is made by [ratio32](https://ratio32.com) and is not affiliated with RME or Elgato.
