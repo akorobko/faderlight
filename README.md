@@ -53,39 +53,14 @@ once.
 3. Switch the XL to the **Faderlight Console** profile. The Status key shows your interface
    with a green LIVE.
 
-## Development
+## Help and contributing
 
-Requires Node.js 24 (see `.nvmrc`). No interface needed: a simulator stands in for TotalMix FX,
-and a virtual deck draws the keys in a browser.
+The [setup guide](docs/setup.md) ends with what to change when something does not work. For
+anything else, open an [issue](https://github.com/akorobko/faderlight/issues).
 
-```sh
-npm ci
-npm run check            # vendor guard, format, lint, typecheck, tests
-npm run sim              # fake TotalMix FX on ports 7002/9002 (packages/simulator/README.md)
-npm run deck             # the keys on a web page, against the simulator (tools/virtual-deck)
-npm run e2e              # browser tests of the virtual deck, screenshots in renders/
-npm run render:goldens   # key images and renders/contact-sheet.png (packages/render/README.md)
-npm run plugin:build     # the Stream Deck plugin (packages/plugin/README.md)
-npm run plugin:pack      # the release file dist/Faderlight-<version>.streamDeckPlugin
-npm run screenshots      # the pictures in docs/images/
-```
-
-| Path                      | Contents                                       |
-| ------------------------- | ---------------------------------------------- |
-| `packages/osc`            | OSC codec and UDP transport                    |
-| `packages/totalmix`       | TotalMix FX Global OSC adaptor                 |
-| `packages/model`          | Mixer model, device profiles, meters           |
-| `packages/render`         | Key renderers (SVG)                            |
-| `packages/deck`           | Deck runtime: settings, gestures, layouts      |
-| `packages/plugin`         | The Stream Deck plugin (SDK wiring, manifest)  |
-| `packages/control-center` | Control Center: settings page and its server   |
-| `packages/simulator`      | Fake TotalMix FX for hardware-free development |
-| `tools/`                  | Developer tools (capture, virtual deck)        |
-| `docs/design/`            | Design documents, starting with the README     |
-| `docs/protocol/`          | Global OSC as TotalMix actually sends it       |
-
-Agent and contributor rules are in [AGENTS.md](AGENTS.md). RME reference documents are not in
-the repository; `scripts/fetch-vendor.sh` downloads them into `docs/vendor/`.
+Bug reports, captures from other RME interfaces and pull requests are welcome. How to build
+Faderlight, run it without an interface and send a change is in
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Trademarks
 
