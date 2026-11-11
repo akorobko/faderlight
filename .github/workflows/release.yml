@@ -3,7 +3,7 @@
 # CHANGELOG.md section. The maintainer reads the draft and publishes it; nothing is public
 # before that.
 #
-# It runs on GitHub's Linux runner, like the PR gate (pr-check.yml): the plugin file is the same
+# It runs on GitHub's Linux runner, like the PR gate (ci.yml): the plugin file is the same
 # for macOS and Windows, so it can be packed anywhere. Only people who can push tags start this
 # workflow, and it runs code that is already in the repository.
 

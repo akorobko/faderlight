@@ -1,6 +1,6 @@
 # Dependency updates: one grouped pull request a week per ecosystem for minor and patch
 # versions, and one per package for a major version. Each goes through the PR gate
-# (pr-check.yml) and the maintainer's review, like any other pull request.
+# (ci.yml) and the maintainer's review, like any other pull request.
 version: 2
 updates:
   - package-ecosystem: npm
