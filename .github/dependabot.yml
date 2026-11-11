@@ -7,6 +7,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Node's types follow the Node that runs the plugin (24, see .nvmrc), not the newest Node.
+    ignore:
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
     groups:
       npm:
         patterns: ['*']

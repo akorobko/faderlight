@@ -3,9 +3,9 @@
 # CHANGELOG.md section. The maintainer reads the draft and publishes it; nothing is public
 # before that.
 #
-# It runs where the PR gate runs (pr-check.yml): the maintainer's Mac while the repository is
-# private, GitHub's macOS runner once it is public, whose logs anyone can read. Only people who
-# can push tags start this workflow, and it runs code that is already in the repository.
+# It runs on GitHub's Linux runner, like the PR gate (pr-check.yml): the plugin file is the same
+# for macOS and Windows, so it can be packed anywhere. Only people who can push tags start this
+# workflow, and it runs code that is already in the repository.
 
 name: Release
 
@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   release:
-    runs-on: ${{ github.event.repository.private && fromJSON('["self-hosted", "macOS", "ARM64"]') || 'macos-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       TAG: ${{ github.ref_name }}
@@ -31,6 +31,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
+          cache: npm
 
       - run: npm ci
 

@@ -1,8 +1,7 @@
-# The pull-request gate. While the repository is private it runs on the maintainer's Mac
-# through a self-hosted runner, which is not billed; the Mac is the primary target platform.
-# Once the repository is public it runs on GitHub's macOS runner instead, which is free for
-# public repositories: a PR from a fork must never run its code on the Mac, and a public
-# repository's run logs are public, so they must not show the Mac's folders or name.
+# The pull-request gate, on GitHub's Linux runner. The code is TypeScript on Node with no
+# native modules, so its tests don't depend on the OS, and the one plugin file covers macOS and
+# Windows. GitHub's macOS and Windows runners bill ten and two times the Linux rate on a private
+# repository, so nothing here uses them. On a public repository the Linux runner is free.
 #
 # Drafts are for reading, so nothing runs for one. Marking a PR ready asks for the gate, and every
 # push after that re-runs it. `checkout` on a `pull_request` event takes the merge of the branch
@@ -25,23 +24,23 @@ concurrency:
 jobs:
   check:
     if: github.event.pull_request.draft == false
-    runs-on: ${{ github.event.repository.private && fromJSON('["self-hosted", "macOS", "ARM64"]') || 'macos-latest' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
-      # Pins Node from .nvmrc instead of whatever Node the Mac has installed. No npm cache step:
-      # ~/.npm already persists between runs on the self-hosted runner.
+      # Node from .nvmrc, with npm's download cache kept between runs.
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
+          cache: npm
 
       - run: npm ci
 
       # Vendor guard, Prettier, ESLint, tsc and Vitest; see AGENTS.md.
       - run: npm run check
 
-      # The virtual deck in Chromium (tools/virtual-deck/e2e). Playwright downloads its browser
-      # once into its cache in the runner's home folder; later runs find it there.
-      - run: npx playwright install chromium
+      # The virtual deck in Chromium (tools/virtual-deck/e2e). --with-deps also installs the
+      # system libraries Chromium needs on Linux.
+      - run: npx playwright install --with-deps chromium
       - run: npm run e2e

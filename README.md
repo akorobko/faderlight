@@ -37,13 +37,13 @@ once.
 
 ## Requirements
 
-| What            | Version                                                                                                   |
-| --------------- | --------------------------------------------------------------------------------------------------------- |
-| Stream Deck     | XL for the Console layout. The single keys should work on other models with keys; only the XL is tested.  |
-| Stream Deck app | 7.1 or later                                                                                              |
-| Computer        | macOS 13 or later, or Windows 10 or later. Tested on macOS; Windows runs the automated tests only so far. |
-| TotalMix FX     | 2.1 or later, for Global OSC. As of November 2026, 2.1 is a beta from RME's forum.                        |
-| Interface       | An RME interface that TotalMix FX 2.1 supports. Tested with a Fireface UFX III.                           |
+| What            | Version                                                                                                  |
+| --------------- | -------------------------------------------------------------------------------------------------------- |
+| Stream Deck     | XL for the Console layout. The single keys should work on other models with keys; only the XL is tested. |
+| Stream Deck app | 7.1 or later                                                                                             |
+| Computer        | macOS 13 or later, or Windows 10 or later. Tested on macOS; not tried on Windows yet.                    |
+| TotalMix FX     | 2.1 or later, for Global OSC. As of November 2026, 2.1 is a beta from RME's forum.                       |
+| Interface       | An RME interface that TotalMix FX 2.1 supports. Tested with a Fireface UFX III.                          |
 
 ## Install
 
