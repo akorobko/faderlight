@@ -2,7 +2,7 @@
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
   "UUID": "com.ratio32.faderlight.mixer",
   "Name": "Faderlight",
-  "Version": "0.1.0.0",
+  "Version": "0.1.1.0",
   "Author": "ratio32.com",
   "Description": "Controls and monitors RME interfaces through TotalMix FX: channel keys with meters, monitoring, snapshots and a full console layout for the XL. Not affiliated with RME or Elgato.",
   "Category": "Faderlight",
