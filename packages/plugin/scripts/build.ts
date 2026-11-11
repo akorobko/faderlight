@@ -9,11 +9,13 @@
 //
 // The manifest and the icons are committed in the folder; everything above is generated and
 // gitignored. With --out <dir> the build goes to another folder (tests use a temporary one) and
-// the committed files are copied there too.
+// the committed files are copied there too. A release build (scripts/pack.ts) always goes to
+// another folder: its manifest leaves out the debug aids (scripts/release.ts), so it has no
+// Render Test profile and no debug/.
 //
 //   node packages/plugin/scripts/build.ts [--out <dir>]
 
-import { cpSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import commonjsImport from '@rollup/plugin-commonjs';
@@ -28,6 +30,7 @@ import { DEBUG_PAGES, pngName } from '../src/debug.ts';
 import { PI_FOLDER, writePi } from './build-pi.ts';
 import { FONTS_DIR, PACKAGE_DIR, PLUGIN_DIR } from './paths.ts';
 import { writeProfiles } from './profile.ts';
+import { pluginVersion, releaseManifest } from './release.ts';
 
 // The CommonJS plugin's types describe a CommonJS module, so TypeScript sees the module object
 // where an ES import gets the function itself.
@@ -111,14 +114,28 @@ async function writeDebugImages(outDir: string): Promise<void> {
 export interface BuildOptions {
   /** Folder to build into (default: the plugin folder in the repo). */
   readonly outDir?: string;
+  /** Leave out the debug aids and write the release manifest (needs another `outDir`). */
+  readonly release?: boolean;
 }
 
 /** Builds the plugin; returns the folder it built into. */
 export async function buildPlugin(options: BuildOptions = {}): Promise<string> {
   const outDir = resolve(options.outDir ?? PLUGIN_DIR);
+  const release = options.release === true;
+  if (release && outDir === PLUGIN_DIR) {
+    throw new Error('a release build goes to another folder, not the committed plugin folder');
+  }
   if (outDir !== PLUGIN_DIR) {
     for (const item of STATIC)
       cpSync(join(PLUGIN_DIR, item), join(outDir, item), { recursive: true });
+  }
+  if (release) {
+    const manifest = JSON.parse(readFileSync(join(PLUGIN_DIR, 'manifest.json'), 'utf8')) as {
+      Version: string;
+      Actions: { UUID: string }[];
+    };
+    const out = releaseManifest(manifest, pluginVersion());
+    writeFileSync(join(outDir, 'manifest.json'), `${JSON.stringify(out, null, 2)}\n`);
   }
   for (const item of GENERATED) rmSync(join(outDir, item), { recursive: true, force: true });
   await bundle(outDir);
@@ -126,7 +143,7 @@ export async function buildPlugin(options: BuildOptions = {}): Promise<string> {
   await writePi(join(outDir, PI_FOLDER));
   copyFonts(outDir);
   writeProfiles(outDir);
-  await writeDebugImages(outDir);
+  if (!release) await writeDebugImages(outDir);
   return outDir;
 }
 

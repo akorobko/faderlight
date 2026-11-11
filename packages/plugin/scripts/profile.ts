@@ -139,12 +139,17 @@ export function profileEntries(p: BundledProfile, version: string): ZipEntry[] {
   ];
 }
 
-/** Writes the bundled profiles into a plugin folder; returns their paths. */
+/**
+ * Writes the profiles that a plugin folder's manifest names into that folder; returns their
+ * paths. A release manifest names fewer than the development one (scripts/release.ts).
+ */
 export function writeProfiles(pluginDir = PLUGIN_DIR): string[] {
-  const manifest = JSON.parse(readFileSync(join(PLUGIN_DIR, 'manifest.json'), 'utf8')) as {
+  const manifest = JSON.parse(readFileSync(join(pluginDir, 'manifest.json'), 'utf8')) as {
     Version: string;
+    Profiles?: { Name: string }[];
   };
-  return PROFILES.map((p) => {
+  const named = new Set((manifest.Profiles ?? []).map((p) => p.Name));
+  return PROFILES.filter((p) => named.has(p.file)).map((p) => {
     const file = join(pluginDir, `${p.file}.streamDeckProfile`);
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, zip(profileEntries(p, manifest.Version)));

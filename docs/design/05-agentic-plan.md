@@ -86,8 +86,8 @@ Legend: 🤖 agent-only · 👤 needs the maintainer (≤15 min) · deps in brac
 - **M5.6 👤 Hardware checkpoint #2** + UX feedback round.
 
 ### M6 — Release (week 6)
-- **M6.1 🤖 Packaging** (`streamdeck pack`), icons (original artwork), release workflow, README, setup guide with TotalMix screenshots (👤 screenshots).
-- **M6.2 🤖 Docs site** (GitHub Pages).
+- **M6.1 🤖 Packaging** (`streamdeck pack`, now `npm run plugin:pack`), icons (original artwork), release workflow (tag → draft GitHub release), README, setup guide with TotalMix screenshots (👤 screenshots).
+- **M6.2 🤖 Docs site**: on the publisher's site at ratio32.com/faderlight instead of GitHub Pages (decided 2026-11-11); the site is kept outside this repository.
 - **M6.3 👤 Marketplace submission** (optional).
 
 ### Later
