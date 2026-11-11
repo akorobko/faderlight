@@ -14,6 +14,7 @@ to the deck runtime (`packages/deck`) and key images back to the Stream Deck app
 | `scripts/build.ts`                       | Builds `bin/`, `control-center/`, `pi/`, `fonts/`, `profiles/`, `debug/` |
 | `scripts/pack.ts`                        | Packs the release `.streamDeckPlugin` file into `dist/`                  |
 | `scripts/release.ts`                     | What a release leaves out, its version and its release notes             |
+| `scripts/notices.ts`                     | The licences of the bundled packages, for `THIRD-PARTY-NOTICES.txt`      |
 | `scripts/profile.ts`                     | Writes the bundled profiles (`scripts/zip.ts` packs them)                |
 | `src/debug.ts`                           | The pages of the Test Images debug action                                |
 | `scripts/icons.ts`                       | Draws the icons in `imgs/` (our own artwork)                             |
@@ -40,7 +41,10 @@ npx streamdeck restart com.ratio32.faderlight.mixer                         # af
 The build bundles `src/plugin.ts` and everything it imports into `bin/plugin.js` with Rollup
 (TypeScript is transpiled file by file, without type checking: `npm run check` does that),
 copies the renderer's fonts into `fonts/`, writes the bundled profiles into `profiles/` and the
-Test Images PNGs into `debug/`. All four are gitignored.
+Test Images PNGs into `debug/`. Next to the manifest it puts the repository's `LICENSE` and
+`THIRD-PARTY-NOTICES.txt`: the licence of each package the bundles hold (the SDK, ws, Preact
+and a few more, all MIT), which their licences ask every copy to keep. All of these are
+gitignored.
 
 The plugin writes its log to the plugin folder's `logs/` (gitignored). `Nodejs.Debug` is
 `enabled` in the manifest, so a debugger can attach to the running plugin.

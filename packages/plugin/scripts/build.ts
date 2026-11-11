@@ -6,6 +6,8 @@
 //   fonts/          the renderer's fonts (packages/render/fonts), read at runtime
 //   profiles/       the bundled profiles: Console and Render Test (scripts/profile.ts)
 //   debug/          PNGs of the Test Images pages (src/debug.ts), drawn with resvg
+//   LICENSE         the repository's licence
+//   THIRD-PARTY-NOTICES.txt  the licences of the packages in the bundles (scripts/notices.ts)
 //
 // The manifest and the icons are committed in the folder; everything above is generated and
 // gitignored. With --out <dir> the build goes to another folder (tests use a temporary one) and
@@ -28,6 +30,7 @@ import { initRaster, rasterize } from '../../render/test/raster.ts';
 import { UI_FOLDER } from '../src/control-center.ts';
 import { DEBUG_PAGES, pngName } from '../src/debug.ts';
 import { PI_FOLDER, writePi } from './build-pi.ts';
+import { NOTICES_FILE, thirdPartyNotices } from './notices.ts';
 import { FONTS_DIR, PACKAGE_DIR, PLUGIN_DIR } from './paths.ts';
 import { writeProfiles } from './profile.ts';
 import { pluginVersion, releaseManifest } from './release.ts';
@@ -38,7 +41,19 @@ const commonjs = ((commonjsImport as unknown as { default?: unknown }).default ?
   commonjsImport) as unknown as typeof commonjsImport.default;
 
 /** Generated parts of the plugin folder (gitignored). */
-export const GENERATED = ['bin', UI_FOLDER, PI_FOLDER, 'fonts', 'profiles', 'debug'] as const;
+export const GENERATED = [
+  'bin',
+  UI_FOLDER,
+  PI_FOLDER,
+  'fonts',
+  'profiles',
+  'debug',
+  'LICENSE',
+  NOTICES_FILE,
+] as const;
+
+/** The repository's licence, copied into the plugin folder. */
+const LICENSE = resolve(PACKAGE_DIR, '../../LICENSE');
 
 /** Committed parts, copied when building into another folder. */
 const STATIC = ['manifest.json', 'imgs'] as const;
@@ -66,7 +81,7 @@ function typescript(): Plugin {
   };
 }
 
-async function bundle(outDir: string): Promise<void> {
+async function bundle(outDir: string, modules: Set<string>): Promise<void> {
   const build = await rollup({
     input: join(PACKAGE_DIR, 'src/plugin.ts'),
     plugins: [
@@ -82,7 +97,9 @@ async function bundle(outDir: string): Promise<void> {
     },
   });
   try {
-    await build.write({ file: join(outDir, 'bin/plugin.js'), format: 'es' });
+    const { output } = await build.write({ file: join(outDir, 'bin/plugin.js'), format: 'es' });
+    for (const chunk of output)
+      if (chunk.type === 'chunk') chunk.moduleIds.forEach((id) => modules.add(id));
   } finally {
     await build.close();
   }
@@ -138,9 +155,12 @@ export async function buildPlugin(options: BuildOptions = {}): Promise<string> {
     writeFileSync(join(outDir, 'manifest.json'), `${JSON.stringify(out, null, 2)}\n`);
   }
   for (const item of GENERATED) rmSync(join(outDir, item), { recursive: true, force: true });
-  await bundle(outDir);
-  await writeUi(join(outDir, UI_FOLDER));
-  await writePi(join(outDir, PI_FOLDER));
+  const modules = new Set<string>();
+  await bundle(outDir, modules);
+  await writeUi(join(outDir, UI_FOLDER), modules);
+  await writePi(join(outDir, PI_FOLDER), modules);
+  cpSync(LICENSE, join(outDir, 'LICENSE'));
+  writeFileSync(join(outDir, NOTICES_FILE), thirdPartyNotices(modules));
   copyFonts(outDir);
   writeProfiles(outDir);
   if (!release) await writeDebugImages(outDir);

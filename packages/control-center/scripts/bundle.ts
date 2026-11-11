@@ -31,9 +31,14 @@ export function typescript(): Plugin {
 
 /**
  * One browser script with everything `entry` imports: an ES module, or a classic script
- * (`iife`) for pages loaded from files, where browsers refuse module scripts.
+ * (`iife`) for pages loaded from files, where browsers refuse module scripts. The ids of the
+ * bundled modules are added to `modules`, when given (for the licence notices).
  */
-export async function bundleBrowser(entry: string, format: 'es' | 'iife' = 'es'): Promise<string> {
+export async function bundleBrowser(
+  entry: string,
+  format: 'es' | 'iife' = 'es',
+  modules?: Set<string>,
+): Promise<string> {
   const build = await rollup({
     input: entry,
     plugins: [
@@ -57,6 +62,7 @@ export async function bundleBrowser(entry: string, format: 'es' | 'iife' = 'es')
     // Anything that reached for Node would fail in the browser: catch it here.
     const node = chunk.imports.filter((i) => i.startsWith('node:') || !i.startsWith('.'));
     if (node.length > 0) throw new Error(`${entry} imports ${node.join(', ')}`);
+    for (const id of chunk.moduleIds) modules?.add(id);
     return chunk.code;
   } finally {
     await build.close();
