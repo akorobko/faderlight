@@ -72,7 +72,8 @@ they apply to people too. The ones that most often matter:
 - Never commit RME or Elgato material, and never use their names or artwork in product
   names, icons or identifiers.
 
-One task per pull request, please. The PR template lists what to check.
+One task per pull request, please. The PR template lists what to check. Every pull request
+needs the maintainer's review before it merges.
 
 ## Licence
 
