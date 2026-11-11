@@ -26,16 +26,16 @@ const PAGE = `<!doctype html>
 </html>
 `;
 
-/** The page's files by name. */
-export async function buildPi(): Promise<Map<string, string>> {
+/** The page's files by name; the ids of the bundled modules go to `modules`. */
+export async function buildPi(modules?: Set<string>): Promise<Map<string, string>> {
   return new Map([
     ['index.html', PAGE],
-    ['pi.js', await bundleBrowser(join(PI_DIR, 'main.ts'), 'iife')],
+    ['pi.js', await bundleBrowser(join(PI_DIR, 'main.ts'), 'iife', modules)],
     ['pi.css', readFileSync(join(PI_DIR, 'style.css'), 'utf8')],
   ]);
 }
 
-export async function writePi(dir: string): Promise<void> {
+export async function writePi(dir: string, modules?: Set<string>): Promise<void> {
   mkdirSync(dir, { recursive: true });
-  for (const [name, body] of await buildPi()) writeFileSync(join(dir, name), body);
+  for (const [name, body] of await buildPi(modules)) writeFileSync(join(dir, name), body);
 }

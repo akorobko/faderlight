@@ -1,0 +1,3 @@
+# The maintainer reviews every file. With "Require review from Code Owners" on in the main
+# branch ruleset, a pull request merges only with the maintainer's approval.
+* @akorobko

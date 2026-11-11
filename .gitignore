@@ -24,6 +24,8 @@ packages/plugin/*.sdPlugin/fonts/
 packages/plugin/*.sdPlugin/profiles/
 packages/plugin/*.sdPlugin/debug/
 packages/plugin/*.sdPlugin/logs/
+packages/plugin/*.sdPlugin/LICENSE
+packages/plugin/*.sdPlugin/THIRD-PARTY-NOTICES.txt
 
 # Playwright output of the virtual deck's end-to-end tests (screenshots go to renders/).
 tools/virtual-deck/test-results/

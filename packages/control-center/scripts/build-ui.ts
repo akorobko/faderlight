@@ -28,9 +28,9 @@ const PAGE = `<!doctype html>
 </html>
 `;
 
-/** The page's files by path, ready for ControlCenterServer. */
-export async function buildUi(): Promise<Map<string, UiFile>> {
-  const js = await bundleBrowser(join(UI_DIR, 'main.tsx'));
+/** The page's files by path, ready for ControlCenterServer; bundled module ids go to `modules`. */
+export async function buildUi(modules?: Set<string>): Promise<Map<string, UiFile>> {
+  const js = await bundleBrowser(join(UI_DIR, 'main.tsx'), 'es', modules);
   return new Map<string, UiFile>([
     ['/index.html', { type: 'text/html; charset=utf-8', body: PAGE }],
     ['/app.js', { type: 'text/javascript; charset=utf-8', body: js }],
@@ -42,9 +42,11 @@ export async function buildUi(): Promise<Map<string, UiFile>> {
 }
 
 /** Writes the page's files into a folder (the plugin's control-center/). */
-export async function writeUi(dir: string): Promise<void> {
+export async function writeUi(dir: string, modules?: Set<string>): Promise<void> {
   mkdirSync(dir, { recursive: true });
-  for (const [path, file] of await buildUi()) writeFileSync(join(dir, path.slice(1)), file.body);
+  for (const [path, file] of await buildUi(modules)) {
+    writeFileSync(join(dir, path.slice(1)), file.body);
+  }
 }
 
 if (import.meta.main) {

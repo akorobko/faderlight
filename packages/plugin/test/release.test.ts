@@ -101,6 +101,8 @@ describe('pack', () => {
       'pi/index.html',
       'control-center/index.html',
       'fonts/OFL.txt',
+      'LICENSE',
+      'THIRD-PARTY-NOTICES.txt',
       `${CONSOLE_PROFILE}.streamDeckProfile`,
       'imgs/plugin/icon.png',
     ]) {
@@ -117,5 +119,12 @@ describe('pack', () => {
     };
     expect(parsed.Version).toBe(manifestVersion(pluginVersion()));
     expect(parsed.Nodejs).not.toHaveProperty('Debug');
+
+    // The bundles hold the SDK, ws and Preact, whose MIT licences ask to keep their notices.
+    const notices = entries.find((e) => e.name === `${root}THIRD-PARTY-NOTICES.txt`);
+    const text = Buffer.from(notices?.data ?? []).toString('utf8');
+    for (const name of ['@elgato/streamdeck', 'preact', 'ws']) {
+      expect(text, name).toMatch(new RegExp(`^${name} \\d+\\.\\d+\\.\\d+ \\(MIT\\)$`, 'm'));
+    }
   }, 120_000);
 });
