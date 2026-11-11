@@ -10,6 +10,7 @@ export * from './specs.ts';
 export * from './controllers.ts';
 export * from './runtime.ts';
 export * from './layout.ts';
+export * from './templates.ts';
 export * from './detail.ts';
 export * from './keys.ts';
 export * from './snapshot-names.ts';

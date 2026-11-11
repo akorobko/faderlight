@@ -194,6 +194,11 @@ code {
   background: #2a1616;
 }
 
+.banner.info {
+  border-color: #355a85;
+  background: #172433;
+}
+
 .loading {
   color: var(--muted);
 }
@@ -622,6 +627,181 @@ button.quiet {
   margin: 12px 0 0;
 }
 
+/* --- layout builder --------------------------------------------------------------------- */
+
+.layout-bar {
+  justify-content: space-between;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tab {
+  background: transparent;
+}
+
+.tab.on {
+  background: #22405f;
+  border-color: var(--accent);
+}
+
+.builder {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+.builder > .card {
+  margin-bottom: 0;
+}
+
+.deck-card {
+  padding: 14px;
+  background: #0d0e10;
+}
+
+.deck-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.cell {
+  display: grid;
+  gap: 4px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 12px;
+  min-width: 0;
+  cursor: grab;
+}
+
+.cell.empty {
+  cursor: pointer;
+}
+
+.cell-key {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #000;
+  box-shadow: 0 0 0 1px #2a2d33;
+}
+
+.cell-key img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cell.empty .cell-key {
+  background: transparent;
+  box-shadow: none;
+  border: 1px dashed var(--line-2);
+}
+
+.cell-plus {
+  color: var(--line-2);
+  font-size: 22px;
+}
+
+.cell:hover .cell-key {
+  box-shadow: 0 0 0 1px #566070;
+}
+
+.cell.selected .cell-key {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.cell.over .cell-key {
+  box-shadow: 0 0 0 2px var(--ok);
+}
+
+.cell-label {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11.5px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell.selected .cell-label {
+  color: var(--text);
+}
+
+.palette {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.palette-list {
+  max-height: 560px;
+  overflow: auto;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+
+.palette-group h3 {
+  margin: 10px 0 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.palette-group:first-child h3 {
+  margin-top: 0;
+}
+
+.chip {
+  display: block;
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 4px 9px;
+  overflow: hidden;
+  font-size: 12.5px;
+  text-align: left;
+  text-overflow: ellipsis;
+  cursor: grab;
+}
+
+.key-what {
+  margin: 0;
+  font-weight: 600;
+}
+
+.templates {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.templates li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.templates p {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+}
+
 /* --- meters ----------------------------------------------------------------------------- */
 
 .meter {
@@ -712,6 +892,10 @@ button.quiet {
 
   .savebar {
     left: 16px;
+  }
+
+  .builder {
+    grid-template-columns: 1fr;
   }
 
   .field,

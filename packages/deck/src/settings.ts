@@ -6,6 +6,8 @@
 // defaults, and `changed` says whether the result should be written back. Settings from a newer
 // build are read as far as they go but never written back, so a downgrade cannot destroy them.
 
+import { readLayout, type Layout } from './layout.ts';
+
 export type JsonValue =
   string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 export type JsonObject = Record<string, JsonValue>;
@@ -93,6 +95,8 @@ export interface GlobalSettings {
   readonly snapshots: SnapshotNameSettings;
   readonly colors: ColorSettings;
   readonly channels: ChannelSettingsMap;
+  /** The Console's layout from the Control Center's layout builder; undefined: the default. */
+  readonly layout?: Layout | undefined;
 }
 
 /** The settings of one channel, by its bus and left index. */
@@ -223,6 +227,7 @@ export function readGlobalSettings(stored: unknown): ReadSettings {
     snapshots: read.snapshots('snapshots'),
     colors: read.colors('colors'),
     channels: read.channels('channels'),
+    ...read.layout('layout'),
   };
 
   const changed =
@@ -309,6 +314,12 @@ class Reader {
       }
     }
     return out;
+  }
+
+  /** The Console's layout, if one is stored (as `{layout}`, to spread). */
+  layout(path: string): { layout?: Layout } {
+    const layout = readLayout(this.get(path), path, this.problems);
+    return layout ? { layout } : {};
   }
 
   private object(path: string): JsonObject {

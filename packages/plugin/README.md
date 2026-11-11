@@ -72,8 +72,8 @@ names the page shown.
 
 Global settings (`packages/deck/src/settings.ts`) hold the connection, gesture timings, frame
 budget, overlay timeout, theme, Level Preset levels, snapshot names, the key colour of each
-TotalMix colour number, and each channel's own name, colour and whether the Console shows it
-(version 3). They carry a version number: the plugin reads any earlier version through the
+TotalMix colour number, each channel's own name, colour and whether the Console shows it, and
+the Console's layout when the user built one (version 3). They carry a version number: the plugin reads any earlier version through the
 migrations there, fills in missing fields, clamps bad values and writes the result back.
 Settings written by a newer build are used but never written back.
 

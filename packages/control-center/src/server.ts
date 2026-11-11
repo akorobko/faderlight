@@ -18,7 +18,10 @@ import { extname, join, relative, sep } from 'node:path';
 import type { Duplex } from 'node:stream';
 import { WebSocketServer, type RawData, type WebSocket } from 'ws';
 import {
+  CONSOLE_LAYOUT,
   DEFAULT_SETTINGS,
+  LAYOUT_TEMPLATES,
+  readGlobalSettings,
   SILENT,
   type GlobalSettings,
   type JsonObject,
@@ -38,6 +41,7 @@ import {
   type Method,
   type Methods,
   type Notifications,
+  type PreviewResult,
   type RpcRequest,
   type SaveResult,
   type StoreEntryJson,
@@ -61,6 +65,11 @@ export interface ControlCenterHost {
   resync(): void;
   /** Snapshot names from TotalMix's state file (index 0: snapshot 1), and where they came from. */
   snapshotNames(): SnapshotNameRead;
+  /**
+   * The keys of a layout page as the deck would draw them now, with these settings (row by
+   * row, image URLs); undefined: the host draws no previews.
+   */
+  preview?(settings: GlobalSettings, page: number): readonly string[];
 }
 
 export interface UiFile {
@@ -429,12 +438,26 @@ export class ControlCenterServer {
       palette: Object.fromEntries(
         Object.entries(DARK.channelColors).flatMap(([n, hex]) => (hex ? [[n, hex]] : [])),
       ),
+      defaultLayout: CONSOLE_LAYOUT,
+      templates: LAYOUT_TEMPLATES,
     }),
     'settings.save': (_c, params): SaveResult => {
       const settings = objectParam(params, 'settings');
       const read = this.host.saveSettings(settings);
       this.pushSettings();
       return { settings: read.settings, problems: read.problems };
+    },
+    'settings.check': (_c, params): SaveResult => {
+      const read = readGlobalSettings(objectParam(params, 'settings'));
+      return { settings: read.settings, problems: read.problems };
+    },
+    'layout.preview': (_c, params): PreviewResult => {
+      const settings = readGlobalSettings(objectParam(params, 'settings')).settings;
+      const page = (params as { page?: unknown }).page;
+      if (typeof page !== 'number' || !Number.isInteger(page) || page < 0) {
+        throw new RpcError(RPC_ERRORS.invalidParams, 'expected {settings, page}');
+      }
+      return { images: this.host.preview?.(settings, page) ?? [] };
     },
     subscribe: (client, params) => {
       // A topic the client follows already gets its first message again: the page has a new

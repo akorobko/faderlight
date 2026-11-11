@@ -48,6 +48,14 @@ export class TestHost implements ControlCenterHost {
   snapshotNames(): { source: SnapshotNameSource; names: (string | undefined)[] } {
     return { source: this.nameSource, names: this.names };
   }
+
+  /** Previews asked for: the page and the theme of the settings they came with. */
+  previews: { page: number; theme: string }[] = [];
+
+  preview(settings: GlobalSettings, page: number): string[] {
+    this.previews.push({ page, theme: settings.theme });
+    return page === 0 ? ['data:image/svg+xml,a', 'data:image/svg+xml,b'] : [];
+  }
 }
 
 export interface HttpReply {

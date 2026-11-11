@@ -117,7 +117,7 @@ export interface DeckRuntimeOptions {
   readonly imageSize?: number;
   /** Turns a view into an image (default: renderKey as an SVG data URL). */
   readonly render?: KeyRenderer;
-  /** What the Console Slots show (default CONSOLE_LAYOUT). */
+  /** What the Console Slots show when the settings have no layout (default CONSOLE_LAYOUT). */
   readonly layout?: Layout | undefined;
   /** The plugin's Console profile, for switchToProfile; undefined: there is none. */
   readonly consoleProfile?: string | undefined;
@@ -173,6 +173,8 @@ interface DeviceHost {
   neighbour(bus: SourceBus, index: number, direction: Direction): number | undefined;
   /** Closes the overlay after this long without a press; 0: never. */
   detailTimeoutMs(): number;
+  /** The names of the layout's pages. */
+  pages(): readonly string[];
 }
 
 /**
@@ -181,7 +183,6 @@ interface DeviceHost {
  */
 class DeckDevice implements Navigator {
   readonly id: string;
-  readonly pages: readonly string[];
   page = 0;
   /** Bank positions, by page and bank ("0/1": the second bank of the first page). */
   readonly banks = new Map<string, BankPosition>();
@@ -194,10 +195,19 @@ class DeckDevice implements Navigator {
   private returnBack = false;
   private timer: TimerHandle | undefined;
 
-  constructor(id: string, pages: readonly string[], host: DeviceHost) {
+  constructor(id: string, host: DeviceHost) {
     this.id = id;
-    this.pages = pages;
     this.host = host;
+  }
+
+  get pages(): readonly string[] {
+    return this.host.pages();
+  }
+
+  /** The layout changed: stay on the page if it is still there, banks back to their start. */
+  relayout(): void {
+    this.page = Math.min(this.page, Math.max(0, this.pages.length - 1));
+    this.banks.clear();
   }
 
   detail(): DetailState | undefined {
@@ -317,8 +327,8 @@ export class DeckRuntime {
   private readonly imageSize: number;
   private readonly render: KeyRenderer;
   private readonly blank: string;
-  private readonly layout: Layout;
-  private readonly pageNames: readonly string[];
+  /** The layout without one in the settings. */
+  private readonly defaultLayout: Layout;
   private readonly consoleProfile: string | undefined;
   private readonly debugImages: DebugImages | undefined;
   private readonly snapshotNames: SnapshotNames | undefined;
@@ -338,8 +348,7 @@ export class DeckRuntime {
     this.imageSize = options.imageSize ?? 144;
     this.render = options.render ?? renderSvg;
     this.blank = blankImage(this.imageSize);
-    this.layout = options.layout ?? CONSOLE_LAYOUT;
-    this.pageNames = this.layout.pages.map((p) => p.name);
+    this.defaultLayout = options.layout ?? CONSOLE_LAYOUT;
     this.consoleProfile = options.consoleProfile;
     this.debugImages = options.debugImages;
     this.snapshotNames = options.snapshotNames;
@@ -351,6 +360,11 @@ export class DeckRuntime {
       this.stripCache.clear();
       this.scheduler.invalidateAll();
     });
+  }
+
+  /** What the Console Slots show: the settings' layout, else the default. */
+  get layout(): Layout {
+    return this.settings.layout ?? this.defaultLayout;
   }
 
   /** Counters of the frame scheduler since the last configure(). */
@@ -440,7 +454,9 @@ export class DeckRuntime {
   /** New global settings: timings apply from the next press, everything else now. */
   configure(settings: GlobalSettings): void {
     const frames = JSON.stringify(settings.frames) !== JSON.stringify(this.settings.frames);
+    const layout = JSON.stringify(settings.layout) !== JSON.stringify(this.settings.layout);
     this.settings = settings;
+    if (layout) for (const d of this.devices.values()) d.relayout();
     // Hidden channels change what the banks hold.
     this.stripCache.clear();
     if (frames) {
@@ -470,7 +486,7 @@ export class DeckRuntime {
   private device(id: string): DeckDevice {
     let d = this.devices.get(id);
     if (!d) {
-      d = new DeckDevice(id, this.pageNames, {
+      d = new DeckDevice(id, {
         clock: this.clock,
         bankOf: (page, n, banks) => this.bankOf(page, n, banks),
         redraw: () => {
@@ -493,6 +509,7 @@ export class DeckRuntime {
         neighbour: (bus, index, direction) =>
           neighbour(this.mixer.store, bus, index, direction)?.index,
         detailTimeoutMs: () => this.settings.detail.timeoutSec * 1000,
+        pages: () => this.layout.pages.map((p) => p.name),
       });
       this.devices.set(id, d);
     }
@@ -509,22 +526,25 @@ export class DeckRuntime {
   }
 
   /** The strips of a bus the Console shows: those not hidden in the Control Center. */
-  private shown(bus: Bus): Strip[] {
+  private shown(bus: Bus, settings: GlobalSettings): Strip[] {
     return strips(this.mixer.store, bus).filter(
-      (s) => channelSettings(this.settings, s.bus, s.index)?.hidden !== true,
+      (s) => channelSettings(settings, s.bus, s.index)?.hidden !== true,
     );
   }
 
-  private listStrips(source: BankSource): Strip[] {
+  private listStrips(source: BankSource, settings = this.settings): Strip[] {
     const store = this.mixer.store;
-    if (source !== 'playback+output') return this.shown(source);
+    if (source !== 'playback+output') return this.shown(source, settings);
     // Main and the Phones outputs have keys of their own on the Console page.
     const own = new Set(
       [mainOutput(store), ...([1, 2, 3, 4] as const).map((n) => phonesOutput(store, n))]
         .filter((s) => s !== undefined)
         .map((s) => s.index),
     );
-    return [...this.shown('playback'), ...this.shown('output').filter((s) => !own.has(s.index))];
+    return [
+      ...this.shown('playback', settings),
+      ...this.shown('output', settings).filter((s) => !own.has(s.index)),
+    ];
   }
 
   private bankOf(
@@ -561,6 +581,87 @@ export class DeckRuntime {
     const strip = bank && this.stripsOf(bank.source)[bank.offset + spec.n];
     if (!bank || !strip) return EMPTY;
     return { type: 'channel', bus: strip.bus, index: strip.index, style: spec.style };
+  }
+
+  // --- previews ---------------------------------------------------------------------------
+
+  /**
+   * Every key of a layout page as the deck would draw it now, with its banks at their start
+   * and no overlay: the Control Center's layout builder shows these. `settings` may be a draft
+   * that is not saved yet. The images are SVG data URLs, whatever the deck draws with.
+   */
+  preview(settings: GlobalSettings, page: number): string[] {
+    const theme = THEMES[settings.theme] ?? DARK;
+    return this.previewViews(settings, page).map((view) =>
+      view === undefined ? this.blank : renderSvg(view, theme, this.imageSize, ''),
+    );
+  }
+
+  /** The views of preview(): undefined for a blank key. */
+  previewViews(settings: GlobalSettings, page: number): (KeyView | undefined)[] {
+    const layout = settings.layout ?? this.defaultLayout;
+    const p = layout.pages[page];
+    if (!p) return [];
+    const lists = new Map<BankSource, Strip[]>();
+    const stripsOf = (source: BankSource): Strip[] => {
+      let list = lists.get(source);
+      if (!list) {
+        list = this.listStrips(source, settings);
+        lists.set(source, list);
+      }
+      return list;
+    };
+    const bank = (n = 0): BankState | undefined => {
+      const spec = p.banks?.[n];
+      if (!spec) return undefined;
+      const total = stripsOf(spec.source).length;
+      return { source: spec.source, offset: 0, size: spec.size, total, home: spec.source };
+    };
+    const nothing = (): void => undefined;
+    const nav: Navigator = {
+      page,
+      pages: layout.pages.map((x) => x.name),
+      bank,
+      openDetail: () => false,
+      moveBank: nothing,
+      nextBankSource: nothing,
+      goToPage: nothing,
+      openConsole: () => false,
+      exitConsole: nothing,
+      detail: () => undefined,
+      closeDetail: nothing,
+      moveDetail: nothing,
+      selectSend: nothing,
+    };
+    const ctx: KeyContext = {
+      mixer: this.mixer,
+      now: this.clock.now(),
+      settings,
+      held: false,
+      memo: {},
+      nav,
+      alert: nothing,
+      ok: nothing,
+      savePreset: nothing,
+      snapshotName: (n) => settings.snapshots[String(n)] ?? this.snapshotNames?.name(n),
+      openControlCenter: () => false,
+    };
+    return Array.from({ length: layout.columns * layout.rows }, (_, i) => {
+      let spec = p.keys[i] ?? EMPTY;
+      if (spec.type === 'strip') {
+        const b = bank(spec.bank ?? 0);
+        const strip = b && stripsOf(b.source)[spec.n];
+        spec = strip
+          ? { type: 'channel', bus: strip.bus, index: strip.index, style: spec.style }
+          : EMPTY;
+      }
+      try {
+        return controllerFor(spec).view(spec, ctx);
+      } catch (error) {
+        this.log.error(`preview of key ${String(i)} failed:`, error);
+        return undefined;
+      }
+    });
   }
 
   // --- internals --------------------------------------------------------------------------

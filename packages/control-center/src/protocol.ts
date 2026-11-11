@@ -6,7 +6,7 @@
 // JSON has no -Infinity (an output that is off): values that are not finite numbers travel as
 // the strings "-Infinity", "Infinity" and "NaN" (encodeJson/decodeJson).
 
-import type { GlobalSettings, JsonObject } from '@faderlight/deck';
+import type { GlobalSettings, JsonObject, Layout, LayoutTemplate } from '@faderlight/deck';
 import type { EntryState, Target } from '@faderlight/model';
 import type { ConnectionReport, PacketEntry } from './diagnostics.ts';
 import type { SetupCheck } from './setup.ts';
@@ -33,6 +33,16 @@ export interface HelloResult {
   readonly defaults: GlobalSettings;
   /** The theme's key colour for each TotalMix colour number it knows, as #rrggbb. */
   readonly palette: Readonly<Record<string, string>>;
+  /** What the Console shows while the settings have no layout of their own. */
+  readonly defaultLayout: Layout;
+  /** Starting points for the layout builder. */
+  readonly templates: readonly LayoutTemplate[];
+}
+
+export interface PreviewResult {
+  /** Every key of the page, row by row, as an image URL; empty when there is no such page
+   * (or the plugin cannot draw previews). */
+  readonly images: readonly string[];
 }
 
 export interface SaveResult {
@@ -52,6 +62,13 @@ export interface StoreEntryJson {
 export interface Methods {
   hello: { params: undefined; result: HelloResult };
   'settings.save': { params: { readonly settings: JsonObject }; result: SaveResult };
+  /** Checks settings (an imported file, say) as a save would, without saving them. */
+  'settings.check': { params: { readonly settings: JsonObject }; result: SaveResult };
+  /** The keys of a layout page as the deck would draw them, with `settings` (a draft). */
+  'layout.preview': {
+    params: { readonly settings: JsonObject; readonly page: number };
+    result: PreviewResult;
+  };
   subscribe: { params: { readonly topics: readonly Topic[] }; result: null };
   unsubscribe: { params: { readonly topics: readonly Topic[] }; result: null };
   /** Reads the whole mixer again. */

@@ -322,6 +322,7 @@ export class VirtualDeck {
       },
       snapshotNames: () =>
         this.snapshotNames.read?.() ?? { source: 'unsupported', names: Array(8).fill(undefined) },
+      preview: (settings, page) => this.runtime?.preview(settings, page) ?? [],
     };
   }
 

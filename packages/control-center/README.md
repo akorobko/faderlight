@@ -23,15 +23,17 @@ builds them in memory when it starts. `node packages/control-center/scripts/buil
 <folder>` writes them anywhere. The page has no other files and loads nothing from elsewhere
 (the server's `Content-Security-Policy` allows only its own origin).
 
-| Section           | Shows                                                                                                                                            |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Connection        | where TotalMix is (host, ports), the Setup Assistant, the packet log, the mixer's state                                                          |
-| Device & Channels | the interface, snapshot names, every channel with its meter, its name and colour on the keys and whether the Console shows it, the Level Presets |
-| Behaviour         | long press, double tap, how held step keys repeat, when Channel Detail closes by itself                                                          |
-| Appearance        | the theme, the key colour of each TotalMix colour number, how often key images are drawn                                                         |
+| Section           | Shows                                                                                                                                              |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Connection        | where TotalMix is (host, ports), the Setup Assistant, the packet log, the mixer's state                                                            |
+| Device & Channels | the interface, snapshot names, every channel with its meter, its name and colour on the keys and whether the Console shows it, the Level Presets   |
+| Behaviour         | long press, double tap, how held step keys repeat, when Channel Detail closes by itself                                                            |
+| Appearance        | the theme, the key colour of each TotalMix colour number, how often key images are drawn                                                           |
+| Layout            | the Console's pages as a grid of live key images: drag keys on, swap them, set each key, name and order pages, banks, templates, export and import |
+| Backup            | all settings to a file and back (checked by the plugin), and reset to the defaults                                                                 |
 
-The section is the address's fragment (`#connection`, `#channels`, `#behaviour`,
-`#appearance`), so the plugin can open one directly. An empty box uses what TotalMix has: a
+The section is the address's fragment (`#connection`, `#channels`, `#layout`, `#behaviour`,
+`#appearance`, `#backup`), so the plugin can open one directly. An empty box uses what TotalMix has: a
 name, colour or snapshot name emptied again takes the entry out of the settings
 (`ui/edits.ts`).
 Edits go into a draft: a bar at the bottom saves or discards them, and the page asks before it
@@ -63,8 +65,10 @@ JSON-RPC 2.0 over the WebSocket at `/rpc` (`src/protocol.ts` has the types):
 
 | Method           | Does                                                                                                                              |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `hello`          | the plugin version, the global settings and their defaults                                                                        |
+| `hello`          | the plugin version, the settings, defaults, layout and templates                                                                  |
 | `settings.save`  | checks, applies and stores global settings; returns them and problems                                                             |
+| `settings.check` | checks settings like a save (an imported file) without saving them                                                                |
+| `layout.preview` | a layout page's keys as the deck draws them now, with draft settings                                                              |
 | `subscribe`      | follows topics (below); the first notification of each has it all, also for a topic followed already (a new listener on the page) |
 | `unsubscribe`    | stops following topics                                                                                                            |
 | `mixer.resync`   | reads the whole mixer again                                                                                                       |
@@ -101,3 +105,18 @@ cookies, `Host` and `Origin` headers, the WebSocket); `test/diagnostics.test.ts`
 diagnostics against the simulator. The page itself is tested in Chromium through the virtual
 deck (`tools/virtual-deck/e2e/control-center.spec.ts`, `npm run e2e`), which saves screenshots
 to `renders/control-center/`.
+
+## The layout builder
+
+The Layout section edits the Console's layout in the draft, like every other setting. The grid
+shows each key as the deck draws it now (`layout.preview`, again every second), with the draft's
+names, colours and hidden channels and the banks at their start. Keys come from the list on the
+right, by dragging or by picking one for the selected key; a key dragged onto another swaps with
+it. The builder keeps a page tidy (`ui/edits.ts`): the channel keys of a bank are numbered in
+reading order and a bank is as long as its keys, so moving keys leaves no gaps; page keys that go
+to a page by number follow it when pages move. A layout that is the default again leaves the
+settings, so the Console keeps following the built-in one.
+
+Templates (Studio Console, Tracking, Monitoring only) replace the whole layout in the draft.
+Export layout writes `faderlight-layout.json`; Import layout reads that, a bare layout, or a
+settings backup, through `settings.check`, so keys that are not keys arrive empty and are listed.
