@@ -26,6 +26,7 @@ import {
   type ReadSettings,
   type SnapshotNameRead,
 } from '@faderlight/deck';
+import { DARK } from '@faderlight/render';
 import { keyOf, type Key, type MixerStore } from '@faderlight/model';
 import type { Diagnostics } from './diagnostics.ts';
 import {
@@ -425,6 +426,9 @@ export class ControlCenterServer {
       version: this.host.version,
       settings: this.host.settings(),
       defaults: DEFAULT_SETTINGS,
+      palette: Object.fromEntries(
+        Object.entries(DARK.channelColors).flatMap(([n, hex]) => (hex ? [[n, hex]] : [])),
+      ),
     }),
     'settings.save': (_c, params): SaveResult => {
       const settings = objectParam(params, 'settings');
@@ -433,8 +437,9 @@ export class ControlCenterServer {
       return { settings: read.settings, problems: read.problems };
     },
     subscribe: (client, params) => {
+      // A topic the client follows already gets its first message again: the page has a new
+      // listener for it (a section opened from the navigation) that needs everything there is.
       for (const topic of topicsParam(params)) {
-        if (client.topics.has(topic)) continue;
         client.topics.add(topic);
         this.first(client, topic);
       }

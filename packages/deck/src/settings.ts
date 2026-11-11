@@ -11,7 +11,7 @@ export type JsonValue =
 export type JsonObject = Record<string, JsonValue>;
 
 /** The current settings version. Bump it with a migration in MIGRATIONS. */
-export const SETTINGS_VERSION = 2;
+export const SETTINGS_VERSION = 3;
 
 export interface ConnectionSettings {
   /** Computer running TotalMix (default 127.0.0.1). */
@@ -52,6 +52,32 @@ export type ThemeName = 'dark' | 'high-contrast';
 /** Saved output levels of the Level Preset keys, in dB, by presetKey() (e.g. "main/1"). */
 export type LevelPresets = Readonly<Record<string, number>>;
 
+/** Snapshot names set in the Control Center, by number ("1"-"8"): they win over TotalMix's. */
+export type SnapshotNameSettings = Readonly<Record<string, string>>;
+
+/** A key colour, as #rrggbb. */
+export type ColorHex = `#${string}`;
+
+/** Key colours for TotalMix's channel colour numbers ("0"-"31"), over the theme's own. */
+export type ColorSettings = Readonly<Record<string, ColorHex>>;
+
+/** What the Control Center changes about one channel, by "input/8", "playback/0", "output/0". */
+export interface ChannelSettings {
+  /** A name for the keys instead of TotalMix's. */
+  readonly name?: string;
+  /** A key colour instead of the one for TotalMix's colour number. */
+  readonly color?: ColorHex;
+  /** Left out of the Console's banks (specific actions still show it). */
+  readonly hidden?: boolean;
+}
+
+export type ChannelSettingsMap = Readonly<Record<string, ChannelSettings>>;
+
+/** Longest snapshot or channel name kept. */
+export const NAME_MAX = 40;
+/** Highest TotalMix colour number a mapping is kept for. */
+export const COLOR_NUMBER_MAX = 31;
+
 /** The lowest and highest level a preset can hold (TotalMix's fader range). */
 export const PRESET_MIN_DB = -65;
 export const PRESET_MAX_DB = 6;
@@ -64,6 +90,18 @@ export interface GlobalSettings {
   readonly detail: DetailSettings;
   readonly theme: ThemeName;
   readonly levels: LevelPresets;
+  readonly snapshots: SnapshotNameSettings;
+  readonly colors: ColorSettings;
+  readonly channels: ChannelSettingsMap;
+}
+
+/** The settings of one channel, by its bus and left index. */
+export function channelSettings(
+  settings: GlobalSettings,
+  bus: string,
+  index: number,
+): ChannelSettings | undefined {
+  return settings.channels[`${bus}/${String(index)}`];
 }
 
 export const DEFAULT_SETTINGS: GlobalSettings = {
@@ -74,6 +112,9 @@ export const DEFAULT_SETTINGS: GlobalSettings = {
   detail: { timeoutSec: 20 },
   theme: 'dark',
   levels: {},
+  snapshots: {},
+  colors: {},
+  channels: {},
 };
 
 export interface ReadSettings {
@@ -96,10 +137,14 @@ const MIGRATIONS: Readonly<Record<number, (stored: JsonObject) => JsonObject>> =
   0: (stored) => ({ ...stored, version: 1 }),
   // Version 1 had no level presets.
   1: (stored) => ({ ...stored, version: 2, levels: {} }),
+  // Version 2 had no names, colours or channel settings of its own.
+  2: (stored) => ({ ...stored, version: 3, snapshots: {}, colors: {}, channels: {} }),
 };
 
 const isObject = (v: unknown): v is JsonObject =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
+
+const isColor = (v: string): boolean => /^#[0-9a-f]{6}$/i.test(v);
 
 /** Reads stored global settings of any version into current, complete settings. */
 export function readGlobalSettings(stored: unknown): ReadSettings {
@@ -175,6 +220,9 @@ export function readGlobalSettings(stored: unknown): ReadSettings {
     },
     theme: read.choice('theme', DEFAULT_SETTINGS.theme, ['dark', 'high-contrast'] as const),
     levels: read.levels('levels'),
+    snapshots: read.snapshots('snapshots'),
+    colors: read.colors('colors'),
+    channels: read.channels('channels'),
   };
 
   const changed =
@@ -259,6 +307,82 @@ class Reader {
           `${path}.${key}: expected a level from ${String(PRESET_MIN_DB)} to ${String(PRESET_MAX_DB)} dB`,
         );
       }
+    }
+    return out;
+  }
+
+  private object(path: string): JsonObject {
+    const v = this.get(path);
+    if (v === undefined) return {};
+    if (!isObject(v)) {
+      this.problems.push(`${path}: expected an object`);
+      return {};
+    }
+    return v;
+  }
+
+  /** Snapshot names 1-8: trimmed, at most NAME_MAX characters; empty ones are dropped. */
+  snapshots(path: string): SnapshotNameSettings {
+    const out: Record<string, string> = {};
+    for (const [key, name] of Object.entries(this.object(path))) {
+      if (!/^[1-8]$/.test(key)) {
+        this.problems.push(`${path}.${key}: expected a snapshot number from 1 to 8`);
+      } else if (typeof name !== 'string') {
+        this.problems.push(`${path}.${key}: expected text`);
+      } else if (name.trim() !== '') {
+        out[key] = name.trim().slice(0, NAME_MAX);
+      }
+    }
+    return out;
+  }
+
+  /** Colours by TotalMix colour number: #rrggbb, lower case. */
+  colors(path: string): ColorSettings {
+    const out: Record<string, ColorHex> = {};
+    for (const [key, color] of Object.entries(this.object(path))) {
+      const n = Number(key);
+      if (!/^\d+$/.test(key) || n > COLOR_NUMBER_MAX) {
+        this.problems.push(
+          `${path}.${key}: expected a colour number from 0 to ${String(COLOR_NUMBER_MAX)}`,
+        );
+      } else if (typeof color !== 'string' || !isColor(color)) {
+        this.problems.push(`${path}.${key}: expected a colour like #3c8cff`);
+      } else {
+        out[String(n)] = color.toLowerCase() as ColorHex;
+      }
+    }
+    return out;
+  }
+
+  /** Channel settings by "bus/index"; a channel with nothing left is dropped. */
+  channels(path: string): ChannelSettingsMap {
+    const out: Record<string, ChannelSettings> = {};
+    for (const [key, v] of Object.entries(this.object(path))) {
+      const at = `${path}.${key}`;
+      if (!/^(input|playback|output)\/\d{1,4}$/.test(key)) {
+        this.problems.push(`${at}: expected a channel like input/8`);
+        continue;
+      }
+      if (!isObject(v)) {
+        this.problems.push(`${at}: expected an object`);
+        continue;
+      }
+      const c: { name?: string; color?: ColorHex; hidden?: boolean } = {};
+      if (typeof v.name === 'string' && v.name.trim() !== '') {
+        c.name = v.name.trim().slice(0, NAME_MAX);
+      } else if (v.name !== undefined && v.name !== '') {
+        this.problems.push(`${at}.name: expected text`);
+      }
+      if (typeof v.color === 'string' && isColor(v.color)) {
+        c.color = v.color.toLowerCase() as ColorHex;
+      } else if (v.color !== undefined) {
+        this.problems.push(`${at}.color: expected a colour like #3c8cff`);
+      }
+      if (v.hidden === true) c.hidden = true;
+      else if (v.hidden !== undefined && v.hidden !== false) {
+        this.problems.push(`${at}.hidden: expected true or false`);
+      }
+      if (Object.keys(c).length > 0) out[key] = c;
     }
     return out;
   }

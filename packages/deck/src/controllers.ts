@@ -30,6 +30,7 @@ import {
 import {
   formatGain,
   formatLevel,
+  type ChannelColor,
   type ChannelKey,
   type ChannelValue,
   type KeyView,
@@ -41,7 +42,7 @@ import {
 import { FADER_MAX_DB, FADER_MIN_DB } from '@faderlight/totalmix';
 import { stepSize, VOLUME_ACCELERATION, type Gesture, type GestureOptions } from './gestures.ts';
 import type { BankPosition, BankSource } from './layout.ts';
-import type { GlobalSettings } from './settings.ts';
+import { channelSettings, type GlobalSettings } from './settings.ts';
 import {
   presetKey,
   type ChannelSpec,
@@ -224,6 +225,26 @@ function toggle(ctx: KeyContext, target: Target): void {
 
 // --- channel ------------------------------------------------------------------------------
 
+/** A channel's name on the keys: the Control Center's, else TotalMix's. */
+export function channelName(ctx: KeyContext, strip: Strip): string {
+  return channelSettings(ctx.settings, strip.bus, strip.index)?.name ?? strip.name;
+}
+
+/**
+ * A channel's key colour: its own from the Control Center, else the Control Center's colour for
+ * TotalMix's colour number, else that number (the theme's colour for it).
+ */
+export function channelColorOf(
+  ctx: KeyContext,
+  strip: Strip,
+  n: Value | undefined,
+): ChannelColor | undefined {
+  const own = channelSettings(ctx.settings, strip.bus, strip.index)?.color;
+  if (own !== undefined) return own;
+  if (typeof n !== 'number') return undefined;
+  return ctx.settings.colors[String(n)] ?? n;
+}
+
 export function channelView(spec: ChannelSpec, ctx: KeyContext): KeyView | undefined {
   const store = ctx.mixer.store;
   const strip = resolveStrip(store, spec.bus, spec.index);
@@ -265,9 +286,9 @@ export function channelView(spec: ChannelSpec, ctx: KeyContext): KeyView | undef
     kind: 'channel',
     style: spec.style,
     label: upper(strip.label),
-    name: strip.name,
+    name: channelName(ctx, strip),
     source: sourceOf(strip.bus),
-    color: typeof color === 'number' ? color : undefined,
+    color: channelColorOf(ctx, strip, color),
     value: primary,
     meter: meterOf(store, strip, ctx.now),
     badges: {
@@ -379,8 +400,8 @@ export function outputView(ref: OutputRef, ctx: KeyContext): OutputKey {
     role,
     title,
     label: upper(strip.label),
-    name: strip.name,
-    color: typeof color === 'number' ? color : undefined,
+    name: channelName(ctx, strip),
+    color: channelColorOf(ctx, strip, color),
     volume: typeof volume === 'number' ? volume : undefined,
     meter: meterOf(store, strip, ctx.now),
     muted: value('mute') === true,

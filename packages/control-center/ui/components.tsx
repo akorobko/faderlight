@@ -3,6 +3,7 @@
 
 import type { ComponentChildren, JSX } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
+import type { ColorHex } from '@faderlight/deck';
 import type { MeterTuple } from '../src/summary.ts';
 
 export function Page(props: {
@@ -206,5 +207,54 @@ export function Button(props: {
     >
       {props.children}
     </button>
+  );
+}
+
+/** A colour of its own (the colour box), or the one it has without (Reset goes back to it). */
+export function ColorChoice(props: {
+  readonly label: string;
+  readonly own: ColorHex | undefined;
+  /** The colour without one of its own; undefined: none. */
+  readonly fallback: string | undefined;
+  /** What the fallback is called, e.g. "from TotalMix". */
+  readonly fallbackText: string;
+  readonly resetTitle: string;
+  readonly onChange: (color: ColorHex | undefined) => void;
+}): JSX.Element {
+  return (
+    <span class="color-choice">
+      <input
+        type="color"
+        aria-label={props.label}
+        value={props.own ?? props.fallback ?? '#8f97a3'}
+        onInput={(e) => {
+          props.onChange(e.currentTarget.value.toLowerCase() as ColorHex);
+        }}
+      />
+      {props.own === undefined ? (
+        <span class="muted">{props.fallback === undefined ? 'none' : props.fallbackText}</span>
+      ) : (
+        <Button
+          kind="quiet"
+          onClick={() => {
+            props.onChange(undefined);
+          }}
+          title={props.resetTitle}
+        >
+          Reset
+        </Button>
+      )}
+    </span>
+  );
+}
+
+/** A small square in a colour; dashed when there is none. */
+export function Swatch(props: { readonly color: string | undefined }): JSX.Element {
+  return (
+    <span
+      class={props.color === undefined ? 'swatch none' : 'swatch'}
+      style={props.color === undefined ? undefined : { background: props.color }}
+      aria-hidden="true"
+    />
   );
 }

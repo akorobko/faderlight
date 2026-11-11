@@ -290,6 +290,11 @@ input[type='text'] {
   width: 100%;
 }
 
+/* Dimmer than a value, so a box that uses TotalMix's name does not read as filled in. */
+input::placeholder {
+  color: #646b75;
+}
+
 input:focus-visible,
 select:focus-visible,
 button:focus-visible,
@@ -517,6 +522,104 @@ button.quiet {
 
 .empty {
   padding: 12px;
+}
+
+/* --- settings tables --------------------------------------------------------------------- */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  padding: 0 10px 6px 0;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 12.5px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+}
+
+.table td {
+  padding: 5px 10px 5px 0;
+  border-bottom: 1px solid #23262b;
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table input[type='text'] {
+  padding: 4px 8px;
+}
+
+.table.channels td:nth-child(1) {
+  width: 130px;
+}
+
+.table.channels td:nth-child(2) {
+  width: 90px;
+  white-space: nowrap;
+}
+
+.table.channels td:nth-child(4) {
+  width: 32%;
+}
+
+.swatch {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-right: 8px;
+  border: 1px solid #0006;
+  border-radius: 3px;
+  vertical-align: -1px;
+}
+
+.swatch.none {
+  border: 1px dashed var(--line-2);
+}
+
+.color-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.color-choice input[type='color'] {
+  width: 34px;
+  height: 26px;
+  padding: 2px;
+  background: #0f1013;
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.color-choice button {
+  padding: 3px 8px;
+}
+
+.note {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+}
+
+.note.first {
+  margin: 0 0 12px;
+}
+
+.facts.first {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.toolbar.add {
+  margin: 12px 0 0;
 }
 
 /* --- meters ----------------------------------------------------------------------------- */

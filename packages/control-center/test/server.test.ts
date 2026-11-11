@@ -115,6 +115,11 @@ describe('the Control Center server', () => {
       version: '0.1.0',
       settings: DEFAULT_SETTINGS,
       defaults: DEFAULT_SETTINGS,
+      palette: expect.objectContaining({
+        '3': '#ff6e0a',
+        '5': '#3c8cff',
+        '6': '#00f027',
+      }) as unknown,
     });
   });
 
@@ -161,6 +166,20 @@ describe('the Control Center server', () => {
     ]);
     const strip = ((await renamed).params as MixerSummary).strips.input[0];
     expect(strip).toMatchObject({ bus: 'input', index: 8, name: 'Vocal', stereo: false });
+  });
+
+  it('sends a topic it follows already again when asked, for a new listener on the page', async () => {
+    host.store.applyDevice([
+      { target: { scope: 'channel', bus: 'input', index: 8, field: 'name' }, value: 'Vocal' },
+    ]);
+    const c = await connect();
+    const first = c.waitFor((n) => n.method === 'mixer');
+    await c.call('subscribe', { topics: ['mixer'] });
+    await first;
+    // Nothing changed in the mixer, and the summary still comes again.
+    const again = c.waitFor((n) => n.method === 'mixer');
+    await c.call('subscribe', { topics: ['mixer'] });
+    expect(((await again).params as MixerSummary).strips.input[0]).toMatchObject({ name: 'Vocal' });
   });
 
   it('streams the store itself: everything first, then what changed', async () => {

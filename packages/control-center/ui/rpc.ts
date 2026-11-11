@@ -80,9 +80,12 @@ export class Rpc {
     if (!set) {
       set = new Set();
       this.listeners.set(topic, set);
-      if (this.link.value === 'open') void this.call('subscribe', { topics: [topic] });
     }
     set.add(listener as Listener<Topic>);
+    // Also for a topic that is followed already: the server answers with the topic's first
+    // message again, so the new listener starts with everything there is (the others get it
+    // too, which is harmless: every first message is a whole state or a reset).
+    if (this.link.value === 'open') void this.call('subscribe', { topics: [topic] });
     return () => {
       const s = this.listeners.get(topic);
       if (!s) return;

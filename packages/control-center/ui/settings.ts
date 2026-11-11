@@ -13,6 +13,8 @@ export interface SettingsState {
   /** What the pages show. */
   readonly draft: GlobalSettings;
   readonly defaults: GlobalSettings;
+  /** The theme's colour for each TotalMix colour number it knows. */
+  readonly palette: Readonly<Record<string, string>>;
   readonly saving: boolean;
   /** What the plugin changed or refused at the last save. */
   readonly problems: readonly string[];
@@ -55,6 +57,7 @@ export class SettingsModel {
       saved: hello.settings,
       draft: dirty ? s.draft : hello.settings,
       defaults: hello.defaults,
+      palette: hello.palette,
       saving: false,
       problems: [],
     });

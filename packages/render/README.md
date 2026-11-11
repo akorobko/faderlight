@@ -61,8 +61,9 @@ outlined badges). `test/cases.ts` has an example of each. The `channel` style ca
 `src/theme.ts` holds every token: colours per state, accents, meter scale and zones (−60 dBFS
 floor, yellow from −18, orange from −6, red from −1), the type scale (15, 22, 36 and 52 px on
 the canvas: the smallest is 10 px on an XL), the pending frame, and the channel colours by
-TotalMix's colour number (1 is "no colour"; 3, 5 and 6 are orange, blue and green; the others
-are placeholders until they are mapped). `DARK` is the default,
+TotalMix's colour number (1 is white, TotalMix's "no colour"; 3, 5 and 6 are orange, blue and
+green as seen; 2, 4, 7 and 8 are grey, red, yellow and pink, inferred from the order of
+TotalMix's colour menu). `DARK` is the default,
 `HIGH_CONTRAST` the high-contrast theme from the design. A test keeps text and chip colours at
 WCAG 4.5:1 or better.
 
@@ -106,9 +107,9 @@ A key renders in about 35 µs once the fonts are loaded (about 6 ms, once), and 
 
 ## Open questions
 
-- **Channel colours.** The mixer sends a small number per channel (`/input/n/color`) whose
-  colours are not mapped yet (`docs/protocol/global-osc.md` §6). `theme.channelColors` is a
-  placeholder palette; the `ui-color` step of the baseline capture records the numbers.
+- **Channel colours.** The mixer sends a small number per channel (`/input/n/color`). 2, 4, 7
+  and 8 are inferred from the order of TotalMix's colour menu (`docs/protocol/global-osc.md`
+  §6), not seen yet; the `ui-color` step of the baseline capture records the numbers.
 - **The Stream Deck app's SVG renderer.** Dashed strokes, cubic curves and `rx` are expected to
   work but have not been seen on a device yet; the visual review on a real XL (M3.4) checks
   them.

@@ -31,6 +31,8 @@ export interface HelloResult {
   readonly version: string;
   readonly settings: GlobalSettings;
   readonly defaults: GlobalSettings;
+  /** The theme's key colour for each TotalMix colour number it knows, as #rrggbb. */
+  readonly palette: Readonly<Record<string, string>>;
 }
 
 export interface SaveResult {
