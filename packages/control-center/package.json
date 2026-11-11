@@ -13,7 +13,7 @@
     "@faderlight/osc": "0.0.0",
     "@faderlight/render": "0.0.0",
     "@faderlight/totalmix": "0.0.0",
-    "preact": "10.29.8",
+    "preact": "11.2.0",
     "ws": "8.22.1"
   },
   "devDependencies": {
