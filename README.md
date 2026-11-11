@@ -60,7 +60,8 @@ anything else, open an [issue](https://github.com/akorobko/faderlight/issues).
 
 Bug reports, captures from other RME interfaces and pull requests are welcome. How to build
 Faderlight, run it without an interface and send a change is in
-[CONTRIBUTING.md](CONTRIBUTING.md).
+[CONTRIBUTING.md](CONTRIBUTING.md). Please report security problems privately, as
+[SECURITY.md](SECURITY.md) describes.
 
 ## Trademarks
 

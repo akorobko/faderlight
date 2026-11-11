@@ -50,4 +50,4 @@ body:
     id: evidence
     attributes:
       label: Logs, captures or photos
-      description: Plugin logs, a capture from tools/capture, or a photo of the deck. Do not attach RME or Elgato documents.
+      description: Plugin logs, a capture from tools/capture, or a photo of the deck. Check that nothing shows your interface's serial number, and do not attach RME or Elgato documents.

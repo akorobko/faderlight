@@ -73,3 +73,8 @@ they apply to people too. The ones that most often matter:
   names, icons or identifiers.
 
 One task per pull request, please. The PR template lists what to check.
+
+## Licence
+
+By contributing, you agree that your contribution is licensed under the project's
+[licence](LICENSE).

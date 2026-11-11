@@ -1,6 +1,8 @@
-# The pull-request gate, on the maintainer's Mac through a self-hosted runner rather than on
-# GitHub's cloud runners: a self-hosted runner is not billed, and the Mac is the primary target
-# platform.
+# The pull-request gate. While the repository is private it runs on the maintainer's Mac
+# through a self-hosted runner, which is not billed; the Mac is the primary target platform.
+# Once the repository is public it runs on GitHub's macOS runner instead, which is free for
+# public repositories: a PR from a fork must never run its code on the Mac, and a public
+# repository's run logs are public, so they must not show the Mac's folders or name.
 #
 # Drafts are for reading, so nothing runs for one. Marking a PR ready asks for the gate, and every
 # push after that re-runs it. `checkout` on a `pull_request` event takes the merge of the branch
@@ -23,13 +25,13 @@ concurrency:
 jobs:
   check:
     if: github.event.pull_request.draft == false
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: ${{ github.event.repository.private && fromJSON('["self-hosted", "macOS", "ARM64"]') || 'macos-latest' }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
 
       # Pins Node from .nvmrc instead of whatever Node the Mac has installed. No npm cache step:
-      # ~/.npm already persists between runs on a self-hosted runner.
+      # ~/.npm already persists between runs on the self-hosted runner.
       - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
