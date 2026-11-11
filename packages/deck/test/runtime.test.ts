@@ -206,7 +206,7 @@ describe('DeckRuntime: specific actions', () => {
     place('tb', 'monitor', { function: 'talkback' });
     const tb = controlRoom('talkback');
     deck.down('tb');
-    advance(50);
+    advance(150); // past the key's 100 ms image gap, well short of a long press
     expect(value(tb)).toBe(true);
     expect(host.view('tb')).toMatchObject({ on: true, caption: 'talking' });
     deck.up('tb');

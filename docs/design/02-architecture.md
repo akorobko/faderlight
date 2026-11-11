@@ -75,7 +75,7 @@
 
 **ActionControllers** — per KeySpec type: turns gestures into commands and store state into a view model. Gesture recogniser per key: tap, long-press (default 450 ms), double-tap (opt-in, 250 ms window), press-and-hold auto-repeat with acceleration (for ± keys).
 
-**FrameScheduler** — global budget for `setImage` (default 120 img/s, max 15 fps per key). Static changes (mute, name) jump the queue; meter-only frames are coalesced and dropped first. Skips sends when SVG hash is unchanged. Meter ballistics computed at render time (decay 20 dB/s, peak hold 1.5 s, clip hold 3 s — configurable).
+**FrameScheduler** — global budget for `setImage` (default 120 img/s, max 10 fps per key: Elgato's guidelines keep programmatic key updates to 10 per second). Static changes (mute, name) jump the queue; meter-only frames are coalesced and dropped first. Skips sends when SVG hash is unchanged. Meter ballistics computed at render time (decay 20 dB/s, peak hold 1.5 s, clip hold 3 s — configurable).
 
 **Control Center** (`packages/control-center`) — HTTP+WS server started lazily when the user clicks "Open Control Center" in a PI (or taps the Status key). Serves SPA, exposes JSON-RPC over WS: read store snapshot + live diff stream, edit layout/global settings, run diagnostics (packet log, Setup Assistant). Binds `127.0.0.1` only, random port, one-time token in URL that the first request swaps for a `SameSite=Strict` session cookie; requests must carry the server's own `Host` and the WebSocket the page's own `Origin`.
 
@@ -95,5 +95,5 @@
 ## Performance targets
 
 - Key press → TotalMix command sent: < 10 ms. Visual confirmation < 50 ms (optimistic).
-- Meters: 12 fps default on up to 32 keys with CPU < 5 % on Apple Silicon.
+- Meters: 10 fps default on up to 32 keys with CPU < 5 % on Apple Silicon.
 - Cold start to live state: < 2 s on UFX III.

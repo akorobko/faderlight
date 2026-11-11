@@ -5,7 +5,8 @@ release (`npm run plugin:pack`, see packages/plugin/README.md, "Releasing").
 
 ## 0.1.0
 
-The first release, for the Stream Deck XL and TotalMix FX 2.1 or later (Global OSC).
+The first release, for TotalMix FX 2.1 or later (Global OSC). The Console needs a Stream Deck
+XL. The single keys work on any Stream Deck with keys.
 
 - The Console profile: snapshots, the Status key, two banks of seven channel strips, Main,
   Phones 1 and 2, a Main level preset, Dim, Mono and Exit, with Inputs and Outputs pages.

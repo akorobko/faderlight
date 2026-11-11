@@ -3,7 +3,8 @@
 //
 // - A global budget of images per second (default 120), kept as a token bucket: every image
 //   sent takes a token, tokens come back at the budget rate, and a short burst is allowed.
-// - At most `maxKeyFps` images per second for one key (default 15).
+// - At most `maxKeyFps` images per second for one key (default 10, Elgato's limit), static
+//   frames included.
 // - Two kinds of frames. Static frames (a mute, a name, a page change) are queued in order and
 //   go first; they wait for budget but are never dropped. Meter frames (keys that animate at
 //   `fps`, or were invalidated as 'meter') are coalesced per key and dropped first when the
@@ -12,6 +13,7 @@
 //   state, and a frame whose image did not change is not sent at all.
 
 import type { Clock, TimerHandle } from '@faderlight/totalmix';
+import { MAX_KEY_FPS } from './settings.ts';
 
 export type FramePriority = 'static' | 'meter';
 
@@ -24,7 +26,7 @@ export type FrameSink = (id: string, image: string) => void;
 export interface FrameSchedulerOptions {
   /** Images per second for all keys together (default 120). */
   readonly budgetPerSecond: number;
-  /** Images per second for one key at most (default 15). */
+  /** Images per second for one key at most (default MAX_KEY_FPS). */
   readonly maxKeyFps: number;
   /** Images that may go out at once after a quiet period (default a tenth of the budget). */
   readonly burst?: number;
@@ -80,7 +82,7 @@ export class FrameScheduler {
     this.clock = clock;
     this.budget = options.budgetPerSecond ?? 120;
     this.burst = Math.max(1, options.burst ?? Math.round(this.budget / 10));
-    this.minGapMs = 1000 / (options.maxKeyFps ?? 15);
+    this.minGapMs = 1000 / (options.maxKeyFps ?? MAX_KEY_FPS);
     this.tickMs = options.tickMs ?? 1000 / 60;
     this.tokens = this.burst;
     this.refilledAt = clock.now();
