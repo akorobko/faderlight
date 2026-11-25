@@ -9,7 +9,7 @@
     "validate": "streamdeck validate com.ratio32.faderlight.mixer.sdPlugin"
   },
   "dependencies": {
-    "@elgato/streamdeck": "3.0.4",
+    "@elgato/streamdeck": "3.0.6",
     "@faderlight/control-center": "0.0.0",
     "@faderlight/deck": "0.0.0",
     "@faderlight/model": "0.0.0",
@@ -17,12 +17,12 @@
     "@faderlight/totalmix": "0.0.0"
   },
   "devDependencies": {
-    "@elgato/cli": "1.10.4",
+    "@elgato/cli": "1.10.5",
     "@faderlight/simulator": "0.0.0",
     "@rollup/plugin-commonjs": "29.0.3",
     "@rollup/plugin-node-resolve": "16.0.3",
     "@types/ws": "8.18.2",
-    "rollup": "4.68.0",
-    "ws": "8.22.1"
+    "rollup": "4.68.8",
+    "ws": "8.23.0"
   }
 }
